@@ -79,3 +79,61 @@ function Part(parent, x, y, heading, width, height)
      */
     this.update = function() { };
 }
+
+
+function Motor(x, y, heading)
+{
+    //construct the part
+    Part.call(this, x, y, heading, 5, 2);
+
+    //set up the power settings
+    this.plevel = 0;
+    this.nlevel = 0;
+    this.pos = function(level) {
+        this.plevel = level;
+    };
+    this.neg = function(level) {
+        this.nlevel = level;
+    };
+
+    // handle speed of the motor
+    this.speed = 0;
+    this.update = function() {
+        var ps = 0;
+        if(this.nlevel < 0 && this.plevel > 0) {
+            ps = this.plevel;
+        } else if(this.nlevel > 0 && this.plevel < 0) {
+            ps = this.plevel;
+        } 
+
+        this.speed = 180 * ps / 100;
+    }
+}
+
+
+function Chassis(x, y, heading) 
+{
+    Part.call(this, x, y, 14, 20)
+
+    //handle the subparts of the chassis
+    this.parts = Array();
+    this.addPart = function(p) {
+        this.parts.push(p);
+    };
+
+    // create the left and right motors
+    this.left = new Motor(-2, 15);
+    this.right = new Motor(14, 15);
+
+    this.update = function() 
+    {
+        //update all the sub parts
+        for(var p in this.parts) {
+            p.update();
+        }
+
+        //update the motors
+        this.left.update();
+        this.right.update();
+    };
+}
