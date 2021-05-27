@@ -62,17 +62,18 @@ function Part(parent, x, y, heading, width, height)
     this.receive = function(){ };
 
     /**
-     * Send power to the part's positive port. 
-     * @param {*} level - The amount of power applied to the positive terminal. 
+     * The power level of the part.
      */
-    this.pos = function(level){ };
-
+    this.power = 0;
 
     /**
-     * Send power to the part's negative port. 
-     * @param {*} level - The amount of power applied to the negative terminal. 
+     * Set the power level of the part. Power level is a number between
+     * 0 and 100 inclusive.
+     * @param {*} power - The power level.
      */
-    this.neg = function(level){ };
+    this.setPower = function(power) {
+        this.power = power;
+    };
 
 
     /**
@@ -87,29 +88,12 @@ function Motor(x, y, heading)
     //construct the part
     Part.call(this, x, y, heading, 5, 2);
 
-    //set up the power settings
-    this.plevel = 0;
-    this.nlevel = 0;
-    this.pos = function(level) {
-        this.plevel = level;
-    };
-    this.neg = function(level) {
-        this.nlevel = level;
-    };
-
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
     this.update = function() {
-        var ps = 0;
-        if(this.nlevel < 0 && this.plevel > 0) {
-            ps = this.plevel;
-        } else if(this.nlevel > 0 && this.plevel < 0) {
-            ps = this.plevel;
-        } 
-
         //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
         //This maximum speed is roughly 6.81 radians per second
-        this.speed = 6.81 * ps / 100;
+        this.speed = 6.81 * this.power / 100;
     }
 }
 
