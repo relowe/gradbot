@@ -26,7 +26,7 @@
  * @param {*} parent  - Parent container of the part.
  * @param {*} x - X coordinate of the part.
  * @param {*} y  - Y coordinate of the part.
- * @param {*} heading  - Angle (0-360) of the part. 
+ * @param {*} heading  - Angle (0-2*Pi) of the part. 
  * @param {*} width  - Width of the part.
  * @param {*} height - Height of the part.
  */
@@ -41,9 +41,10 @@ function Part(parent, x, y, heading, width, height)
     this.height = height != undefined ? height : 0;
 
     // correct the heading range
-    this.head %= 360;
+    var twoPi = 2 * Math.PI;
+    this.head %= twoPi;
     if(this.heading < 0) {
-        this.heading += 360;
+        this.heading += twoPi;
     }
 
     //set up the functions By default, they do nothing
@@ -97,7 +98,7 @@ function Motor(x, y, heading)
     };
 
     // handle speed of the motor
-    this.speed = 0;
+    this.speed = 0;  // motor speed in radians per second
     this.update = function() {
         var ps = 0;
         if(this.nlevel < 0 && this.plevel > 0) {
@@ -106,7 +107,9 @@ function Motor(x, y, heading)
             ps = this.plevel;
         } 
 
-        this.speed = 180 * ps / 100;
+        //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
+        //This maximum speed is roughly 6.81 radians per second
+        this.speed = 6.81 * ps / 100;
     }
 }
 
@@ -135,5 +138,26 @@ function Chassis(x, y, heading)
         //update the motors
         this.left.update();
         this.right.update();
+
+        //compute our forward translation and yaw speeds
+        var r = 0.065; // 65mm diameter wheels
+        var l = 0.238; // 238mm axel length
+        var fwd = r/2 * (this.left.speed + this.right.speed);
+        var yaw = r/l * (this.right.speed - this.left.speed);
+
+        //populate the last update (if needed)
+        if(this.lastUpdate == undefined) {
+            this.lastUpdate = Date.now();
+        }
+
+        //compute elapsed time
+        var cur = Date.now();
+        var elapsed = (cur - this.lastUpdate) / 1000;
+        this.lastUpdate = cur;
+
+        //perform translation
+        this.x += fwd * Math.cos(this.heading) * elapsed;
+        this.y += fwd * Math.sin(this.heading) * elapsed;
+        this.heading += yaw * elapsed;
     };
 }
