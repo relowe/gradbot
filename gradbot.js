@@ -173,18 +173,23 @@ function VectorView(x, y, heading, scale, points) {
         var cos_th = Math.cos(this.heading);
 
         context.beginPath();
-        for(var p in points) {
+        for(var i in points) {
+            var p = points[i];
+
             // get the raw point and scale
             x = p.x * this.scale;
             y = p.y * this.scale;
 
+            // rotate
+            var rx, ry;
+            rx = x * cos_th - y * sin_th;
+            ry = x * sin_th + y * cos_th;
+            x = rx;
+            y = ry;
+
             // translate
             x += this.x;
             y += this.y;
-
-            // rotate
-            x = x * cos_th - y * sin_th;
-            y = y * cos_th + y * sin_th;
 
             if(started) {
                 context.lineTo(x, y);
@@ -200,7 +205,7 @@ function VectorView(x, y, heading, scale, points) {
             context.strokeStyle = this.outline;
         } 
         if(this.fill) {
-            contest.fillStyle = this.fill;
+            context.fillStyle = this.fill;
         }
         
         //draw the path
