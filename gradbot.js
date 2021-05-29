@@ -145,3 +145,66 @@ function Chassis(x, y, heading)
         this.heading += yaw * elapsed;
     };
 }
+
+
+function VectorView(x, y, heading, scale, points) {
+    // set up the fields
+    this.x = x != undefined ? x : 0;
+    this.y = y != undefined ? y : 0;
+    this.heading = heading != undefined ? heading : 0;
+    this.scale = scale != undefined ? scale : 1;
+    this.points = points != undefined ? points : {};
+    this.outline = undefined;
+    this.fill = undefined;
+
+    // draw the shape
+    this.draw = function(canvas, context) {
+        var x;
+        var y;
+        var started = false;
+
+        // skip the blank shapes
+        if(this.points.length == 0) {
+            return;
+        }
+
+        //compute rotation coeffecients
+        var sin_th = Math.sin(this.heading);
+        var cos_th = Math.cos(this.heading);
+
+        context.beginPath();
+        for(var p in points) {
+            // get the raw point and scale
+            x = p.x * this.scale;
+            y = p.y * this.scale;
+
+            // translate
+            x += this.x;
+            y += this.y;
+
+            // rotate
+            x = x * cos_th - y * sin_th;
+            y = y * cos_th + y * sin_th;
+
+            if(started) {
+                context.lineTo(x, y);
+            } else {
+                context.moveTo(x, y);
+                started = true;
+            }
+        }
+        context.closePath();
+
+        // set the colors, if needed
+        if(this.outline) {
+            context.strokeStyle = this.outline;
+        } 
+        if(this.fill) {
+            contest.fillStyle = this.fill;
+        }
+        
+        //draw the path
+        context.fill();
+        context.stroke();
+    }
+}
