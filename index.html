@@ -4,7 +4,40 @@
     <title>Title</title>
     <meta charset = "utf-8">
     <script src="gradbot.js"></script>
+    <script>
+        var robot;
+        var direction = 0.1;
+
+        window.onload = function () {
+            var chassis = new Chassis(100, 100, 0);
+            robot = new ChassisView(chassis);
+
+            var canvas = document.getElementById("foreground");
+            var context = canvas.getContext("2d");
+            robot.draw(canvas, context);
+
+            setInterval(spin, 100);
+        }
+
+
+        function spin() {
+            var canvas = document.getElementById("foreground");
+            var context = canvas.getContext("2d");
+
+            robot.scale += direction;
+            if(robot.scale >= 4.0 || robot.scale < 1.0) {
+                direction = -direction;
+            }
+
+            robot.rotate(0.25);
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            robot.draw(canvas, context);
+
+        }
+
+    </script>
 </head>
 <body>
+    <canvas id="foreground" width="800" height="600"></canvas>
 </body>
 </html>

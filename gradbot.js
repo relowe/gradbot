@@ -21,6 +21,56 @@
  * @license GPL 3.0 
  */
 
+
+/**
+ * This function takes an angle in radians and reduces it so its range
+ * is always within [0, 2*PI]
+ * @param {number} a - The angle to reduce
+ * @returns The reduced angle.
+ */
+function reduceAngle(a) {
+    var tau = 2 * Math.PI;
+
+    a %= tau;
+    if(a<0) {
+        a+= tau;
+    }
+
+    return a;
+}
+
+
+/**
+ * This is a prototype for a positionable object. It handles all the 
+ * intricacies of moving an object around.
+ * @param {number} x - x coordinate 
+ * @param {number} y - y coordinate
+ * @param {number} heading  - the direction in which the object is facing
+ */
+function Positionable(x, y, heading) {
+    this.x = x != undefined ? x : 0;
+    this.y = y != undefined ? y : 0;
+    this.heading = heading != undefined ? heading : 0;
+
+    /**
+     * Rotate the part.
+     * @param {number} a - The angle to rotate by (in radians)
+     */
+    this.rotate = function(a) {
+        this.heading = reduceAngle(this.heading + a);
+    };
+
+
+    /**
+     * Turn the part to face along the given heading.
+     * @param {number} a - The new heading to face along
+     */
+    this.face = function(a) {
+        this.heading = reduceAngle(a);
+    }
+}
+
+
 /**
  * The Part object is the base of all robot parts. 
  * @param {*} parent  - Parent container of the part.
@@ -34,18 +84,12 @@ function Part(parent, x, y, heading, width, height)
 {
     // populate the fields
     this.parent = parent;
-    this.x = x != undefined ? x : 0;
-    this.y = y != undefined ? y : 0;
-    this.heading = heading != undefined ? heading : 0;
+    Positionable.call(this, x, y, heading);
     this.width = width != undefined ? width : 0;
     this.height = height != undefined ? height : 0;
 
     // correct the heading range
-    var twoPi = 2 * Math.PI;
-    this.head %= twoPi;
-    if(this.heading < 0) {
-        this.heading += twoPi;
-    }
+    this.heading = reduceAngle(this.heading);
 
     //set up the functions By default, they do nothing
 
@@ -80,13 +124,15 @@ function Part(parent, x, y, heading, width, height)
      * Update the part's state.
      */
     this.update = function() { };
+
+
 }
 
 
-function Motor(x, y, heading)
+function Motor(parent, x, y, heading)
 {
     //construct the part
-    Part.call(this, x, y, heading, 5, 2);
+    Part.call(this, parent, x, y, heading, 6, 2);
 
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
@@ -100,7 +146,7 @@ function Motor(x, y, heading)
 
 function Chassis(x, y, heading) 
 {
-    Part.call(this, x, y, 14, 20)
+    Part.call(this, null, x, y, 0, 20, 12)
 
     //handle the subparts of the chassis
     this.parts = Array();
@@ -109,8 +155,8 @@ function Chassis(x, y, heading)
     };
 
     // create the left and right motors
-    this.left = new Motor(-2, 15);
-    this.right = new Motor(14, 15);
+    this.left = new Motor(this, -7, -7, 0);
+    this.right = new Motor(this, -7, 7, Math.PI);
 
     this.update = function() 
     {
@@ -149,9 +195,7 @@ function Chassis(x, y, heading)
 
 function VectorView(x, y, heading, scale, points) {
     // set up the fields
-    this.x = x != undefined ? x : 0;
-    this.y = y != undefined ? y : 0;
-    this.heading = heading != undefined ? heading : 0;
+    Positionable.call(this, x, y, heading);
     this.scale = scale != undefined ? scale : 1;
     this.points = points != undefined ? points : {};
     this.outline = undefined;
@@ -211,5 +255,127 @@ function VectorView(x, y, heading, scale, points) {
         //draw the path
         context.fill();
         context.stroke();
+    };
+}
+
+
+
+function PartView(part) {
+    // Construct the positionable parts of ourselves
+    Positionable.call(this, part.x, part.y, part.heading);
+
+    // Every PartView has a vector view
+    this.view = null;
+
+    // Scale the view
+    this.scale = 1;
+
+    // We also need a list of sub views 
+    this.subviews = [];
+    this.addSubview = function(view) {
+        view.reOrigin();
+        this.subviews.push(view);
     }
+
+    // remember the part we are viewing!
+    this.part = part;
+
+    /**
+     * Draw the part along with all of its subparts.
+     * @param {*} canvas - The canvas to draw on.
+     * @param {*} context - The context to draw on.
+     */
+    this.draw = function(canvas, context) {
+        // draw the base view (if it exists)
+        if(this.view) {
+            this.view.x = this.x;
+            this.view.y = this.y;
+            this.view.heading = this.heading;
+            this.view.scale = this.scale;
+            this.view.draw(canvas, context);
+        }
+
+        // draw each subviews offset to this view's pose
+        for(var i = 0; i < this.subviews.length; i++) {
+            var v = this.subviews[i];
+            v.x = this.x;
+            v.y = this.y;
+            v.face(this.heading);
+            v.scale = this.scale;
+            v.draw(canvas, context);
+        }
+    };
+
+    
+    /**
+     * Shift the part's origin to its x,y and set its position to 0,0.
+     */
+    this.reOrigin = function() {
+        //compute rotation coeffecients
+        var sin_th = Math.sin(this.heading);
+        var cos_th = Math.cos(this.heading);
+
+        for(var i=0; i < this.view.points.length; i++) {
+            var p = this.view.points[i];
+            var rx, ry;
+            rx = p.x * cos_th - p.y * sin_th;
+            ry = p.x * sin_th + p.y * cos_th;
+            p.x = rx + this.x;
+            p.y = ry + this.y;
+        }
+
+        this.heading = 0;
+        this.view.heading = 0;
+        this.view.x = 0;
+        this.view.y = 0;
+        this.x = 0;
+        this.y = 0;
+    };
+}
+
+
+/**
+ * Constructor for the chassis view object. This visualizes an entire 
+ * robot. 
+ * @param {*} part - The chassis part
+ */
+function ChassisView(part) {
+    // initialize the partview
+    PartView.call(this, part);
+
+    // add the motors to the subview list.
+    this.addSubview(new MotorView(part.left));
+    this.addSubview(new MotorView(part.right));
+
+    //create my vector view
+    var points = [
+        {x: -10, y: -6},
+        {x: 10, y: -6},
+        {x: 10, y: 6},
+        {x: -10, y: 6},
+    ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.stroke = "black"
+}
+
+
+/**
+ * constructor for the motor view object. This visualizes a motor.
+ * @param {*} part - The motor part 
+ */
+function MotorView(part) {
+    //initialize the part view
+    PartView.call(this, part);
+
+    //create my vector view
+    var points = [
+        {x: -3, y: -1},
+        {x: 3, y: -1},
+        {x: 3, y: 1},
+        {x: -3, y: 1},
+    ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.stroke = "black"
 }
