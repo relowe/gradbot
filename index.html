@@ -1,22 +1,82 @@
 <!doctype html>
 <html lang = "en">
 <head>
-    <title>Title</title>
+    <title>Gradbot Simulator</title>
     <meta charset = "utf-8">
     <script src="gradbot.js"></script>
+    <style>
+        /* Style the tab */
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+    
+        /* Style the buttons inside the tab */
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+    
+        /* Change background color of buttons on hover */
+        .tab button:hover {
+            background-color: #ddd;
+        }
+    
+        /* Create an active/current tablink class */
+        .tab button.active {
+            background-color: #ccc;
+        }
+    
+        /* Style the tab content */
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+
+        /* Canvas Container */
+        .container {
+            position: relative;
+            margin: 0px;
+            padding: 0px;
+            top: 0px;
+            left: 0px;
+            width: 800px;
+            height: 600px;
+        }
+
+        /* contained canvases */
+        #simfg, #simbg{
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
+    </style>
     <script>
         var robot;
         var direction = 0.1;
 
         window.onload = function () {
-            var chassis = new Chassis(100, 100, 0);
-            robot = new ChassisView(chassis);
+            //var chassis = new Chassis(400, 300, -Math.PI/2);
+            //robot = new ChassisView(chassis);
 
-            var canvas = document.getElementById("foreground");
-            var context = canvas.getContext("2d");
-            robot.draw(canvas, context);
+            //var canvas = document.getElementById("foreground");
+            //var context = canvas.getContext("2d");
+            //robot.scale = 30;
+            //robot.draw(canvas, context);
 
-            setInterval(spin, 100);
+            //robot.part.left.setPower(100);
+            //robot.part.right.setPower(-100);
+
+            //setInterval(spin, 1000/30);
         }
 
 
@@ -24,12 +84,7 @@
             var canvas = document.getElementById("foreground");
             var context = canvas.getContext("2d");
 
-            robot.scale += direction;
-            if(robot.scale >= 4.0 || robot.scale < 1.0) {
-                direction = -direction;
-            }
-
-            robot.rotate(0.25);
+            robot.part.update();
             context.clearRect(0, 0, canvas.width, canvas.height);
             robot.draw(canvas, context);
 
@@ -38,6 +93,20 @@
     </script>
 </head>
 <body>
-    <canvas id="foreground" width="800" height="600"></canvas>
+    <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'Simulate')">Simulate</button>
+            <button class="tablinks" onclick="openTab(event, 'Build')">Build</button>
+    </div>
+
+    <div class="tabcontent" id='Simulate'>
+        <div class="container">
+        <canvas id="simbg" width="800" height="600"></canvas>
+        <canvas id="simfg" width="800" height="600"></canvas>
+        </div>
+    </div>
+
+    <div class="tabcontent" id="Build">
+        <canvas id="buildCanvas" width="800" height="600"></canvas>
+    </div>
 </body>
 </html>

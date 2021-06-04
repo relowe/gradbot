@@ -22,6 +22,11 @@
  */
 
 
+/****************************************** 
+ * Utility Functions and Objects
+ ******************************************/
+
+
 /**
  * This function takes an angle in radians and reduces it so its range
  * is always within [0, 2*PI]
@@ -51,6 +56,7 @@ function Positionable(x, y, heading) {
     this.x = x != undefined ? x : 0;
     this.y = y != undefined ? y : 0;
     this.heading = heading != undefined ? heading : 0;
+    this.heading = reduceAngle(this.heading);
 
     /**
      * Rotate the part.
@@ -71,6 +77,12 @@ function Positionable(x, y, heading) {
 }
 
 
+
+/****************************************** 
+ * Simulation Objects
+ ******************************************/
+
+
 /**
  * The Part object is the base of all robot parts. 
  * @param {*} parent  - Parent container of the part.
@@ -87,9 +99,6 @@ function Part(parent, x, y, heading, width, height)
     Positionable.call(this, x, y, heading);
     this.width = width != undefined ? width : 0;
     this.height = height != undefined ? height : 0;
-
-    // correct the heading range
-    this.heading = reduceAngle(this.heading);
 
     //set up the functions By default, they do nothing
 
@@ -146,7 +155,7 @@ function Motor(parent, x, y, heading)
 
 function Chassis(x, y, heading) 
 {
-    Part.call(this, null, x, y, 0, 20, 12)
+    Part.call(this, null, x, y, heading, 20, 12)
 
     //handle the subparts of the chassis
     this.parts = Array();
@@ -170,10 +179,10 @@ function Chassis(x, y, heading)
         this.right.update();
 
         //compute our forward translation and yaw speeds
-        var r = 0.065; // 65mm diameter wheels
+        var r = .065; // 65mm diameter wheels
         var l = 0.238; // 238mm axel length
-        var fwd = r/2 * (this.left.speed + this.right.speed);
-        var yaw = r/l * (this.right.speed - this.left.speed);
+        var fwd = r/2 * (this.left.speed + this.right.speed) * 60;
+        var yaw = r/l * (this.left.speed - this.right.speed);
 
         //populate the last update (if needed)
         if(this.lastUpdate == undefined) {
@@ -191,6 +200,12 @@ function Chassis(x, y, heading)
         this.heading += yaw * elapsed;
     };
 }
+
+
+
+/****************************************** 
+ * Utility Functions and Objects
+ ******************************************/
 
 
 function VectorView(x, y, heading, scale, points) {
@@ -357,6 +372,39 @@ function ChassisView(part) {
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.stroke = "black"
+
+
+    //remember the base version
+    this.partDraw = this.draw;
+
+    /**
+     * Update for the movement of the model and then draw.
+     * @param {*} canvas 
+     * @param {*} context 
+     */
+    this.draw = function(canvas, context) {
+        //copy the chassis pose
+        this.x = this.part.x;
+        this.y = this.part.y;
+        this.heading = this.part.heading;
+
+        //draw like normal
+        this.partDraw(canvas, context); 
+    }
+}
+
+
+function ChassisBuildView(part) {
+    ChassisView.call(this, part);
+
+    // This view has a fixed position and heading
+    this.x = 400;
+    this.y = 300;
+    this.scale=30; //it's also big!
+    this.heading = -Math.PI/2;
+
+    //We won't move this.
+    this.draw = this.partDraw;
 }
 
 
@@ -378,4 +426,37 @@ function MotorView(part) {
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.stroke = "black"
+}
+
+
+/****************************************** 
+ * USER INTERFACE
+ ******************************************/
+var robot;
+var simView;
+var buildView;
+
+/**
+ * Open a UI tab.
+ * This is based on a code tutorial found at: https://www.w3schools.com/howto/howto_js_tabs.asp 
+ * @param {*} evt 
+ * @param {*} tabId
+ */
+function openTab(evt, tabId) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(tabId).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+
+
+function gradbotInit() {
+    
 }
