@@ -54,59 +54,75 @@
         }
 
         /* contained canvases */
-        #simfg, #simbg{
+        .container canvas{
             position: absolute;
             top: 0px;
             left: 0px;
         }
+
+        /* toolbox div */
+        .toolbox {
+            position: absolute;
+            top: 0px;
+            left: 820px;
+            width: 200px;
+            height: 600px;
+            overflow: auto;
+            border: 1px solid lightblue;
+        }
+
+        .toolboxHead {
+            text-align: center;
+            border-bottom: 1px solid lightcoral;
+            height: 30px;
+            line-height: 30px;
+        }
+
+        .toolboxContent {
+            width: 200px;
+            height: 570px;
+            overflow: auto;
+        }
     </style>
     <script>
-        var robot;
-        var direction = 0.1;
-
         window.onload = function () {
-            //var chassis = new Chassis(400, 300, -Math.PI/2);
-            //robot = new ChassisView(chassis);
-
-            //var canvas = document.getElementById("foreground");
-            //var context = canvas.getContext("2d");
-            //robot.scale = 30;
-            //robot.draw(canvas, context);
-
-            //robot.part.left.setPower(100);
-            //robot.part.right.setPower(-100);
-
-            //setInterval(spin, 1000/30);
+            (function () { var script = document.createElement('script'); script.src="//cdn.jsdelivr.net/npm/eruda"; document.body.appendChild(script); script.onload = function () { eruda.init() } })();
+            gradbotInit();
         }
-
-
-        function spin() {
-            var canvas = document.getElementById("foreground");
-            var context = canvas.getContext("2d");
-
-            robot.part.update();
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            robot.draw(canvas, context);
-
-        }
-
     </script>
 </head>
 <body>
     <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'Simulate')">Simulate</button>
-            <button class="tablinks" onclick="openTab(event, 'Build')">Build</button>
+            <button class="tablinks" id="simButton" onclick="openTab(event, 'Simulate')">Simulate</button>
+            <button class="tablinks" id="buildButton" onclick="openTab(event, 'Build')">Build</button>
     </div>
 
     <div class="tabcontent" id='Simulate'>
         <div class="container">
-        <canvas id="simbg" width="800" height="600"></canvas>
-        <canvas id="simfg" width="800" height="600"></canvas>
+            <canvas id="simbg" width="800" height="600"></canvas>
+            <canvas id="simfg" width="800" height="600"></canvas>
+            <div class="toolbox">
+                <div class="toolboxHead">
+                    Simulation Controls
+                </div>
+                <div class="toolboxContent">
+
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="tabcontent" id="Build">
-        <canvas id="buildCanvas" width="800" height="600"></canvas>
+        <div class="container">
+            <canvas id="buildCanvas" width="800" height="600"></canvas>
+            <div class="toolbox">
+                <div class="toolboxHead">
+                    Part Editor
+                </div>
+                <div class="toolboxContent">
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
