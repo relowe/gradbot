@@ -100,6 +100,10 @@ function Part(parent, x, y, heading, width, height)
     this.width = width != undefined ? width : 0;
     this.height = height != undefined ? height : 0;
 
+    // the outline and fill color of the part
+    this.outline = "black";
+    this.fill = "white";
+
     //set up the functions By default, they do nothing
 
     /**
@@ -142,6 +146,7 @@ function Motor(parent, x, y, heading)
 {
     //construct the part
     Part.call(this, parent, x, y, heading, 6, 2);
+
 
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
@@ -301,6 +306,10 @@ function PartView(part) {
      * @param {*} context - The context to draw on.
      */
     this.draw = function(canvas, context) {
+        // set the color
+        this.view.outline = this.part.outline;
+        this.view.fill = this.part.fill;
+
         // draw the base view (if it exists)
         if(this.view) {
             this.view.x = this.x;
@@ -403,6 +412,7 @@ function ChassisBuildView(part) {
     this.scale=30; //it's also big!
     this.heading = -Math.PI/2;
 
+
     //We won't move this.
     this.draw = this.partDraw;
 }
@@ -443,20 +453,65 @@ var buildView;
  * @param {*} tabId
  */
 function openTab(evt, tabId) {
-  var i, tabcontent, tablinks;
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-  tablinks = document.getElementsByClassName("tablinks");
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
-  }
-  document.getElementById(tabId).style.display = "block";
-  evt.currentTarget.className += " active";
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    document.getElementById(tabId).style.display = "block";
+    evt.currentTarget.className += " active";
 }
 
 
+/**
+ * Fill the canvas with the given ID with a graph paper like pattern.
+ * @param {*} - id
+ */
+function graphPaperFill(id) {
+    var back = document.getElementById(id);
+    var context = back.getContext("2d");
+    context.fillStyle = "white";
+    context.fillRect(0, 0, back.width, back.height);
+
+    context.beginPath();
+    for (var lx = 0; lx < back.width; lx += 20) {
+        context.moveTo(lx, 0);
+        context.lineTo(lx, back.height);
+    }
+    for (var ly = 0; ly < back.height; ly += 20) {
+        context.moveTo(0, ly);
+        context.lineTo(back.width, ly);
+    }
+    context.strokeStyle = "lightblue";
+    context.stroke();
+
+    context.strokeRect(0, 0, back.width, back.height);
+}
+
+
+
 function gradbotInit() {
-    
+    //select the simulation tab
+    document.getElementById('simButton').click();
+
+    //fill the simulation background with graph paper
+    graphPaperFill('simbg');
+
+    //create the robot
+    robot = new Chassis(100, 100, 0);
+
+    //put the robot on the foreground of the simulator
+    var canvas = document.getElementById('simfg');
+    simView = new ChassisView(robot);
+    simView.draw(canvas, canvas.getContext("2d"));
+
+    //build the robot builder view
+    canvas = document.getElementById("buildCanvas");
+    buildView = new ChassisBuildView(robot);
+    graphPaperFill('buildCanvas');
+    buildView.draw(canvas, canvas.getContext("2d")); 
 }
