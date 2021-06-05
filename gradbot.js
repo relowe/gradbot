@@ -59,7 +59,7 @@ function Positionable(x, y, heading) {
     this.heading = reduceAngle(this.heading);
 
     /**
-     * Rotate the part.
+     * Rotate the positionable.
      * @param {number} a - The angle to rotate by (in radians)
      */
     this.rotate = function(a) {
@@ -68,11 +68,22 @@ function Positionable(x, y, heading) {
 
 
     /**
-     * Turn the part to face along the given heading.
+     * Turn the positionable to face along the given heading.
      * @param {number} a - The new heading to face along
      */
     this.face = function(a) {
         this.heading = reduceAngle(a);
+    }
+
+
+    /**
+     * Move the positionable to (x,y)
+     * @param {*} x 
+     * @param {*} y 
+     */
+    this.moveTo = function(x, y) {
+        this.x = x;
+        this.y = y;
     }
 }
 
@@ -220,12 +231,29 @@ function VectorView(x, y, heading, scale, points) {
     this.points = points != undefined ? points : {};
     this.outline = undefined;
     this.fill = undefined;
+    
+
+    /**
+     * Reset the minx, miny, maxx, and maxy to Infinity and -Infinity
+     */
+    this.resetExtents = function() {
+        //extents of the vector view
+        this.minx = Infinity;
+        this.miny = Infinity;
+        this.maxx = -Infinity;
+        this.maxy = -Infinity;
+    };
+    this.resetExtents();
+
 
     // draw the shape
     this.draw = function(canvas, context) {
         var x;
         var y;
         var started = false;
+
+        //reset the extents
+        this.resetExtents();
 
         // skip the blank shapes
         if(this.points.length == 0) {
@@ -255,12 +283,19 @@ function VectorView(x, y, heading, scale, points) {
             x += this.x;
             y += this.y;
 
+            //add the line or start the shape
             if(started) {
                 context.lineTo(x, y);
             } else {
                 context.moveTo(x, y);
                 started = true;
             }
+
+            //track extents
+            if(x < this.minx) { this.minx = x; }
+            if(x > this.maxx) { this.maxx = x; }
+            if(y < this.miny) { this.miny = y; }
+            if(y > this.maxy) { this.maxy = y; }
         }
         context.closePath();
 
@@ -276,6 +311,18 @@ function VectorView(x, y, heading, scale, points) {
         context.fill();
         context.stroke();
     };
+
+
+    /**
+     * Determines if the point (x,y) is within the extents of the view.
+     * @param {*} x - x coordinate 
+     * @param {*} y - y coordinate
+     * @returns true if (x,y) is inside this view, false otherwise.
+     */
+    this.encloses = function(x, y) {
+        return x >= this.minx && x <= this.maxx &&
+               y >= this.miny && y <= this.maxy;
+    }
 }
 
 
@@ -446,6 +493,21 @@ var robot;
 var simView;
 var buildView;
 
+// dragmodes
+const DRAG_NONE= 0;
+const DRAG_MOVE=1;
+const DRAG_ROTATE=2;
+
+//state of the simulator ui
+var simState = {
+    dragMode: DRAG_NONE,
+    dragTarget: null,
+    lastX: 0,
+    lastY: 0 
+};
+
+
+
 /**
  * Open a UI tab.
  * This is based on a code tutorial found at: https://www.w3schools.com/howto/howto_js_tabs.asp 
@@ -464,6 +526,34 @@ function openTab(evt, tabId) {
     }
     document.getElementById(tabId).style.display = "block";
     evt.currentTarget.className += " active";
+}
+
+
+/**
+ * Draw the simulator canvas.
+ */
+function drawSim() {
+    var canvas = document.getElementById('simfg');
+    var context = canvas.getContext("2d");
+
+    // clear the frame
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    //draw the robot
+    simView.draw(canvas, context);
+}
+
+
+/**
+ * Draws the build canvas.
+ */
+function drawBuild() {
+    var canvas = document.getElementById("buildCanvas");
+    var context = canvas.getContext("2d");
+    
+    //draw the build window
+    graphPaperFill("buildCanvas");
+    buildView.draw(canvas, context);
 }
 
 
@@ -493,6 +583,86 @@ function graphPaperFill(id) {
 }
 
 
+/*
+ * Simulation Events
+ */
+
+/**
+ * Handler for mouse down events on the sim canvas.
+ */
+function simMouseDown(event) {
+
+    // get the target of the click
+    simState.dragTarget = null;
+    if(simView.view.encloses(event.offsetX, event.offsetY)) {
+        simState.dragTarget = simView.part;
+    } else {
+        return;
+    }
+
+    //record this position
+    simState.lastX = event.offsetX;
+    simState.lastY = event.offsetY;
+
+    //get the mode
+    if(document.getElementById('dragRotate').checked) {
+        simState.dragMode = DRAG_ROTATE;
+    } else if(document.getElementById('dragMove').checked) {
+        simState.dragMode = DRAG_MOVE;
+        simState.dragTarget.moveTo(event.offsetX, event.offsetY);
+    } else {
+        simState.dragMode = DRAG_NONE;
+    }
+
+    //refresh the canvas
+    drawSim();
+}
+
+
+/**
+ * Handler for mouse up events on the sim canvas.
+ */
+function simMouseUp(event) {
+    // one last move (if that is what we are up to!)
+    if(simState.dragMode == DRAG_MOVE) {
+        simState.dragTarget.moveTo(event.offsetX, event.offsetY);
+    }
+
+    // end the drag mode
+    simState.dragMode = DRAG_NONE;
+
+    //refresh the canvas
+    drawSim();
+}
+
+
+/**
+ * Handler for mouse move events on the sim canvas.
+ */
+function simMouseMove(event) {
+    // if we have no drag mode, do nothing
+    if(simState.dragMode == DRAG_NONE) {
+        return;
+    }
+
+    // process movement
+    if(simState.dragMode == DRAG_MOVE) {
+        simState.dragTarget.moveTo(event.offsetX, event.offsetY);
+    }
+
+    //process rotation
+    if(simState.dragMode == DRAG_ROTATE) {
+        simState.dragTarget.rotate((event.offsetY-simState.lastY) * 0.1);
+    }
+
+    //record this position
+    simState.lastX = event.offsetX;
+    simState.lastY = event.offsetY;
+
+    // refresh the canvas
+    drawSim();
+}
+
 
 function gradbotInit() {
     //select the simulation tab
@@ -505,13 +675,16 @@ function gradbotInit() {
     robot = new Chassis(100, 100, 0);
 
     //put the robot on the foreground of the simulator
-    var canvas = document.getElementById('simfg');
     simView = new ChassisView(robot);
-    simView.draw(canvas, canvas.getContext("2d"));
+    drawSim();
 
     //build the robot builder view
-    canvas = document.getElementById("buildCanvas");
     buildView = new ChassisBuildView(robot);
-    graphPaperFill('buildCanvas');
-    buildView.draw(canvas, canvas.getContext("2d")); 
+    drawBuild();
+
+    //set up the sim mouse events
+    var canvas = document.getElementById('simfg');
+    canvas.onmousedown = simMouseDown;
+    canvas.onmouseup = simMouseUp;
+    canvas.onmousemove = simMouseMove;
 }

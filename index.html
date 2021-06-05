@@ -10,6 +10,8 @@
             overflow: hidden;
             border: 1px solid #ccc;
             background-color: #f1f1f1;
+            width: 1044px;
+            margin: auto;
         }
     
         /* Style the buttons inside the tab */
@@ -40,6 +42,8 @@
             padding: 6px 12px;
             border: 1px solid #ccc;
             border-top: none;
+            width: 1020px;
+            margin: auto;
         }
 
         /* Canvas Container */
@@ -83,6 +87,16 @@
             height: 570px;
             overflow: auto;
         }
+
+        .inner {
+            padding: 6px;
+        }
+
+        hr {
+            background-color: lightblue;
+            border: none;
+            height: 1px;
+        }
     </style>
     <script>
         window.onload = function () {
@@ -106,7 +120,14 @@
                     Simulation Controls
                 </div>
                 <div class="toolboxContent">
-
+                    <div class="inner">
+                        <b>Drag Mode</b><br/>
+                        <input type="radio" id="dragMove" name="dragMode" checked="checked" />
+                        <label for="dragMove">Move</label>
+                        <input type="radio" id="dragRotate" name="dragMode"/>
+                        <label for="dragRotate">Rotate</label>
+                        <hr/>
+                    </div>
                 </div>
             </div>
         </div>
