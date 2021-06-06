@@ -101,10 +101,28 @@
         .partEditorPane {
             display: none;
         }
+
+        input[type=text] {
+            width: 150px;
+        } 
+
+        #robotCode {
+            width: 800px;
+            height: 588px;
+            border: 1px solid lightblue;
+            font-family: monospace;
+            font-size: 14pt;
+            padding: 6px;
+        }
+
+        ul {
+            padding: 0px 20px;
+            margin: 0px;
+        }
     </style>
     <script>
         window.onload = function () {
-            //(function () { var script = document.createElement('script'); script.src="//cdn.jsdelivr.net/npm/eruda"; document.body.appendChild(script); script.onload = function () { eruda.init() } })();
+            (function () { var script = document.createElement('script'); script.src="//cdn.jsdelivr.net/npm/eruda"; document.body.appendChild(script); script.onload = function () { eruda.init() } })();
             gradbotInit();
         }
     </script>
@@ -113,6 +131,7 @@
     <div class="tab">
             <button class="tablinks" id="simButton" onclick="openTab(event, 'Simulate')">Simulate</button>
             <button class="tablinks" id="buildButton" onclick="openTab(event, 'Build')">Build</button>
+            <button class="tablinks" id="codeButton" onclick="openTab(event, 'Code')">Code</button>
     </div>
 
     <div class="tabcontent" id='Simulate'>
@@ -130,6 +149,10 @@
                         <label for="dragMove">Move</label>
                         <input type="radio" id="dragRotate" name="dragMode"/>
                         <label for="dragRotate">Rotate</label>
+                        <hr/>
+                        <b>Simulation</b><br/>
+                        <button id="simGo">Start</button>
+                        <button id="simReset">Reset</button><br/>
                         <hr/>
                     </div>
                 </div>
@@ -162,6 +185,23 @@
                             <button id="partCancel">Cancel</button><hr>
                             <br/>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabcontent" id="Code">
+        <div class="container">
+            <textarea id="robotCode"></textarea>
+            <div class="toolbox">
+                <div class="toolboxHead">
+                    Part List 
+                </div>
+                <div class="toolboxContent">
+                    <div class="inner">
+                        <ul id="codePartList">
+                        </ul>
                     </div>
                 </div>
             </div>

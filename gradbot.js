@@ -183,6 +183,9 @@ function Chassis(x, y, heading, name)
     this.left = new Motor(this, -7, -7, 0, "left");
     this.right = new Motor(this, -7, 7, Math.PI, "right");
 
+    // create the robot code
+    this.code = "";
+
     this.update = function() 
     {
         //update all the sub parts
@@ -503,7 +506,11 @@ var simState = {
     dragMode: DRAG_NONE,
     dragTarget: null,
     lastX: 0,
-    lastY: 0 
+    lastY: 0,
+    robotStartX: 100,
+    robotStartY: 100,
+    robotStartHeading: 0,
+    timer: null
 };
 
 
@@ -517,6 +524,7 @@ var buildState = {
     editOriginalOutline: null
 }
 
+var protectedList = [ 'protectedList', 'robot', 'simView', 'buildView', 'simState', 'buildState'];
 
 
 /**
@@ -544,7 +552,30 @@ function openTab(evt, tabId) {
         drawSim();
     } else if(tabId == "Build") {
         drawBuild();
+    } else if(tabId == "Code") {
+        var partList = document.getElementById("codePartList");
+        partList.innerHTML="";
+        addPartToPartList(partList, robot.left);
+        addPartToPartList(partList, robot.right);
+        for(var i=0; i < robot.parts; i++) {
+            addPartToPartList(partList, robot.parts[i]);
+        }
+        document.getElementById('robotCode').value = robot.code;
     }
+    robot.code = document.getElementById('robotCode').value;
+}
+
+
+
+/**
+ * Add part to the partList element
+ * @param {*} partList 
+ * @param {*} part 
+ */
+function addPartToPartList(partList, part) {
+    var li = document.createElement('li');
+    li.innerHTML = part.name + ": <i>" + part.type + "</i>";
+    partList.appendChild(li);
 }
 
 
@@ -879,6 +910,48 @@ function buildCancel(event) {
 
 
 /**
+ * Handle the simulation go button.
+ * @param {*} event 
+ */
+function simulationGo(event) {
+    var text = event.target.innerHTML;
+
+    if(text == "Start") {
+        event.target.innerHTML = "Pause";
+        
+        //preserve the starting pose of the robot
+        simState.robotStartX = robot.x;
+        simState.robotStartY = robot.y;
+        simState.robotStartHeading = robot.heading;
+        simulationStart();
+    } else if(text == "Pause") {
+        event.target.innerHTML = "Resume";
+        simulationStop();
+    } else if(text == "Resume") {
+        event.target.innerHTML = "Pause";
+        simulationStart();
+    }
+}
+
+
+function simulationReset(event) {
+    document.getElementById("simGo").innerHTML = "Start";
+
+    //put the robot back in its original position and heading
+    robot.moveTo(simState.robotStartX, simState.robotStartY);
+    robot.face(simState.robotStartHeading);
+
+    //clear the background
+    graphPaperFill("simbg");
+
+    simulationStop();
+
+    //draw the simulator
+    drawSim();
+}
+
+
+/**
  * Initialize the gradbot interface.
  */
 function gradbotInit() {
@@ -887,6 +960,9 @@ function gradbotInit() {
 
     //create the robot
     robot = new Chassis(100, 100, 0, "chassis");
+    simState.robotStartX = robot.x;
+    simState.robotStartY = robot.y;
+    simState.robotStartHeading = robot.heading;
 
     //put the robot on the foreground of the simulator
     simView = new ChassisView(robot);
@@ -903,6 +979,10 @@ function gradbotInit() {
     canvas.onmouseup = simMouseUp;
     canvas.onmousemove = simMouseMove;
 
+    //set up the sim buttons
+    document.getElementById('simGo').onclick = simulationGo;
+    document.getElementById('simReset').onclick = simulationReset;
+
     //set up the build mouse events
     canvas = document.getElementById("buildCanvas");
     canvas.onmousedown = buildMouseDown;
@@ -915,4 +995,34 @@ function gradbotInit() {
 
     //select the simulation tab
     document.getElementById('simButton').click();
+}
+
+/******************************************
+ * Simulator Functions
+ ******************************************/
+function simulationStart() {
+    // clear the timer, if there is one
+    if(simState.timer) {
+        clearInterval(simState.timer);
+    }
+
+    //set the timer going!
+    simState.timer = setInterval(simulationUpdate, 1000/30);
+}
+
+
+function simulationStop() {
+    // clear the timer, if there is one
+    if(simState.timer) {
+        clearInterval(simState.timer);
+    }
+
+    // remove the robot's abilityt to teleport on resume ^_^
+    robot.lastUpdate = undefined;
+}
+
+
+function simulationUpdate() {
+    robot.update();
+    drawSim();
 }
