@@ -510,7 +510,8 @@ var simState = {
     robotStartX: 100,
     robotStartY: 100,
     robotStartHeading: 0,
-    timer: null
+    timer: null,
+    robotFunction: undefined
 };
 
 
@@ -997,20 +998,32 @@ function gradbotInit() {
     document.getElementById('simButton').click();
 }
 
+
 /******************************************
  * Simulator Functions
  ******************************************/
+
+
+/**
+ * Start the simulation.
+ */
 function simulationStart() {
     // clear the timer, if there is one
     if(simState.timer) {
         clearInterval(simState.timer);
     }
 
+    //generate the robot function
+    simState.robotFunction = simulationRobotFunction(robot);
+
     //set the timer going!
     simState.timer = setInterval(simulationUpdate, 1000/30);
 }
 
 
+/**
+ * Stop the simulation
+ */
 function simulationStop() {
     // clear the timer, if there is one
     if(simState.timer) {
@@ -1022,7 +1035,36 @@ function simulationStop() {
 }
 
 
+/**
+ * Update one simulation frame.
+ */
 function simulationUpdate() {
+    simState.robotFunction(robot);
     robot.update();
     drawSim();
+}
+
+
+/**
+ * Get the robot's code function.
+ */
+function simulationRobotFunction(robot) {
+    var preamble = "";    
+
+    //shadow all the protected variables
+    for(var i=0; i<protectedList.length; i++) {
+        preamble += "var " + protectedList[i] + ";\n";
+    }
+
+    //reference all the robot variables
+    preamble += "var " + robot.left.name +" = r.left;\n";
+    preamble += "var " + robot.right.name +" = r.right;\n";
+    for(var i=0; i<robot.parts; i++) {
+        preamble += "var " + robot.parts[i].name + " = r.parts["+i+"];\n";
+    }
+
+    //undefine the r parameter
+    preamble += "r = undefined;\n";
+
+    return new Function("r", preamble + robot.code);
 }
