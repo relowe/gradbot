@@ -97,6 +97,10 @@
             border: none;
             height: 1px;
         }
+
+        .partEditorPane {
+            display: none;
+        }
     </style>
     <script>
         window.onload = function () {
@@ -141,6 +145,17 @@
                     Part Editor
                 </div>
                 <div class="toolboxContent">
+                    <div class="inner">
+                        <div id="partColorEditor" class="partEditorPane">
+                            <label for="partOutlineColor">Outline Color</label>
+                            <input type="text" id="partOutlineColor"/>
+                            <label for="partFillColor">Fill Color</label>
+                            <input type="text" id="partFillColor"/>
+                            <button id="partApply">Apply</button>
+                            <button id="partCancel">Cancel</button>
+                            <br/>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

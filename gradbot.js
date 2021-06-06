@@ -507,6 +507,17 @@ var simState = {
 };
 
 
+//state of the build ui
+var buildState = {
+    dragMode: DRAG_NONE,
+    dragTarget: null,
+    lastX: 0,
+    lastY: 0,
+    editTarget: null,
+    editOriginalOutline: null
+}
+
+
 
 /**
  * Open a UI tab.
@@ -526,6 +537,14 @@ function openTab(evt, tabId) {
     }
     document.getElementById(tabId).style.display = "block";
     evt.currentTarget.className += " active";
+
+    //handle switching to specific tabs
+    if(tabId == "Simulate") {
+        deselectPart();
+        drawSim();
+    } else if(tabId == "Build") {
+        drawBuild();
+    }
 }
 
 
@@ -597,7 +616,7 @@ function simMouseDown(event) {
     if(simView.view.encloses(event.offsetX, event.offsetY)) {
         simState.dragTarget = simView.part;
     } else {
-        return;
+        return false;
     }
 
     //record this position
@@ -616,6 +635,8 @@ function simMouseDown(event) {
 
     //refresh the canvas
     drawSim();
+
+    return true;
 }
 
 
@@ -633,6 +654,7 @@ function simMouseUp(event) {
 
     //refresh the canvas
     drawSim();
+    return true;
 }
 
 
@@ -642,7 +664,7 @@ function simMouseUp(event) {
 function simMouseMove(event) {
     // if we have no drag mode, do nothing
     if(simState.dragMode == DRAG_NONE) {
-        return;
+        return false;
     }
 
     // process movement
@@ -661,9 +683,195 @@ function simMouseMove(event) {
 
     // refresh the canvas
     drawSim();
+
+    return true;
 }
 
 
+
+/*
+ * Build Events
+ */
+
+/**
+ * Show the editor for the part specified by "view".
+ * @param {*} view 
+ */
+function showPartEditor(view) {
+    //get the colors populated
+    document.getElementById("partOutlineColor").value = view.part.outline;
+    document.getElementById("partFillColor").value = view.part.fill;
+
+    //show the editor pane
+    document.getElementById("partColorEditor").style.display="block";
+}
+
+
+/**
+ * Hide the part editor.
+ */
+function hidePartEditor() {
+    //hide the editor pane
+    document.getElementById("partColorEditor").style.display="none";
+}
+
+
+/**
+ * Select the partview in the editor.
+ * @param {*} view 
+ */
+function selectPart(view) {
+    // deselect (if needed) 
+    if(buildState.editTarget != null) {
+        deselectPart();
+    }
+
+    // grab the original color 
+    buildState.editOriginalOutline = view.part.outline;
+
+    // set up the target
+    buildState.editTarget = view;
+
+    //show the editor
+    showPartEditor(view);
+
+    // color it coral
+    view.part.outline = "coral";
+
+
+    // redraw the canvas
+    drawBuild();
+}
+
+
+/**
+ * Deselect the selected partview (if there is one)
+ */
+function deselectPart() {
+    // do nothing if there is no selected part
+    if(buildState.editTarget == null) {
+        return;
+    }
+
+    // retore the original color
+    buildState.editTarget.part.outline = buildState.editOriginalOutline;
+
+    // remove the selection
+    buildState.editTarget = null;
+    hidePartEditor();
+
+    // redraw the canvas
+    drawBuild();
+}
+
+
+/**
+ * Handle build canvas mouse down 
+ * @param {*} event 
+ */
+function buildMouseDown(event) {
+    var x = event.offsetX;
+    var y = event.offsetY;
+
+    // assume we have found nothing
+    buildState.dragTarget = null;
+    buildState.dragMode = DRAG_NONE;
+
+    // check for clicking on a robot subpart
+    for(var i=0; i < buildView.subviews.length; i++) {
+        var partView = buildView.subviews[i];
+        if(partView.view.encloses(x, y)) {
+            buildState.dragTarget = partView;
+            break;
+        }
+    }
+
+    // if no subpart is selected, see if we have selected the chassis body.
+    if(buildState.dragTarget == null && buildView.view.encloses(x,y)) {
+        buildState.dragTarget = buildView;
+    }
+
+    // if we still lack a subpart, return
+    if(!buildState.dragTarget) {
+        return;
+    }
+
+    //record last x and last y
+    buildState.lastX = x;
+    buildState.lastY = y;
+}
+
+
+/**
+ * Handle build canvas mouse move 
+ * @param {*} event 
+ */
+function buildMouseMove(event) {
+    //if there is no return target, stop!
+    if(!buildState.dragTarget) { return; }
+
+    var x = event.offsetX;
+    var y = event.offsetY;
+
+    //record last x and last y
+    buildState.lastX = x;
+    buildState.lastY = y;
+}
+
+
+/**
+ * Handle build canvas mouse up 
+ * @param {*} event 
+ */
+function buildMouseUp(event) {
+    // if there was a drag target, it is now the selected object
+    if(buildState.dragTarget) {
+        selectPart(buildState.dragTarget);
+    }
+
+    // clear the drag target
+    buildState.dragTarget = null;
+    buildState.dragMode = DRAG_NONE;
+}
+
+
+/**
+ * Handle the apply button for the part editor.
+ * @param {*} event 
+ */
+function buildApply(event) {
+
+    //get the color from the editor
+    var fill = document.getElementById("partFillColor").value;
+    var outline = document.getElementById("partOutlineColor").value;
+
+    //get the part we are editing
+    var part = buildState.editTarget.part;
+
+    //deselect the part
+    deselectPart();
+
+    //set the colors
+    part.fill = fill;
+    part.outline = outline;
+
+    //refresh the canvas
+    drawBuild();
+}
+
+
+/**
+ * Handle the cancel button
+ * @param {*} event 
+ */
+function buildCancel(event) {
+    deselectPart();
+}
+
+
+/**
+ * Initialize the gradbot interface.
+ */
 function gradbotInit() {
     //select the simulation tab
     document.getElementById('simButton').click();
@@ -676,6 +884,7 @@ function gradbotInit() {
 
     //put the robot on the foreground of the simulator
     simView = new ChassisView(robot);
+    simView.scale=2;
     drawSim();
 
     //build the robot builder view
@@ -687,4 +896,14 @@ function gradbotInit() {
     canvas.onmousedown = simMouseDown;
     canvas.onmouseup = simMouseUp;
     canvas.onmousemove = simMouseMove;
+
+    //set up the build mouse events
+    canvas = document.getElementById("buildCanvas");
+    canvas.onmousedown = buildMouseDown;
+    canvas.onmouseup = buildMouseUp;
+    canvas.onmousemove = buildMouseMove;
+
+    //set up the build's form buttons
+    document.getElementById("partApply").onclick = buildApply;
+    document.getElementById("partCancel").onclick = buildCancel;
 }
