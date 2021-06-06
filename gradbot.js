@@ -100,16 +100,14 @@ function Positionable(x, y, heading) {
  * @param {*} x - X coordinate of the part.
  * @param {*} y  - Y coordinate of the part.
  * @param {*} heading  - Angle (0-2*Pi) of the part. 
- * @param {*} width  - Width of the part.
- * @param {*} height - Height of the part.
  */
-function Part(parent, x, y, heading, width, height) 
+function Part(parent, x, y, heading, name) 
 {
     // populate the fields
     this.parent = parent;
     Positionable.call(this, x, y, heading);
-    this.width = width != undefined ? width : 0;
-    this.height = height != undefined ? height : 0;
+    this.type = "part";
+    this.name = name != undefined ? name : "part";
 
     // the outline and fill color of the part
     this.outline = "black";
@@ -153,10 +151,11 @@ function Part(parent, x, y, heading, width, height)
 }
 
 
-function Motor(parent, x, y, heading)
+function Motor(parent, x, y, heading, name)
 {
     //construct the part
-    Part.call(this, parent, x, y, heading, 6, 2);
+    Part.call(this, parent, x, y, heading, name);
+    this.type = "Motor";
 
 
     // handle speed of the motor
@@ -169,9 +168,10 @@ function Motor(parent, x, y, heading)
 }
 
 
-function Chassis(x, y, heading) 
+function Chassis(x, y, heading, name) 
 {
-    Part.call(this, null, x, y, heading, 20, 12)
+    Part.call(this, null, x, y, heading, name);
+    this.type = "Chassis";
 
     //handle the subparts of the chassis
     this.parts = Array();
@@ -180,8 +180,8 @@ function Chassis(x, y, heading)
     };
 
     // create the left and right motors
-    this.left = new Motor(this, -7, -7, 0);
-    this.right = new Motor(this, -7, 7, Math.PI);
+    this.left = new Motor(this, -7, -7, 0, "left");
+    this.right = new Motor(this, -7, 7, Math.PI, "right");
 
     this.update = function() 
     {
@@ -698,9 +698,14 @@ function simMouseMove(event) {
  * @param {*} view 
  */
 function showPartEditor(view) {
+    //populate the type and name
+    document.getElementById("partType").innerHTML = view.part.type;
+    document.getElementById("partName").value = view.part.name;
+
     //get the colors populated
     document.getElementById("partOutlineColor").value = view.part.outline;
     document.getElementById("partFillColor").value = view.part.fill;
+
 
     //show the editor pane
     document.getElementById("partColorEditor").style.display="block";
@@ -845,15 +850,19 @@ function buildApply(event) {
     var fill = document.getElementById("partFillColor").value;
     var outline = document.getElementById("partOutlineColor").value;
 
+    //get the part name
+    var name = document.getElementById("partName").value;
+
     //get the part we are editing
     var part = buildState.editTarget.part;
 
     //deselect the part
     deselectPart();
 
-    //set the colors
+    //set the fields
     part.fill = fill;
     part.outline = outline;
+    part.name = name;
 
     //refresh the canvas
     drawBuild();
@@ -873,14 +882,11 @@ function buildCancel(event) {
  * Initialize the gradbot interface.
  */
 function gradbotInit() {
-    //select the simulation tab
-    document.getElementById('simButton').click();
-
     //fill the simulation background with graph paper
     graphPaperFill('simbg');
 
     //create the robot
-    robot = new Chassis(100, 100, 0);
+    robot = new Chassis(100, 100, 0, "chassis");
 
     //put the robot on the foreground of the simulator
     simView = new ChassisView(robot);
@@ -906,4 +912,7 @@ function gradbotInit() {
     //set up the build's form buttons
     document.getElementById("partApply").onclick = buildApply;
     document.getElementById("partCancel").onclick = buildCancel;
+
+    //select the simulation tab
+    document.getElementById('simButton').click();
 }

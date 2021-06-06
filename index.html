@@ -104,7 +104,7 @@
     </style>
     <script>
         window.onload = function () {
-            (function () { var script = document.createElement('script'); script.src="//cdn.jsdelivr.net/npm/eruda"; document.body.appendChild(script); script.onload = function () { eruda.init() } })();
+            //(function () { var script = document.createElement('script'); script.src="//cdn.jsdelivr.net/npm/eruda"; document.body.appendChild(script); script.onload = function () { eruda.init() } })();
             gradbotInit();
         }
     </script>
@@ -147,12 +147,19 @@
                 <div class="toolboxContent">
                     <div class="inner">
                         <div id="partColorEditor" class="partEditorPane">
+                            Type: <span id="partType"></span><hr>
+
+                            <label for="partName">Name</label>
+                            <input type="text" id="partName"><hr>
+
                             <label for="partOutlineColor">Outline Color</label>
-                            <input type="text" id="partOutlineColor"/>
+                            <input type="text" id="partOutlineColor"><hr>
+
                             <label for="partFillColor">Fill Color</label>
-                            <input type="text" id="partFillColor"/>
+                            <input type="text" id="partFillColor"><hr>
+
                             <button id="partApply">Apply</button>
-                            <button id="partCancel">Cancel</button>
+                            <button id="partCancel">Cancel</button><hr>
                             <br/>
                         </div>
                     </div>
