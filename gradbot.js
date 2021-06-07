@@ -154,7 +154,23 @@ function Part(parent, x, y, heading, name)
     this.update = function() { };
 
 
+    /**
+     * Serialize
+     */
+    this.toJSON = function () {
+        result = {};
+        for (var attr in this) {
+            //skip parents and functions
+            if (attr == "parent" || typeof this[attr] == "function") {
+                continue;
+            }
+            result[attr] = this[attr];
+        }
+        return result;
+    };
 }
+
+
 
 
 function Motor(parent, x, y, heading, name)
@@ -517,7 +533,8 @@ var simState = {
     robotStartY: 100,
     robotStartHeading: 0,
     timer: null,
-    robotFunction: undefined
+    robotFunction: undefined,
+    prevTab: null
 };
 
 
@@ -569,7 +586,17 @@ function openTab(evt, tabId) {
         }
         document.getElementById('robotCode').value = robot.code;
     }
-    robot.code = document.getElementById('robotCode').value;
+
+    //handle previous tab transitions
+    if(simState.prevTab == "Code") {
+        robot.code = document.getElementById('robotCode').value;
+    }
+
+    //save robot in local store
+    saveRobot(robot);
+
+    // remember previous tab
+    simState.prevTab = tabId;
 }
 
 
@@ -959,6 +986,23 @@ function simulationReset(event) {
 
 
 /**
+ * Handle simulation clear.
+ * @param {*} event
+ */
+function simulationClear(event) {
+    document.getElementById("simReset").click();
+
+    // move the robot to the normal start position.
+    robot.x = 100;
+    robot.y = 100;
+    robot.heading = 0;
+    
+    //redraw 
+    drawSim();
+}
+
+
+/**
  * Gradbot Error Handler
  * @param {*} event 
  */
@@ -966,6 +1010,8 @@ function gradbotError(message) {
     document.getElementById("simReset").click();
     alert(message);
 }
+
+
 
 
 /**
@@ -977,6 +1023,7 @@ function gradbotInit() {
 
     //create the robot
     robot = new Chassis(100, 100, 0, "chassis");
+    loadRobot(robot);
     simState.robotStartX = robot.x;
     simState.robotStartY = robot.y;
     simState.robotStartHeading = robot.heading;
@@ -999,6 +1046,7 @@ function gradbotInit() {
     //set up the sim buttons
     document.getElementById('simGo').onclick = simulationGo;
     document.getElementById('simReset').onclick = simulationReset;
+    document.getElementById('simClear').onclick = simulationClear;
 
     //set up the build mouse events
     canvas = document.getElementById("buildCanvas");
@@ -1086,4 +1134,54 @@ function simulationRobotFunction(robot) {
     preamble += "r = undefined;\n";
 
     return new Function("r", preamble + robot.code);
+}
+
+
+/******************************************
+ * Storage Functions
+ ******************************************/
+function saveRobot(robot) {
+    localStorage.setItem("robot", JSON.stringify(robot));
+}
+
+
+function loadRobot(robot) {
+    var robotString = localStorage.getItem("robot");
+    if(!robotString) return;
+
+    var obj = JSON.parse(robotString);
+
+    /* grab the attributes */
+    for(var attr in obj) {
+        if(attr == "parts") { continue; }
+        robot[attr] = obj[attr];
+    }
+
+    /* handle the motors */
+    robot.left = finishPart(obj.left);
+    robot.right = finishPart(obj.right);
+
+    /* handle the parts */
+    robot.parts = [];
+    for(var i=0; i<obj.parts.length; i++) {
+        robot.addPart(finishPart(obj.parts[i]));
+    }
+}
+
+
+function finishPart(part) {
+    var result;
+
+    // run the part constructor
+    if(part.type == "Motor") {
+        result = new Motor();
+    } else {
+        return undefined;
+    }
+
+    for(var attr in part) {
+        result[attr] = part[attr];
+    }
+
+    return result;
 }
