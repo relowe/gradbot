@@ -138,6 +138,12 @@ function Part(parent, x, y, heading, name)
      * @param {*} power - The power level.
      */
     this.setPower = function(power) {
+        //limit the power setting's range
+        if(power > 100) {
+            power = 100;
+        } else if(power < -100) {
+            power = -100;
+        }
         this.power = power;
     };
 
@@ -953,6 +959,16 @@ function simulationReset(event) {
 
 
 /**
+ * Gradbot Error Handler
+ * @param {*} event 
+ */
+function gradbotError(message) {
+    document.getElementById("simReset").click();
+    alert(message);
+}
+
+
+/**
  * Initialize the gradbot interface.
  */
 function gradbotInit() {
@@ -996,6 +1012,9 @@ function gradbotInit() {
 
     //select the simulation tab
     document.getElementById('simButton').click();
+
+    //activate our error handler
+    window.onerror = gradbotError;
 }
 
 
