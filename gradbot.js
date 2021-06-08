@@ -168,6 +168,24 @@ function Part(parent, x, y, heading, name)
         }
         return result;
     };
+
+
+    /**
+     * Return a sendable (postable to a worker) version of this object.
+     */
+    this.sendable = function() {
+        //by default, just use the toJSON function
+        return this.toJSON();
+    };
+
+
+    /**
+     * Receive a message from the user thread
+     * @param {*} message 
+     */
+    this.receiveUser = function(message) {
+        //by default, just ignore the message!
+    }
 }
 
 
@@ -186,6 +204,16 @@ function Motor(parent, x, y, heading, name)
         //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
         //This maximum speed is roughly 6.81 radians per second
         this.speed = 6.81 * this.power / 100;
+    }
+
+
+    /**
+     * Receive a message from the user thread
+     * @param {*} message 
+     */
+    this.receiveUser = function(message) {
+        //copy the power setting from the user model
+        this.setPower(message.power);
     }
 }
 
@@ -240,6 +268,53 @@ function Chassis(x, y, heading, name)
         this.y += fwd * Math.sin(this.heading) * elapsed;
         this.heading += yaw * elapsed;
     };
+
+
+    /**
+     * Return a sendable (postable to a worker) version of this object.
+     */
+    this.sendable = function() {
+        var result = {};
+        result.name = this.name;
+        result.type = this.type;
+        result.code = this.code;
+        result.parts = [];
+
+        //push the motors onto the parts list
+        result.parts.push(this.left.sendable());
+        result.parts.push(this.right.sendable());
+
+        //push all the parts
+        for(var i=0; i<this.parts.length; i++) {
+            result.parts.push(this.parts[i].sendable());
+        }
+
+        return result;
+    };
+
+    /**
+     * Return the part with the given name
+     * @param {*} name 
+     */
+    this.getPartByName = function(name) {
+        //try the motors
+        if(this.left.name == name) {
+            return this.left;
+        }
+        if(this.right.name == name) {
+            return this.right;
+        }
+
+        //try the parts
+        for(var i=0; i<this.parts.length; i++) {
+            if(this.parts[i].name == name) {
+                return this.parts[i];
+            }
+        }
+
+        //not found!
+        return null;
+    }
 }
 
 
@@ -533,8 +608,8 @@ var simState = {
     robotStartY: 100,
     robotStartHeading: 0,
     timer: null,
-    robotFunction: undefined,
-    prevTab: null
+    prevTab: null,
+    robotThread: null
 };
 
 
@@ -547,8 +622,6 @@ var buildState = {
     editTarget: null,
     editOriginalOutline: null
 }
-
-var protectedList = [ 'protectedList', 'robot', 'simView', 'buildView', 'simState', 'buildState'];
 
 
 /**
@@ -1080,11 +1153,28 @@ function simulationStart() {
         clearInterval(simState.timer);
     }
 
-    //generate the robot function
-    simState.robotFunction = simulationRobotFunction(robot);
+    //stop the motors
+    robot.left.setPower(0);
+    robot.right.setPower(0);
+
+    //start the robot thread
+    simState.robotThread = new Worker("userbot.js");
+    simState.robotThread.onerror = gradbotError;
+    simState.robotThread.onmessage = simulationReceiveMessage;
+    simState.robotThread.postMessage({type: "start", robot: robot.sendable()});
+
 
     //set the timer going!
     simState.timer = setInterval(simulationUpdate, 1000/30);
+}
+
+
+/**
+ * Handle messages from the user robot.
+ * @param {*} message 
+ */
+function simulationReceiveMessage(message) {
+    robot.getPartByName(message.data.name).receiveUser(message.data);
 }
 
 
@@ -1097,8 +1187,15 @@ function simulationStop() {
         clearInterval(simState.timer);
     }
 
+    // terminate the robot thread
+    if(simState.robotThread) {
+        simState.robotThread.terminate();
+        simState.robotThread = null;
+    }
+
     // remove the robot's abilityt to teleport on resume ^_^
     robot.lastUpdate = undefined;
+
 }
 
 
@@ -1106,35 +1203,11 @@ function simulationStop() {
  * Update one simulation frame.
  */
 function simulationUpdate() {
-    simState.robotFunction(robot);
     robot.update();
     drawSim();
 }
 
 
-/**
- * Get the robot's code function.
- */
-function simulationRobotFunction(robot) {
-    var preamble = "";    
-
-    //shadow all the protected variables
-    for(var i=0; i<protectedList.length; i++) {
-        preamble += "var " + protectedList[i] + ";\n";
-    }
-
-    //reference all the robot variables
-    preamble += "var " + robot.left.name +" = r.left;\n";
-    preamble += "var " + robot.right.name +" = r.right;\n";
-    for(var i=0; i<robot.parts; i++) {
-        preamble += "var " + robot.parts[i].name + " = r.parts["+i+"];\n";
-    }
-
-    //undefine the r parameter
-    preamble += "r = undefined;\n";
-
-    return new Function("r", preamble + robot.code);
-}
 
 
 /******************************************
