@@ -693,6 +693,9 @@ function drawSim() {
     var canvas = document.getElementById('simfg');
     var context = canvas.getContext("2d");
 
+    //scale the view
+    simView.scale=2;
+
     // clear the frame
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1103,7 +1106,6 @@ function gradbotInit() {
 
     //put the robot on the foreground of the simulator
     simView = new ChassisView(robot);
-    simView.scale=2;
     drawSim();
 
     //build the robot builder view
@@ -1133,6 +1135,13 @@ function gradbotInit() {
 
     //select the simulation tab
     document.getElementById('simButton').click();
+
+    //set up file handlers
+    document.getElementById("buildOpen").onclick = function() {
+        document.getElementById("buildUpload").click();
+    };
+    document.getElementById("buildSave").onclick = saveRobotFile;
+    document.getElementById("buildUpload").onchange = openRobotFile ;
 
     //activate our error handler
     window.onerror = gradbotError;
@@ -1218,9 +1227,42 @@ function saveRobot(robot) {
 }
 
 
-function loadRobot(robot) {
-    var robotString = localStorage.getItem("robot");
+function saveRobotFile() {
+    var file = new Blob([JSON.stringify(robot)]);
+    var a = document.getElementById('buildDownload');
+    a.href = URL.createObjectURL(file, {type: "text/plain"});
+    a.download = "robot";
+    a.click();
+    
+    URL.revokeObjectURL(a.href);
+}
+
+
+function openRobotFile() {
+    var reader = new FileReader();
+    reader.onload = function() {
+        loadRobot(robot, reader.result);
+
+        //rebuild the robot views
+        simView = new ChassisView(robot);
+        buildView = new ChassisBuildView(robot);
+
+        //redraw
+        graphPaperFill("simbg");
+        drawSim();
+        drawBuild();
+    };
+
+    reader.readAsText(this.files[0]);
+
+}
+
+
+function loadRobot(robot, robotString) {
+
+    if(!robotString) robotString = localStorage.getItem("robot");
     if(!robotString) return;
+
 
     var obj = JSON.parse(robotString);
 
