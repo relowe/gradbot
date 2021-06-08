@@ -1142,6 +1142,11 @@ function gradbotInit() {
     };
     document.getElementById("buildSave").onclick = saveRobotFile;
     document.getElementById("buildUpload").onchange = openRobotFile ;
+    document.getElementById("buildNew").onclick = function() {
+        if(confirm("Are you sure you want to create a new robot? Any unsaved changes will be lost!")) {
+            newRobot();
+        }
+    }
 
     //activate our error handler
     window.onerror = gradbotError;
@@ -1299,4 +1304,18 @@ function finishPart(part) {
     }
 
     return result;
+}
+
+
+function newRobot() {
+    robot = new Chassis(100, 100, 0);
+
+    //rebuild the robot views
+    simView = new ChassisView(robot);
+    buildView = new ChassisBuildView(robot);
+
+    //redraw
+    graphPaperFill("simbg");
+    drawSim();
+    drawBuild();
 }
