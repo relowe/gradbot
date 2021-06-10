@@ -218,6 +218,44 @@ function Motor(parent, x, y, heading, name)
 }
 
 
+function Marker(parent, x, y, name) {
+    //construct the part
+    Part.call(this, parent, x, y, 0, name);
+    this.type = "Marker";
+
+    //by default we are coloring black
+    this.color = "black";
+
+    //by default the pen is up
+    this.penDrawing = false;
+
+    //set the marker color
+    this.setColor = function(color) {
+        this.color = color;
+    }
+
+    //lower the pen
+    this.penDown = function() {
+        this.penDrawing = true;
+    }
+
+    //raise the pen
+    this.penUp = function() {
+        this.penDrawing = false;
+    }
+
+
+    /**
+     * Receive a message from the user thread
+     * @param {*} message 
+     */
+    this.receiveUser = function(message) {
+        this.color = message.color;
+        this.penDrawing = message.penDrawing;
+    }
+}
+
+
 function Chassis(x, y, heading, name) 
 {
     Part.call(this, null, x, y, heading, name);
@@ -239,7 +277,8 @@ function Chassis(x, y, heading, name)
     this.update = function() 
     {
         //update all the sub parts
-        for(var p in this.parts) {
+        for(var i in this.parts) {
+            var p = this.parts[i];
             p.update();
         }
 
@@ -426,6 +465,25 @@ function VectorView(x, y, heading, scale, points) {
 }
 
 
+/**
+ * Construct a view for the given part. It works by calling the correct
+ * constructor for the part.
+ * @param {*} part 
+ * @returns The newly constructed part. Returns undefined for parts with no known view.
+ */
+function constructView(part) {
+    if(part.type == "Chassis") {
+        return new ChassisView(part);
+    } else if(part.type == "Motor") {
+        return new MotorView(part);
+    } else if(part.type == "Marker") {
+        return new MarkerView(part);
+    }
+
+    // we don't know how to show this part.
+    return undefined;
+}
+
 
 function PartView(part) {
     // Construct the positionable parts of ourselves
@@ -515,8 +573,13 @@ function ChassisView(part) {
     PartView.call(this, part);
 
     // add the motors to the subview list.
-    this.addSubview(new MotorView(part.left));
-    this.addSubview(new MotorView(part.right));
+    this.addSubview(constructView(part.left));
+    this.addSubview(constructView(part.right));
+
+    //add the other parts to the view
+    for(var i=0; i<part.parts.length; i++) {
+        this.addSubview(constructView(part.parts[i]));
+    }
 
     //create my vector view
     var points = [
@@ -583,6 +646,61 @@ function MotorView(part) {
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.stroke = "black"
+}
+
+
+/**
+ * constructor for the marker view object. This visualizes a marker.
+ * @param {*} part - The motor part 
+ */
+function MarkerView(part) {
+    //initialize the part view
+    PartView.call(this, part);
+
+    //create my vector view
+    var points = [
+        {x: -1, y: -1.5},
+        {x: 1, y: -1.5},
+        {x: -1, y: 1.5},
+        {x: 1, y: 1.5},
+    ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.stroke = "black"
+
+    //store the original draw
+    this.drawPart = this.draw;
+
+    this.draw = function(canvas, context) {
+        if(part.penDrawing) {
+            part.fill = part.color;
+        } else {
+            part.fill = "#00000000";
+        }
+        part.outline = part.color;
+        this.drawPart(canvas, context);
+
+        //draw a line if the pen is down and we have two endpoints
+        this.updateLoc();
+        if(this.part.penDrawing && this.loc && this.prevLoc) {
+            var canvas = document.getElementById("simbg");
+            var context = canvas.getContext("2d");
+            context.beginPath();
+            context.moveTo(this.prevLoc.x, this.prevLoc.y);
+            context.lineTo(this.loc.x, this.loc.y);
+            context.strokeStyle = this.part.color;
+            context.stroke();
+        }
+    }
+
+    this.loc = null;
+    this.prevLoc = null;
+    this.updateLoc = function() {
+        this.prevLoc = this.loc;
+        this.loc = {};
+        this.loc.x = (this.view.maxx + this.view.minx) / 2;
+        this.loc.y = (this.view.maxy + this.view.miny) / 2;
+    }
 }
 
 
@@ -654,7 +772,7 @@ function openTab(evt, tabId) {
         partList.innerHTML="";
         addPartToPartList(partList, robot.left);
         addPartToPartList(partList, robot.right);
-        for(var i=0; i < robot.parts; i++) {
+        for(var i=0; i < robot.parts.length; i++) {
             addPartToPartList(partList, robot.parts[i]);
         }
         document.getElementById('robotCode').value = robot.code;
@@ -1074,6 +1192,7 @@ function simulationClear(event) {
     robot.heading = 0;
     
     //redraw 
+    graphPaperFill("simbg");
     drawSim();
 }
 
@@ -1295,6 +1414,8 @@ function finishPart(part) {
     // run the part constructor
     if(part.type == "Motor") {
         result = new Motor();
+    } else if(part.type == "Marker") {
+        result = new Marker();
     } else {
         return undefined;
     }

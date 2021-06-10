@@ -69,6 +69,41 @@ function Motor(source) {
     }
 }
 
+function Marker(source) {
+    //construct the part
+    Part.call(this, source);
+    this.color = source.color;
+    this.penDrawing = source.penDrawing;
+
+    //set the marker color
+    this.setColor = function(color) {
+        this.color = color;
+        postMessage(this.sendable());
+    }
+
+    //lower the pen
+    this.penDown = function() {
+        this.penDrawing = true;
+        postMessage(this.sendable());
+    }
+
+    //raise the pen
+    this.penUp = function() {
+        this.penDrawing = false;
+        postMessage(this.sendable());
+    }
+
+
+    /**
+     * Receive a message from the user thread
+     * @param {*} message 
+     */
+    this.receiveUser = function(message) {
+        this.color = message.color;
+        this.penDrawing = message.penDrawing;
+    }
+}
+
 
 function Chassis(source) {
     Part.call(this, source);
@@ -77,7 +112,7 @@ function Chassis(source) {
 
     //capture the parts
     for(var i = 0; i < source.parts.length; i++) {
-        this.parts.push(new Motor(source.parts[i]));
+        this.parts.push(constructPart(source.parts[i]));
     }
 }
 
@@ -93,6 +128,8 @@ function constructPart(source) {
         return new Chassis(source);
     } else if(source.type == "Motor") {
         return new Motor(source);
+    } else if(source.type == "Marker") {
+        return new Marker(source);
     }
 
     // this is an unknown part!
