@@ -1146,9 +1146,11 @@ function buildMouseMove(event) {
 
     //move the part (if that is our mode)
     if(buildState.dragMode == DRAG_MOVE) {
-        var p = buildState.dragTarget.globalToPartLoc(x, y);
-        buildState.dragTarget.moveTo(p.x, p.y);
-        drawBuild();
+        if(buildView.view.encloses(x, y)) {
+            var p = buildState.dragTarget.globalToPartLoc(x, y);
+            buildState.dragTarget.moveTo(p.x, p.y);
+            drawBuild();
+        }
     }
 
     //record last x and last y
@@ -1371,12 +1373,14 @@ function gradbotInit() {
 
     //set up file handlers
     document.getElementById("buildOpen").onclick = function() {
+        deselectPart();
         document.getElementById("buildUpload").click();
     };
     document.getElementById("buildSave").onclick = saveRobotFile;
     document.getElementById("buildUpload").onchange = openRobotFile ;
     document.getElementById("buildNew").onclick = function() {
         if(confirm("Are you sure you want to create a new robot? Any unsaved changes will be lost!")) {
+            deselectPart();
             newRobot();
         }
     }
