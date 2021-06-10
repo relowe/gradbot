@@ -101,13 +101,15 @@ function Positionable(x, y, heading) {
  * @param {*} y  - Y coordinate of the part.
  * @param {*} heading  - Angle (0-2*Pi) of the part. 
  */
+var partCount = 0;
 function Part(parent, x, y, heading, name) 
 {
+    partCount++;
     // populate the fields
     this.parent = parent;
     Positionable.call(this, x, y, heading);
     this.type = "part";
-    this.name = name != undefined ? name : "part";
+    this.name = name != undefined ? name : ("part" + partCount);
 
     // the outline and fill color of the part
     this.outline = "black";
@@ -560,6 +562,28 @@ function PartView(part) {
         this.x = 0;
         this.y = 0;
     };
+
+
+    /**
+     * Convert a global coordinate to a part view coordinate. 
+     * @param {*} x 
+     * @param {*} y 
+     * @returns Location object {x:, y:}
+     */
+    this.globalToPartLoc = function(x, y) {
+        var sin_th = Math.sin(-this.heading);
+        var cos_th = Math.cos(-this.heading);
+        var result = {};
+
+        result.x = this.x * cos_th - this.y * sin_th;
+        result.y = this.x * sin_th + this.y * cos_th;
+        result.x -= this.x;
+        result.y -= this.y;
+        result.x /= this.scale;
+        result.y /= this.scale;
+
+        return result;
+    };
 }
 
 
@@ -609,6 +633,15 @@ function ChassisView(part) {
 
         //draw like normal
         this.partDraw(canvas, context); 
+    }
+
+
+    /**
+     * Add a part to the view
+     * @param {*} part 
+     */
+    this.addPart = function(part) {
+        this.addSubview(constructView(part));
     }
 }
 
@@ -1138,6 +1171,18 @@ function buildCancel(event) {
 
 
 /**
+ * Handle adding a marker. 
+ * @param {*} event 
+ */
+function buildAddMarker(event) {
+    var marker = new Marker(robot);
+    robot.addPart(marker);
+    simView.addPart(marker);
+    buildView.addPart(marker);
+    drawBuild();
+}
+
+/**
  * Handle the simulation go button.
  * @param {*} event 
  */
@@ -1267,8 +1312,12 @@ function gradbotInit() {
         }
     }
 
+    // add part buttons
+    document.getElementById("buildAddMarker").onclick = buildAddMarker;
+
     //activate our error handler
     window.onerror = gradbotError;
+
 }
 
 
