@@ -359,6 +359,12 @@ function Chassis(x, y, heading, name)
 }
 
 
+function Light(parent, x, y) {
+    Part.call(this, parent, x, y);
+    this.type = "Light";
+}
+
+
 
 /****************************************** 
  * Utility Functions and Objects
@@ -480,6 +486,8 @@ function constructView(part) {
         return new MotorView(part);
     } else if(part.type == "Marker") {
         return new MarkerView(part);
+    } else if(part.type == "Light") {
+        return new LightView(part);
     }
 
     // we don't know how to show this part.
@@ -760,6 +768,50 @@ function MarkerView(part) {
 }
 
 
+/**
+ * Construct a light view.
+ * @param {*} part 
+ */
+function LightView(part, subpart) {
+    //initialize the part view
+    PartView.call(this, part);
+
+
+    //create the actual drawing part
+    var points = [ {x: 0, y: 0} ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.outline = "black";
+    this.view.radius=3;
+    this.view.draw = function(canvas, context) {
+        //set the extents
+        this.minx = this.x - this.radius * this.scale;
+        this.maxx = this.x + this.radius * this.scale;
+        this.miny = this.y - this.radius * this.scale;
+        this.maxy = this.y + this.radius * this.scale;
+
+        //draw the arch
+        context.beginPath();
+        context.arc(this.x, this.y, this.radius * this.scale, 0, 2 * Math.PI);
+        context.fillStyle = this.fill;
+        context.strokeStyle = this.stroke;
+        context.fill();
+        context.stroke();
+    }
+
+    //handle world-centric drawing
+    if(!subpart) {
+        this.partDraw = this.draw;
+        this.draw = function(canvas, context) {
+            this.x = part.x;
+            this.y = part.y;
+            this.partDraw(canvas, context);
+        };
+    }
+
+}
+
+
 /****************************************** 
  * USER INTERFACE
  ******************************************/
@@ -783,7 +835,8 @@ var simState = {
     robotStartHeading: 0,
     timer: null,
     prevTab: null,
-    robotThread: null
+    robotThread: null,
+    worldObjects: []
 };
 
 
@@ -881,6 +934,12 @@ function drawSim() {
     // clear the frame
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    //draw the world objects
+    for(i in simState.worldObjects) {
+        simState.worldObjects[i].scale = 2;
+        simState.worldObjects[i].draw(canvas, context);
+    }
+
     //draw the robot
     simView.draw(canvas, context);
 }
@@ -939,6 +998,16 @@ function simMouseDown(event) {
     if(simView.view.encloses(event.offsetX, event.offsetY)) {
         simState.dragTarget = simView.part;
     } else {
+        for(i in simState.worldObjects) {
+            var obj = simState.worldObjects[i];
+            if(obj.view.encloses(event.offsetX, event.offsetY)) {
+                simState.dragTarget = obj.part;
+                break;
+            }
+        }
+    }
+    
+    if(!simState.dragTarget) {
         return false;
     }
 
@@ -1008,6 +1077,19 @@ function simMouseMove(event) {
     drawSim();
 
     return true;
+}
+
+
+/**
+ * Add a light to the simulator.
+ * @param {*} event 
+ */
+function simAddLight(event) {
+    var canvas = document.getElementById("simfg");
+    var light = new Light(null, canvas.width/2, canvas.height/2);
+
+    simState.worldObjects.push(constructView(light));
+    drawSim();
 }
 
 
@@ -1357,6 +1439,9 @@ function gradbotInit() {
     document.getElementById('simReset').onclick = simulationReset;
     document.getElementById('simClear').onclick = simulationClear;
 
+    //set up the object buttons
+    document.getElementById('simAddLight').onclick = simAddLight;
+
     //set up the build mouse events
     canvas = document.getElementById("buildCanvas");
     canvas.onmousedown = buildMouseDown;
@@ -1387,6 +1472,7 @@ function gradbotInit() {
 
     // add part buttons
     document.getElementById("buildAddMarker").onclick = buildAddMarker;
+
 
     //activate our error handler
     window.onerror = gradbotError;
@@ -1526,6 +1612,7 @@ function loadRobot(robot, robotString) {
     robot.parts = [];
     for(var i=0; i<obj.parts.length; i++) {
         robot.addPart(finishPart(obj.parts[i]));
+        robot.parts[i].parent = robot;
     }
 }
 
@@ -1538,6 +1625,8 @@ function finishPart(part) {
         result = new Motor();
     } else if(part.type == "Marker") {
         result = new Marker();
+    } else if(part.type == "Light") {
+        result = new Light();
     } else {
         return undefined;
     }

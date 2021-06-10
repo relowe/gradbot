@@ -138,22 +138,51 @@
             <canvas id="simbg" width="800" height="600"></canvas>
             <canvas id="simfg" width="800" height="600"></canvas>
             <div class="toolbox">
-                <div class="toolboxHead">
-                    Simulation Controls
-                </div>
                 <div class="toolboxContent">
                     <div class="inner">
-                        <b>Drag Mode</b><br/>
+                        <div class="toolboxHead">
+                            Drag Mode
+                        </div>
                         <input type="radio" id="dragMove" name="dragMode" checked="checked" />
                         <label for="dragMove">Move</label>
                         <input type="radio" id="dragRotate" name="dragMode"/>
                         <label for="dragRotate">Rotate</label>
                         <hr/>
-                        <b>Simulation</b><br/>
+                        <div class="toolboxHead">
+                            Simulation Controls
+                        </div>
                         <button id="simGo">Start</button>
                         <button id="simReset">Reset</button>
                         <button id="simClear">Clear</button>
                         <hr/>
+
+                        <div class="toolboxHead">
+                            Object Editor
+                        </div>
+                        <div id="simColorEditor" class="partEditorPane">
+                            Type: <span id="partType"></span><hr>
+
+                            <label for="simPartName">Name</label>
+                            <input type="text" id="simPartName"><hr>
+
+                            <label for="simPartOutlineColor">Outline Color</label>
+                            <input type="text" id="simPartOutlineColor"><hr>
+
+                            <label for="simPartFillColor">Fill Color</label>
+                            <input type="text" id="simPartFillColor"><hr>
+
+                            <button id="simPartApply">Apply</button>
+                            <button id="simPartCancel">Cancel</button><hr>
+
+                            <button id="simPartDelete">Delete Part</button> <hr>
+                        </div>
+                        <hr>
+
+                        <div class="toolboxHead">
+                            Add Object
+                        </div>
+                        <button id="simAddLight">Light</button>
+                        <hr>
                     </div>
                 </div>
             </div>
