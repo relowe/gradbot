@@ -565,6 +565,28 @@ function PartView(part) {
 
 
     /**
+     * Move the part to x, y (in part coordinates)
+     * @param {*} x 
+     * @param {*} y 
+     */
+    this.moveTo = function(x, y) {
+        var dx = x - this.part.x;
+        var dy = y - this.part.y;
+
+        // Move all the points in the view
+        for(var i=0; i < this.view.points.length; i++) {
+            var p = this.view.points[i];
+            p.x += dx;
+            p.y += dy;
+        }
+
+        // move the part position
+        this.part.x = x;
+        this.part.y = y;
+    }
+
+
+    /**
      * Convert a global coordinate to a part view coordinate. 
      * @param {*} x 
      * @param {*} y 
@@ -575,12 +597,13 @@ function PartView(part) {
         var cos_th = Math.cos(-this.heading);
         var result = {};
 
-        result.x = this.x * cos_th - this.y * sin_th;
-        result.y = this.x * sin_th + this.y * cos_th;
-        result.x -= this.x;
-        result.y -= this.y;
-        result.x /= this.scale;
-        result.y /= this.scale;
+        x /= this.scale;
+        y /= this.scale;
+        x -= this.x / this.scale;
+        y -= this.y / this.scale;
+
+        result.x = x * cos_th - y * sin_th;
+        result.y = x * sin_th + y * cos_th;
 
         return result;
     };
@@ -812,9 +835,17 @@ function openTab(evt, tabId) {
     }
 
     //handle previous tab transitions
-    if(simState.prevTab == "Code") {
+    if(simState.prevTab == "Simulate") {
+        //stop the simulation
+        simulationStop();
+    } else if(simState.prevTab == "Build") {
+        //reconstruct the chassis view after build
+        simView = new ChassisView(robot);
+        drawSim();
+        graphPaperFill("simbg");
+    } else if(simState.prevTab == "Code") {
         robot.code = document.getElementById('robotCode').value;
-    }
+    } 
 
     //save robot in local store
     saveRobot(robot);
@@ -1079,6 +1110,9 @@ function buildMouseDown(event) {
         var partView = buildView.subviews[i];
         if(partView.view.encloses(x, y)) {
             buildState.dragTarget = partView;
+            if(buildState.dragTarget.part.type != "Motor") {
+                buildState.dragMode = DRAG_MOVE;
+            }
             break;
         }
     }
@@ -1109,6 +1143,13 @@ function buildMouseMove(event) {
 
     var x = event.offsetX;
     var y = event.offsetY;
+
+    //move the part (if that is our mode)
+    if(buildState.dragMode == DRAG_MOVE) {
+        var p = buildState.dragTarget.globalToPartLoc(x, y);
+        buildState.dragTarget.moveTo(p.x, p.y);
+        drawBuild();
+    }
 
     //record last x and last y
     buildState.lastX = x;
@@ -1171,16 +1212,41 @@ function buildCancel(event) {
 
 
 /**
+ * Handle the delete button.
+ * @param {*} event
+ */
+function buildDeletePart(event) {
+    var part = buildState.editTarget.part;
+
+    if(part.type == "Motor" || part.type == "Chassis") {
+        alert("You cannot remove this part.");
+        return;
+    }
+
+    if(!confirm("Are you sure you want to remove " + part.name + "?")) {
+        return;
+    }
+
+    // remove it from the robot parts list
+    robot.parts.splice(robot.parts.indexOf(part), 1);
+
+    // rebuild the robot
+    buildView = new ChassisBuildView(robot);
+    drawBuild();
+}
+
+
+/**
  * Handle adding a marker. 
  * @param {*} event 
  */
 function buildAddMarker(event) {
     var marker = new Marker(robot);
     robot.addPart(marker);
-    simView.addPart(marker);
     buildView.addPart(marker);
     drawBuild();
 }
+
 
 /**
  * Handle the simulation go button.
@@ -1296,6 +1362,7 @@ function gradbotInit() {
     //set up the build's form buttons
     document.getElementById("partApply").onclick = buildApply;
     document.getElementById("partCancel").onclick = buildCancel;
+    document.getElementById("partDelete").onclick = buildDeletePart;
 
     //select the simulation tab
     document.getElementById('simButton').click();
