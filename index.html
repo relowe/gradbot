@@ -164,11 +164,11 @@
         <div class="container">
             <canvas id="buildCanvas" width="800" height="600"></canvas>
             <div class="toolbox">
-                <div class="toolboxHead">
-                    Part Editor
-                </div>
                 <div class="toolboxContent">
                     <div class="inner">
+                        <div class="toolboxHead">
+                            Part Editor
+                        </div>
                         <div id="partColorEditor" class="partEditorPane">
                             Type: <span id="partType"></span><hr>
 
@@ -183,10 +183,18 @@
 
                             <button id="partApply">Apply</button>
                             <button id="partCancel">Cancel</button><hr>
-                            <br/>
                         </div>
 
+                        <div class="toolboxHead">
+                            Add Part
+                        </div>
+                        <button id="buildAddMarker">Marker</button><br>
                         <hr>
+
+                        <div class="toolboxHead">
+                            Robot Management
+                        </div>
+
                         <div id="buildFiles">
                             <input type="file" id="buildUpload" style="display: none">
                             <a href="" id="buildDownload" style="display: none"></a>
@@ -194,6 +202,7 @@
                             <button id="buildSave">Save</button>
                             <button id="buildNew">New</button>
                         </div>
+                        <hr>
                     </div>
                 </div>
             </div>
