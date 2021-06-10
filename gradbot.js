@@ -1227,6 +1227,8 @@ function buildDeletePart(event) {
         return;
     }
 
+    deselectPart();
+
     // remove it from the robot parts list
     robot.parts.splice(robot.parts.indexOf(part), 1);
 
