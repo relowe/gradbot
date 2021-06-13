@@ -359,9 +359,43 @@ function Chassis(x, y, heading, name)
 }
 
 
+/**
+ * A light. It glows!
+ * @param {*} parent 
+ * @param {*} x 
+ * @param {*} y 
+ */
 function Light(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "Light";
+}
+
+
+/**
+ * A sensor which computes the range to an object.
+ * @param {*} parent 
+ * @param {*} x 
+ * @param {*} y 
+ */
+function RangeSensor(parent, x, y) {
+    Part.call(this, parent, x, y);
+    this.type = "RangeSensor";
+}
+
+
+
+/**
+ * A sensor which determines the intensity of a light source.
+ * It can also be filtered, which makes it only see one color of light.
+ * @param {*} parent 
+ * @param {*} x 
+ * @param {*} y 
+ */
+function LightSensor(parent, x, y) {
+    Part.call(this, parent, x, y);
+    this.type = "LightSensor"
+    this.filter = "";
+    this.intensity = 0;
 }
 
 
@@ -488,6 +522,8 @@ function constructView(part) {
         return new MarkerView(part);
     } else if(part.type == "Light") {
         return new LightView(part);
+    } else if(part.type == "LightSensor") {
+        return new LightSensorView(part);
     }
 
     // we don't know how to show this part.
@@ -810,6 +846,64 @@ function LightView(part, subpart) {
     }
 
 }
+
+
+function LightSensorView(part) {
+    PartView.call(this, part);
+
+    //points for the light sensor
+    var points = [ {x:-1.5, y:-1},
+                   {x:-1.5, y:1},
+                   {x:1.5, y:1},
+                   {x:1.5, y:-1}];
+    this.view = new VectorView(this.x, this.y, this.heading, this.scale, points);
+
+    // a little custom drawing action
+    this.partDraw = this.draw;
+    this.draw = function(canvas, context) {
+        var outline = part.outline;
+        part.fill = part.filter;
+
+        //draw the filter
+        this.partDraw(canvas, context);
+
+        //compute rotation coeffecients
+        var sin_th = Math.sin(this.heading);
+        var cos_th = Math.cos(this.heading);
+
+        //draw the actual part outline.
+        context.beginPath();
+        var started = false;
+        for(var i=0; i<this.view.points.length; i++ ) {
+            var p = this.view.points[i];
+            var x = p.x * this.scale;
+            var y = p.y * this.scale;
+
+            // rotate
+            var rx, ry;
+            rx = x * cos_th - y * sin_th;
+            ry = x * sin_th + y * cos_th;
+            x = rx;
+            y = ry;
+
+            // translate
+            x += this.x;
+            y += this.y;
+
+            //plot the point
+            if(!started) {
+                context.moveTo(x, y);
+                started = true;
+            } else {
+                context.lineTo(x, y);
+            }
+        }
+
+        context.strokeStyle = this.part.outline;
+        context.stroke();
+    }
+}
+
 
 
 /****************************************** 
@@ -1627,6 +1721,8 @@ function finishPart(part) {
         result = new Marker();
     } else if(part.type == "Light") {
         result = new Light();
+    } else if(part.type == "LightSensor") {
+        result = new LightSensor();
     } else {
         return undefined;
     }

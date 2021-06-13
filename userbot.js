@@ -117,6 +117,18 @@ function Chassis(source) {
 }
 
 
+function Light(source) {
+    Part.call(this, source);
+}
+
+
+function LightSensor(source) {
+    Part.call(this, source);
+    this.filter = source.filter;
+    this.intensity = source.intensity;
+}
+
+
 /**
  * Construct a local model object from the source.
  * This selects the appropriate constructor and invokes it.
@@ -130,6 +142,10 @@ function constructPart(source) {
         return new Motor(source);
     } else if(source.type == "Marker") {
         return new Marker(source);
+    } else if(source.type == "Light") {
+        return new Light(source);
+    } else if(source.type == "LightSensor") {
+        return new LightSensor(source);
     }
 
     // this is an unknown part!
