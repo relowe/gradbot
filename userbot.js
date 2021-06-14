@@ -124,7 +124,6 @@ function Light(source) {
 
 function LightSensor(source) {
     Part.call(this, source);
-    this.filter = source.filter;
     this.intensity = source.intensity;
 }
 
@@ -160,6 +159,8 @@ onmessage = function(message) {
     // handle the type of the message
     if(message.data.type == "start") {
         runRobot(message.data.robot);
+    } else if(message.data.type == "update") {
+        updateRobot(message.data.update);
     }
 }
 
@@ -167,14 +168,16 @@ onmessage = function(message) {
 /******************************************
  * Robot Running
  ******************************************/
+var robot;
+var robotFun;
 
 /**
  * Run the user robot's code.
  * @param {*} source 
  */
 function runRobot(source) {
-    var robot = new Chassis(source);
-    var robotFun = getRobotFunction(robot);
+    robot = new Chassis(source);
+    robotFun = getRobotFunction(robot);
 
     robotFun(robot);
 }
@@ -196,6 +199,19 @@ function getRobotFunction(robot) {
     preamble += "async function userFunction() {\n";
 
     return new Function("r", preamble + robot.code + "}\n  userFunction();");
+}
+
+
+function updateRobot(update) {
+    for(i in robot.parts) {
+        var part = robot.parts[i];
+
+        if(part.name == update.name) {
+            for(var attr in update) {
+                part[attr] = update[attr];
+            }
+        }
+    }
 }
 
 

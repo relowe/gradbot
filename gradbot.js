@@ -394,8 +394,83 @@ function RangeSensor(parent, x, y) {
 function LightSensor(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "LightSensor"
-    this.filter = "";
+    this.worldx = 0;
+    this.worldy = 0;
     this.intensity = 0;
+    this.freq = 10;  //frequency in hertz
+
+
+    this.updateSensor = function() {
+        var closest = Infinity; 
+
+        //find the closest visible light source
+        for(var i in simState.worldObjects) {
+            var part = simState.worldObjects[i].part;
+    
+            //we only sense lights
+            if(part.type != "Light") { 
+                continue; 
+            }
+
+            //filter the lighty by our fill color
+            if(this.fill != "white" && part.fill != this.fill) {
+                continue;
+            }
+
+            //calculate displacement to the light
+            var dx = part.x - this.worldx;
+            var dy = part.y - this.worldy;
+
+            //calculate the angle to the light
+            var angle = reduceAngle(Math.atan2(dy, dx));
+            angle = reduceAngle(this.parent.heading - angle);
+
+            //skip the lights outside of our field of view
+            if(angle > 0.52 && angle < 5.76) {
+                continue;
+            }
+
+            //calculate the square distance
+            var dist = dx*dx + dy*dy;
+            if(dist < closest) {
+                closest = dist;
+            }
+        }
+
+        //calculate the intensity
+        closest = closest / 400; // 20px per meter => 400px per meter^2
+
+        // 100% intensity at 1 m so...
+        this.intensity = 100 / closest;
+        if(isNaN(this.intensity)) {
+            this.intensity = 0;
+        }
+        if(this.intensity > 100) {
+            this.intensity=100;
+        }
+
+        //pass the update into the web worker
+        simState.robotThread.postMessage({type: "update", update: {name: this.name, intensity: this.intensity}});
+    };
+
+
+    this.update = function() {
+        //populate the last update (if needed)
+        if(this.lastUpdate == undefined) {
+            this.lastUpdate = Date.now();
+        }
+
+        //compute elapsed time
+        var cur = Date.now();
+        var elapsed = (cur - this.lastUpdate) / 1000;
+
+        // trigger the sensor
+        if(elapsed >= 1 / this.freq) {
+            this.updateSensor();
+            this.lastUpdate = cur;
+        }
+    };
+
 }
 
 
@@ -852,20 +927,24 @@ function LightSensorView(part) {
     PartView.call(this, part);
 
     //points for the light sensor
-    var points = [ {x:-1.5, y:-1},
-                   {x:-1.5, y:1},
-                   {x:1.5, y:1},
-                   {x:1.5, y:-1}];
+    var points = [ {x:0.5, y:-1},
+                   {x:-0.5, y:-1},
+                   {x:-0.5, y:1},
+                   {x:0.5, y:1} ];
     this.view = new VectorView(this.x, this.y, this.heading, this.scale, points);
 
     // a little custom drawing action
     this.partDraw = this.draw;
     this.draw = function(canvas, context) {
         var outline = part.outline;
-        part.fill = part.filter;
+        part.outline = part.fill;
+        part.worldx = (this.view.minx + this.view.maxx)/2;
+        part.worldy = (this.view.miny + this.view.maxy)/2;
 
         //draw the filter
         this.partDraw(canvas, context);
+
+        part.outline = outline;
 
         //compute rotation coeffecients
         var sin_th = Math.sin(this.heading);
@@ -1429,6 +1508,18 @@ function buildAddMarker(event) {
 
 
 /**
+ * Handle adding a light sensor.
+ * @param {*} event
+ */
+function buildAddLightSensor(event) {
+    var sensor = new LightSensor(robot);
+    robot.addPart(sensor);
+    buildView.addPart(sensor);
+    drawBuild();
+}
+
+
+/**
  * Handle the simulation go button.
  * @param {*} event 
  */
@@ -1566,6 +1657,7 @@ function gradbotInit() {
 
     // add part buttons
     document.getElementById("buildAddMarker").onclick = buildAddMarker;
+    document.getElementById("buildAddLightSensor").onclick = buildAddLightSensor;
 
 
     //activate our error handler
