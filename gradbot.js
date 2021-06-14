@@ -905,7 +905,7 @@ function LightView(part, subpart) {
         context.beginPath();
         context.arc(this.x, this.y, this.radius * this.scale, 0, 2 * Math.PI);
         context.fillStyle = this.fill;
-        context.strokeStyle = this.stroke;
+        context.strokeStyle = this.outline;
         context.fill();
         context.stroke();
     }
@@ -999,6 +999,7 @@ const DRAG_ROTATE=2;
 
 //state of the simulator ui
 var simState = {
+    prefix: "sim",
     dragMode: DRAG_NONE,
     dragTarget: null,
     lastX: 0,
@@ -1009,19 +1010,22 @@ var simState = {
     timer: null,
     prevTab: null,
     robotThread: null,
-    worldObjects: []
+    worldObjects: [],
+    editTarget: null,
+    editOriginalOutline: null
 };
 
 
 //state of the build ui
 var buildState = {
+    prefix: "build",
     dragMode: DRAG_NONE,
     dragTarget: null,
     lastX: 0,
     lastY: 0,
     editTarget: null,
     editOriginalOutline: null
-}
+};
 
 
 /**
@@ -1045,7 +1049,7 @@ function openTab(evt, tabId) {
 
     //handle switching to specific tabs
     if(tabId == "Simulate") {
-        deselectPart();
+        deselectPart(buildState);
         drawSim();
     } else if(tabId == "Build") {
         drawBuild();
@@ -1169,12 +1173,12 @@ function simMouseDown(event) {
     // get the target of the click
     simState.dragTarget = null;
     if(simView.view.encloses(event.offsetX, event.offsetY)) {
-        simState.dragTarget = simView.part;
+        simState.dragTarget = simView;
     } else {
         for(i in simState.worldObjects) {
             var obj = simState.worldObjects[i];
             if(obj.view.encloses(event.offsetX, event.offsetY)) {
-                simState.dragTarget = obj.part;
+                simState.dragTarget = obj;
                 break;
             }
         }
@@ -1193,7 +1197,7 @@ function simMouseDown(event) {
         simState.dragMode = DRAG_ROTATE;
     } else if(document.getElementById('dragMove').checked) {
         simState.dragMode = DRAG_MOVE;
-        simState.dragTarget.moveTo(event.offsetX, event.offsetY);
+        simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
     } else {
         simState.dragMode = DRAG_NONE;
     }
@@ -1211,11 +1215,16 @@ function simMouseDown(event) {
 function simMouseUp(event) {
     // one last move (if that is what we are up to!)
     if(simState.dragMode == DRAG_MOVE) {
-        simState.dragTarget.moveTo(event.offsetX, event.offsetY);
+        simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
     }
 
     // end the drag mode
     simState.dragMode = DRAG_NONE;
+
+    //if this is not the robot, select it
+    if(simState.dragTarget && simState.dragTarget.part.type != "Chassis") {
+        selectPart(simState.dragTarget, simState);
+    }
 
     //refresh the canvas
     drawSim();
@@ -1234,12 +1243,12 @@ function simMouseMove(event) {
 
     // process movement
     if(simState.dragMode == DRAG_MOVE) {
-        simState.dragTarget.moveTo(event.offsetX, event.offsetY);
+        simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
     }
 
     //process rotation
     if(simState.dragMode == DRAG_ROTATE) {
-        simState.dragTarget.rotate((event.offsetY-simState.lastY) * 0.1);
+        simState.dragTarget.part.rotate((event.offsetY-simState.lastY) * 0.1);
     }
 
     //record this position
@@ -1275,27 +1284,27 @@ function simAddLight(event) {
  * Show the editor for the part specified by "view".
  * @param {*} view 
  */
-function showPartEditor(view) {
+function showPartEditor(view, state) {
     //populate the type and name
-    document.getElementById("partType").innerHTML = view.part.type;
-    document.getElementById("partName").value = view.part.name;
+    document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
+    document.getElementById(state.prefix +"PartName").value = view.part.name;
 
     //get the colors populated
-    document.getElementById("partOutlineColor").value = view.part.outline;
-    document.getElementById("partFillColor").value = view.part.fill;
+    document.getElementById(state.prefix + "PartOutlineColor").value = view.part.outline;
+    document.getElementById(state.prefix + "PartFillColor").value = view.part.fill;
 
 
     //show the editor pane
-    document.getElementById("partColorEditor").style.display="block";
+    document.getElementById(state.prefix + "PartEditor").style.display="block";
 }
 
 
 /**
  * Hide the part editor.
  */
-function hidePartEditor() {
+function hidePartEditor(state) {
     //hide the editor pane
-    document.getElementById("partColorEditor").style.display="none";
+    document.getElementById(state.prefix + "PartEditor").style.display="none";
 }
 
 
@@ -1303,48 +1312,87 @@ function hidePartEditor() {
  * Select the partview in the editor.
  * @param {*} view 
  */
-function selectPart(view) {
+function selectPart(view, state) {
     // deselect (if needed) 
-    if(buildState.editTarget != null) {
-        deselectPart();
+    if(state.editTarget != null) {
+        deselectPart(state);
     }
 
     // grab the original color 
-    buildState.editOriginalOutline = view.part.outline;
+    state.editOriginalOutline = view.part.outline;
 
     // set up the target
-    buildState.editTarget = view;
+    state.editTarget = view;
 
     //show the editor
-    showPartEditor(view);
+    showPartEditor(view, state);
 
     // color it coral
     view.part.outline = "coral";
 
 
     // redraw the canvas
-    drawBuild();
+    if(state.prefix == "build") {
+        drawBuild();
+    } else if(state.prefix == "sim") {
+        drawSim();
+    }
 }
 
 
 /**
  * Deselect the selected partview (if there is one)
  */
-function deselectPart() {
+function deselectPart(state) {
     // do nothing if there is no selected part
-    if(buildState.editTarget == null) {
+    if(state.editTarget == null) {
         return;
     }
 
     // retore the original color
-    buildState.editTarget.part.outline = buildState.editOriginalOutline;
+    state.editTarget.part.outline = state.editOriginalOutline;
 
     // remove the selection
-    buildState.editTarget = null;
-    hidePartEditor();
+    state.editTarget = null;
+    hidePartEditor(state);
 
     // redraw the canvas
-    drawBuild();
+    if(state.prefix == "build") {
+        drawBuild();
+    } else if(state.prefix == "sim") {
+        drawSim();
+    }
+}
+
+
+/**
+ * Apply the editor to the given state.
+ */
+function applyEditor(state) {
+    //get the color from the editor
+    var fill = document.getElementById(state.prefix + "PartFillColor").value;
+    var outline = document.getElementById(state.prefix + "PartOutlineColor").value;
+
+    //get the part name
+    var name = document.getElementById(state.prefix + "PartName").value;
+
+    //get the part we are editing
+    var part = state.editTarget.part;
+
+    //deselect the part
+    deselectPart(state);
+
+    //set the fields
+    part.fill = fill;
+    part.outline = outline;
+    part.name = name;
+
+    // redraw the canvas
+    if(state.prefix == "build") {
+        drawBuild();
+    } else if(state.prefix == "sim") {
+        drawSim();
+    }
 }
 
 
@@ -1421,7 +1469,7 @@ function buildMouseMove(event) {
 function buildMouseUp(event) {
     // if there was a drag target, it is now the selected object
     if(buildState.dragTarget) {
-        selectPart(buildState.dragTarget);
+        selectPart(buildState.dragTarget, buildState);
     }
 
     // clear the drag target
@@ -1431,45 +1479,44 @@ function buildMouseUp(event) {
 
 
 /**
- * Handle the apply button for the part editor.
+ * Handle the apply button for the build part editor.
  * @param {*} event 
  */
 function buildApply(event) {
-
-    //get the color from the editor
-    var fill = document.getElementById("partFillColor").value;
-    var outline = document.getElementById("partOutlineColor").value;
-
-    //get the part name
-    var name = document.getElementById("partName").value;
-
-    //get the part we are editing
-    var part = buildState.editTarget.part;
-
-    //deselect the part
-    deselectPart();
-
-    //set the fields
-    part.fill = fill;
-    part.outline = outline;
-    part.name = name;
-
-    //refresh the canvas
-    drawBuild();
+    applyEditor(buildState);
 }
 
 
 /**
- * Handle the cancel button
+ * Handle the apply button for the sim part editor.
+ * @param {*} event 
+ */
+function simApply(event) {
+    applyEditor(simState);
+}
+
+
+/**
+ * Handle the build cancel button
  * @param {*} event 
  */
 function buildCancel(event) {
-    deselectPart();
+    deselectPart(buildState);
 }
 
 
 /**
- * Handle the delete button.
+ * Handle the sim cancel button
+ * @param {*} event 
+ */
+function simCancel(event) {
+    deselectPart(simState);
+}
+
+
+
+/**
+ * Handle the build delete button.
  * @param {*} event
  */
 function buildDeletePart(event) {
@@ -1484,7 +1531,7 @@ function buildDeletePart(event) {
         return;
     }
 
-    deselectPart();
+    deselectPart(buildState);
 
     // remove it from the robot parts list
     robot.parts.splice(robot.parts.indexOf(part), 1);
@@ -1492,6 +1539,32 @@ function buildDeletePart(event) {
     // rebuild the robot
     buildView = new ChassisBuildView(robot);
     drawBuild();
+}
+
+
+/**
+ * Handle the sim delete button.
+ * @param {*} event
+ */
+function simDeletePart(event) {
+    var part = simState.editTarget.part;
+
+    if(part.type == "Motor" || part.type == "Chassis") {
+        alert("You cannot remove this part.");
+        return;
+    }
+
+    if(!confirm("Are you sure you want to remove " + part.name + "?")) {
+        return;
+    }
+
+    deselectPart(simState);
+
+    // remove it from the robot parts list
+    simState.worldObjects.splice(simState.worldObjects.indexOf(part), 1);
+
+    // redraw the sim
+    drawSim();
 }
 
 
@@ -1634,23 +1707,28 @@ function gradbotInit() {
     canvas.onmousemove = buildMouseMove;
 
     //set up the build's form buttons
-    document.getElementById("partApply").onclick = buildApply;
-    document.getElementById("partCancel").onclick = buildCancel;
-    document.getElementById("partDelete").onclick = buildDeletePart;
+    document.getElementById("buildPartApply").onclick = buildApply;
+    document.getElementById("buildPartCancel").onclick = buildCancel;
+    document.getElementById("buildPartDelete").onclick = buildDeletePart;
+
+    //set up the sim's form buttons
+    document.getElementById("simPartApply").onclick = simApply;
+    document.getElementById("simPartCancel").onclick = simCancel;
+    document.getElementById("simPartDelete").onclick = simDeletePart;
 
     //select the simulation tab
     document.getElementById('simButton').click();
 
     //set up file handlers
     document.getElementById("buildOpen").onclick = function() {
-        deselectPart();
+        deselectPart(buildState);
         document.getElementById("buildUpload").click();
     };
     document.getElementById("buildSave").onclick = saveRobotFile;
     document.getElementById("buildUpload").onchange = openRobotFile ;
     document.getElementById("buildNew").onclick = function() {
         if(confirm("Are you sure you want to create a new robot? Any unsaved changes will be lost!")) {
-            deselectPart();
+            deselectPart(buildState);
             newRobot();
         }
     }
