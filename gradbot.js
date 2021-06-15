@@ -368,6 +368,17 @@ function Chassis(x, y, heading, name)
 function Light(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "Light";
+    this.radius = 3;
+
+
+    /**
+     * Receive a message from the user thread
+     * @param {*} message 
+     */
+    this.receiveUser = function(message) {
+        //copy the power setting from the user model
+        this.fill = message.fill;
+    }
 }
 
 
@@ -380,6 +391,67 @@ function Light(parent, x, y) {
 function RangeSensor(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "RangeSensor";
+    this.distance = Infinity;
+    this.freq = 10;  //frequency in hertz
+    this.worldx = 0;
+    this.worldy = 0;
+
+
+    this.updateSensor = function() {
+        var closest = Infinity; 
+
+        //find the closest visible light source
+        for(var i in simState.worldObjects) {
+            var part = simState.worldObjects[i].part;
+    
+            //calculate displacement to the light
+            var dx = part.x - this.worldx;
+            var dy = part.y - this.worldy;
+
+            //calculate the angle to the light
+            var angle = reduceAngle(Math.atan2(dy, dx));
+            angle = reduceAngle(this.parent.heading - angle);
+
+            //skip the lights outside of our field of view
+            if(angle > 0.52 && angle < 5.76) {
+                continue;
+            }
+
+            //calculate the square distance
+            var dist = dx*dx + dy*dy;
+            if(dist < closest) {
+                closest = dist;
+            }
+        }
+
+        //calculate the distance
+        this.distance = Math.sqrt(closest) / 60;
+        if(isNaN(this.distance) || this.distance > 5) {
+            this.distance = Infinity;
+        }
+
+
+        //pass the update into the web worker
+        simState.robotThread.postMessage({type: "update", update: {name: this.name, distance: this.distance}});
+    };
+
+
+    this.update = function() {
+        //populate the last update (if needed)
+        if(this.lastUpdate == undefined) {
+            this.lastUpdate = Date.now();
+        }
+
+        //compute elapsed time
+        var cur = Date.now();
+        var elapsed = (cur - this.lastUpdate) / 1000;
+
+        // trigger the sensor
+        if(elapsed >= 1 / this.freq) {
+            this.updateSensor();
+            this.lastUpdate = cur;
+        }
+    };
 }
 
 
@@ -599,6 +671,8 @@ function constructView(part) {
         return new LightView(part);
     } else if(part.type == "LightSensor") {
         return new LightSensorView(part);
+    } else if(part.type == "RangeSensor") {
+        return new RangeSensorView(part);
     }
 
     // we don't know how to show this part.
@@ -883,7 +957,7 @@ function MarkerView(part) {
  * Construct a light view.
  * @param {*} part 
  */
-function LightView(part, subpart) {
+function LightView(part) {
     //initialize the part view
     PartView.call(this, part);
 
@@ -893,17 +967,27 @@ function LightView(part, subpart) {
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.outline = "black";
-    this.view.radius=3;
+    this.view.radius=part.radius;
     this.view.draw = function(canvas, context) {
+        var sin_th = Math.sin(this.heading);
+        var cos_th = Math.cos(this.heading);
+        var x = this.points[0].x * this.scale;
+        var y = this.points[0].y * this.scale;
+        var rx, ry;
+        rx = x * cos_th - y * sin_th;
+        ry = x * sin_th + y * cos_th;
+        x = rx + this.x;
+        y = ry + this.y;
+
         //set the extents
-        this.minx = this.x - this.radius * this.scale;
-        this.maxx = this.x + this.radius * this.scale;
-        this.miny = this.y - this.radius * this.scale;
-        this.maxy = this.y + this.radius * this.scale;
+        this.minx = x - this.radius * this.scale;
+        this.maxx = x + this.radius * this.scale;
+        this.miny = y - this.radius * this.scale;
+        this.maxy = y + this.radius * this.scale;
 
         //draw the arch
         context.beginPath();
-        context.arc(this.x, this.y, this.radius * this.scale, 0, 2 * Math.PI);
+        context.arc(x, y, this.radius * this.scale, 0, 2 * Math.PI);
         context.fillStyle = this.fill;
         context.strokeStyle = this.outline;
         context.fill();
@@ -911,7 +995,7 @@ function LightView(part, subpart) {
     }
 
     //handle world-centric drawing
-    if(!subpart) {
+    if(!part.parent) {
         this.partDraw = this.draw;
         this.draw = function(canvas, context) {
             this.x = part.x;
@@ -983,6 +1067,47 @@ function LightSensorView(part) {
     }
 }
 
+
+
+/**
+ * constructor for the range sensor view object. This visualizes a marker.
+ * @param {*} part - The motor part 
+ */
+function RangeSensorView(part) {
+    //initialize the part view
+    PartView.call(this, part);
+
+    //create my vector view
+    var points = [
+        {x: -0.5, y: -2.5},
+        {x:  0, y: -2.5},
+        {x:  0, y: -1.5},
+        {x:  1, y: -1.5},
+        {x:  1, y: -0.5},
+        {x:  0, y: -0.5},
+        {x:  0, y:  0.5},
+        {x:  1, y:  0.5},
+        {x:  1, y:  1.5},
+        {x:  0, y:  1.5},
+        {x:  0, y:  2.5},
+        {x: -0.5, y:  2.5}
+    ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.stroke = "black"
+
+
+    // a little custom drawing action
+    this.partDraw = this.draw;
+    this.draw = function(canvas, context) {
+        //report world coordinates
+        part.worldx = (this.view.minx + this.view.maxx)/2;
+        part.worldy = (this.view.miny + this.view.maxy)/2;
+
+        //draw the filter
+        this.partDraw(canvas, context);
+    }
+}
 
 
 /****************************************** 
@@ -1581,11 +1706,36 @@ function buildAddMarker(event) {
 
 
 /**
+ * Handle adding a light.
+ * @param {*} event
+ */
+function buildAddLight(event) {
+    var light = new Light(robot);
+    light.radius = 1;
+    robot.addPart(light);
+    buildView.addPart(light);
+    drawBuild();
+}
+
+
+/**
  * Handle adding a light sensor.
  * @param {*} event
  */
 function buildAddLightSensor(event) {
     var sensor = new LightSensor(robot);
+    robot.addPart(sensor);
+    buildView.addPart(sensor);
+    drawBuild();
+}
+
+
+/**
+ * Handle adding a range sensor.
+ * @param {*} event
+ */
+function buildAddRangeSensor(event) {
+    var sensor = new RangeSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
@@ -1735,7 +1885,9 @@ function gradbotInit() {
 
     // add part buttons
     document.getElementById("buildAddMarker").onclick = buildAddMarker;
+    document.getElementById("buildAddLight").onclick = buildAddLight;
     document.getElementById("buildAddLightSensor").onclick = buildAddLightSensor;
+    document.getElementById("buildAddRangeSensor").onclick = buildAddRangeSensor;
 
 
     //activate our error handler
@@ -1893,6 +2045,8 @@ function finishPart(part) {
         result = new Light();
     } else if(part.type == "LightSensor") {
         result = new LightSensor();
+    } else if(part.type == "RangeSensor") {
+        result = new RangeSensor();
     } else {
         return undefined;
     }

@@ -119,12 +119,24 @@ function Chassis(source) {
 
 function Light(source) {
     Part.call(this, source);
+    this.fill = source.fill;
+
+    this.setColor = function(color) {
+        this.fill = color;
+        postMessage(this.sendable());
+    }
 }
 
 
 function LightSensor(source) {
     Part.call(this, source);
     this.intensity = source.intensity;
+}
+
+
+function RangeSensor(source) {
+    Part.call(this, source);
+    this.distance = source.distance;
 }
 
 
@@ -145,6 +157,8 @@ function constructPart(source) {
         return new Light(source);
     } else if(source.type == "LightSensor") {
         return new LightSensor(source);
+    } else if(source.type == "RangeSensor") {
+        return new RangeSensor(source);
     }
 
     // this is an unknown part!
