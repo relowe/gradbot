@@ -1393,6 +1393,8 @@ function LaserBlastView(part) {
  * USER INTERFACE
  ******************************************/
 var robot;
+var opponent;
+var opponentView;
 var simView;
 var buildView;
 
@@ -1414,6 +1416,7 @@ var simState = {
     timer: null,
     prevTab: null,
     robotThread: null,
+    opponentThread: null,
     worldObjects: [],
     editTarget: null,
     editOriginalOutline: null
@@ -1523,6 +1526,12 @@ function drawSim() {
 
     //draw the robot
     simView.draw(canvas, context);
+
+    //draw the opponent (if there is one)
+    if(opponent) {
+        opponentView.scale=2;
+        opponentView.draw(canvas, context);
+    }
 }
 
 
@@ -1691,6 +1700,10 @@ function simAddWall(event) {
     drawSim();
 }
 
+
+function simOpenOpponent(event) {
+    
+}
 
 
 /*
@@ -2087,6 +2100,13 @@ function simulationClear(event) {
     robot.x = 100;
     robot.y = 100;
     robot.heading = 0;
+
+    // reset the opponent
+    if(opponent) {
+        opponent.x = 700;
+        opponent.y = 500;
+        opponent.heading = Math.PI;
+    }
     
     //redraw 
     graphPaperFill("simbg");
@@ -2176,6 +2196,21 @@ function gradbotInit() {
         }
     }
 
+    //set up opponent handlers
+    document.getElementById("simUpload").onchange = openOpponentFile;
+    document.getElementById("simOpenOpponent").onclick = function() {
+        document.getElementById("simUpload").click();
+    };
+    document.getElementById("simRemoveOpponent").onclick = function() {
+        opponent = null;
+        if(simView.opponentThread) {
+            simView.opponentThread.terminate();
+        }
+        simView.opponentThread = null;
+        opponentView = null;
+        drawSim();
+    };
+
     // add part buttons
     document.getElementById("buildAddMarker").onclick = buildAddMarker;
     document.getElementById("buildAddLight").onclick = buildAddLight;
@@ -2215,6 +2250,15 @@ function simulationStart() {
     simState.robotThread.postMessage({type: "start", robot: robot.sendable()});
 
 
+    //start the opponent thread (if there is one)
+    if(opponent) {
+        simState.opponentThread = new Worker("userbot.js");
+        simState.opponentThread.onerror = gradbotError;
+        simState.opponentThread.onmessage = opponentReceiveMessage;
+        simState.opponentThread.postMessage({type: "start", robot: opponent.sendable()});
+    }
+
+
     //set the timer going!
     simState.timer = setInterval(simulationUpdate, 1000/30);
 }
@@ -2226,6 +2270,15 @@ function simulationStart() {
  */
 function simulationReceiveMessage(message) {
     robot.getPartByName(message.data.name).receiveUser(message.data);
+}
+
+
+/**
+ * Handle messages from the opponent robot.
+ * @param {*} message 
+ */
+function opponentReceiveMessage(message) {
+    opponent.getPartByName(message.data.name).receiveUser(message.data);
 }
 
 
@@ -2244,8 +2297,17 @@ function simulationStop() {
         simState.robotThread = null;
     }
 
+    //terminate the opponent thread
+    if(simState.opponentThread) {
+        simState.opponentThread.terminate();
+        simState.opponentThread = null;
+    }
+
     // remove the robot's abilityt to teleport on resume ^_^
     robot.lastUpdate = undefined;
+    if(opponent) {
+        opponent.lastUpdate = undefined;
+    }
 
 }
 
@@ -2255,6 +2317,10 @@ function simulationStop() {
  */
 function simulationUpdate() {
     robot.update();
+
+    if(opponent) {
+        opponent.update();
+    }
 
     //update all the world objects
     for(var i=0; i < simState.worldObjects.length; i++) {
@@ -2298,6 +2364,28 @@ function openRobotFile() {
         graphPaperFill("simbg");
         drawSim();
         drawBuild();
+    };
+
+    reader.readAsText(this.files[0]);
+
+}
+
+
+function openOpponentFile() {
+    var reader = new FileReader();
+    reader.onload = function() {
+        opponent = new Chassis();
+        loadRobot(opponent, reader.result);
+        opponent.x = 700;
+        opponent.y = 500;
+        opponent.heading = Math.PI;
+
+        //rebuild the robot view
+        opponentView = new ChassisView(opponent);
+
+        //redraw
+        graphPaperFill("simbg");
+        drawSim();
     };
 
     reader.readAsText(this.files[0]);
