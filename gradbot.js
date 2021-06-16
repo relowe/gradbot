@@ -199,6 +199,10 @@ function Part(parent, x, y, heading, name)
     Positionable.call(this, x, y, heading);
     this.type = "part";
     this.name = name != undefined ? name : ("part" + partCount);
+    
+    //position in world coordinates
+    this.worldx = 0;
+    this.worldy = 0;
 
     // the outline and fill color of the part
     this.outline = "black";
@@ -362,11 +366,69 @@ function Chassis(x, y, heading, name)
     this.left = new Motor(this, -7, -7, 0, "left");
     this.right = new Motor(this, -7, 7, Math.PI, "right");
 
+
+    //we start unexploded and healthy!
+    this.hp = 3;
+    this.blowedUp = false;
+    this.explosionVelocities = [];
+
     // create the robot code
     this.code = "";
 
+    // deal with explosions
+    this.explode = function() {
+        this.blowedUp = true;
+        this.explosionVelocities = [];
+
+        //put all the parts in the world with new velocities
+        this.parts = this.parts.concat([this.left, this.right, this]);
+        var speed = 10;
+        for(var i=0; i<this.parts.length; i++) {
+            //worldify it!
+            this.parts[i].x = this.parts[i].worldx;
+            this.parts[i].y = this.parts[i].worldy;
+            this.parts[i].parent = null;
+
+            //compute the new velocities
+            var heading = Math.random() * Math.PI * 2;
+            var velocity = { dx: speed * Math.cos(heading),
+                             dy: speed * Math.sin(heading) };
+            this.explosionVelocities.push(velocity);
+        }
+
+    }
+
+
+    //explosion frame
+    this.explosionUpdate = function() {
+        for(var i=0; i < this.parts.length; i++) {
+            var p = this.parts[i];
+
+            //tumble
+            p.rotate(0.3);
+
+            //travel
+            p.x += this.explosionVelocities[i].dx;
+            p.y += this.explosionVelocities[i].dy;
+        }
+    }
+
+
     this.update = function() 
     {
+        //handle exploding
+        if(this.blowedUp) {
+            this.explosionUpdate();
+            return;
+        }
+
+        //has the end come?
+        if(this.hp <= 0) {
+          this.explode();
+          return;
+        }
+
+
         //update all the sub parts
         for(var i in this.parts) {
             var p = this.parts[i];
@@ -811,6 +873,14 @@ function PartView(part) {
      * @param {*} context - The context to draw on.
      */
     this.draw = function(canvas, context) {
+        // unparented parts are in the world (but not necessarily of
+        // it!)
+        if(!this.part.parent) {
+            this.x = this.part.x;
+            this.y = this.part.y;
+            this.heading = this.part.heading;
+        }
+
         // set the color
         this.view.outline = this.part.outline;
         this.view.fill = this.part.fill;
@@ -822,6 +892,8 @@ function PartView(part) {
             this.view.heading = this.heading;
             this.view.scale = this.scale;
             this.view.draw(canvas, context);
+            part.worldx = (this.view.minx + this.view.maxx)/2;
+            part.worldy = (this.view.miny + this.view.maxy)/2;
         }
 
         // draw each subviews offset to this view's pose
@@ -939,14 +1011,14 @@ function ChassisView(part) {
 
 
     //remember the base version
-    this.partDraw = this.draw;
+    //this.partDraw = this.draw;
 
     /**
      * Update for the movement of the model and then draw.
      * @param {*} canvas 
      * @param {*} context 
      */
-    this.draw = function(canvas, context) {
+    /*this.draw = function(canvas, context) {
         //copy the chassis pose
         this.x = this.part.x;
         this.y = this.part.y;
@@ -954,7 +1026,7 @@ function ChassisView(part) {
 
         //draw like normal
         this.partDraw(canvas, context); 
-    }
+    }*/
 
 
     /**
@@ -976,9 +1048,26 @@ function ChassisBuildView(part) {
     this.scale=30; //it's also big!
     this.heading = -Math.PI/2;
 
+    this.partDraw = this.draw;
+    this.draw = function(canvas, context) {
+        // remember the real location
+        var x = this.part.x;
+        var y = this.part.y;
+        var heading = this.part.heading;
 
-    //We won't move this.
-    this.draw = this.partDraw;
+        // shift the robot
+        this.part.x = this.x;
+        this.part.y = this.y;
+        this.part.heading = this.heading;
+
+        //draw the robot
+        this.partDraw(canvas, context);
+
+        // restore the robot position
+        this.part.x = x;
+        this.part.y = y;
+        this.part.heading = heading;
+    }
 }
 
 
@@ -989,6 +1078,7 @@ function ChassisBuildView(part) {
 function MotorView(part) {
     //initialize the part view
     PartView.call(this, part);
+
 
     //create my vector view
     var points = [
@@ -1233,15 +1323,6 @@ function WallView(part) {
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.stroke = "black"
-
-    //this is a world object
-    this.partDraw = this.draw;
-    this.draw = function(canvas, context) {
-        this.x = part.x;
-        this.y = part.y;
-        this.heading = part.heading;
-        this.partDraw(canvas, context);
-    }
 }
 
 
@@ -2172,6 +2253,8 @@ function loadRobot(robot, robotString) {
     /* handle the motors */
     robot.left = finishPart(obj.left);
     robot.right = finishPart(obj.right);
+    robot.left.parent = robot;
+    robot.right.parent = robot;
 
     /* handle the parts */
     robot.parts = [];
