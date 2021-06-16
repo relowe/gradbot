@@ -48,11 +48,12 @@ function reduceAngle(a) {
 /**
  * Compute the minimum distance from point e to the line segment
  * ab. Each point is expected to be an object with fields x, y
- * for the coordinates.
+ * for the coordinates. This function also computes the angle to
+ * that closest point.
  * @param {object} a - Endpoint a
  * @param {object} b - Endpoint b
  * @param {object} e - Endpoint e
- * @returns {numeric} The minimum distance to ab
+ * @returns {object} - an object {distance:, angle:}
  */
 function minLineDist(a, b, e) {
     //vectors
@@ -65,18 +66,20 @@ function minLineDist(a, b, e) {
     ab_ae = ab.x * ae.x + ab.y * ae.y;
     
     //Minimum distance from e to the line segment
-    var result = 0;
+    var result = {distance: Infinity, angle: 0};
 
     if(ab_be > 0) {
         // Case 1 - Point b is the closest
-        var y = e.y - b.y;
-        var x = e.x - b.x;
-        result = Math.sqrt(x * x + y * y);
+        var y = b.y - e.y;
+        var x = b.x - e.x;
+        result.distance = Math.sqrt(x * x + y * y);
+        result.angle = Math.atan2(y, x);
     } else if(ab_ae < 0) {
         // Case 2 - Point a is the closest
-        var y = e.y - a.y;
-        var x = e.x - a.x;
-        result = Math.sqrt(x * x + y * y);
+        var y = b.y - e.y;
+        var x = b.x - e.x;
+        result.distance = Math.sqrt(x * x + y * y);
+        result.angle = Math.atan2(y, x);
     } else {
         // Case 3 - Perpendicular distance
         var x1 = ab.x;
@@ -84,7 +87,8 @@ function minLineDist(a, b, e) {
         var x2 = ae.x;
         var y2 = ae.y;
         var mod = Math.sqrt(x1 * x1 + y1 * y1);
-        result = Math.abs(x1 * y2 - y1 * x2) / mod;
+        result.distance = Math.abs(x1 * y2 - y1 * x2) / mod;
+        result.angle = Math.atan2(ab.y, ab.x) + Math.PI/2;
     }
 
     return result;
@@ -94,12 +98,23 @@ function minLineDist(a, b, e) {
 
 /**
  * Find the minimum distance between point p and polygon poly.
+ * It also computes the angle to the nearest point.
  * @param {object} p - The point as an x, y object.
  * @param {object} poly - A list of points in the polygon
+ * @returns {object} - an object {distance:, angle:}
  */
 function minPolyDist(p, poly) {
-    var result = Infinity;
+    var result = {distance: Infinity, angle: 0};
     var dist;
+
+    //handle single point polygons 
+    if(poly.length == 1) {
+        var dx = poly[0].x - p.x;
+        var dy = poly[0].y - p.y;
+        result.distance = Math.sqrt(dx*dx + dy*dy);
+        result.angle = Math.atan2(dy, dx);
+        return result;
+    }
 
     //close the path
     poly = poly.concat([poly[0]]);
@@ -109,7 +124,7 @@ function minPolyDist(p, poly) {
         a = {x: poly[i].x, y: poly[i].y};
         b = {x: poly[i+1].x, y: poly[i+1].y};
         dist = minLineDist(a, b, p);
-        if(dist < result) {
+        if(dist.distance < result.distance) {
             result = dist;
         }
     }
@@ -492,12 +507,9 @@ function RangeSensor(parent, x, y) {
         for(var i in simState.worldObjects) {
             var part = simState.worldObjects[i].part;
     
-            //calculate displacement to the light
-            var dx = part.x - this.worldx;
-            var dy = part.y - this.worldy;
-
-            //calculate the angle to the light
-            var angle = reduceAngle(Math.atan2(dy, dx));
+            //calculate displacement to the object
+            var dist = minPolyDist({x: this.worldx, y: this.worldy}, simState.worldObjects[i].view.polygon);
+            var angle = reduceAngle(dist.angle);
             angle = reduceAngle(this.parent.heading - angle);
 
             //skip the lights outside of our field of view
@@ -505,15 +517,14 @@ function RangeSensor(parent, x, y) {
                 continue;
             }
 
-            //calculate the square distance
-            var dist = dx*dx + dy*dy;
-            if(dist < closest) {
-                closest = dist;
+            //check for being the closest
+            if(dist.distance < closest) {
+                closest = dist.distance;
             }
         }
 
         //calculate the distance
-        this.distance = Math.sqrt(closest) / 60;
+        this.distance = closest / 60;
         if(isNaN(this.distance) || this.distance > 5) {
             this.distance = Infinity;
         }
