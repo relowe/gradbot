@@ -708,6 +708,49 @@ function LightSensor(parent, x, y) {
 
 
 
+/**
+ * A blast, from a laser. What else would it be?
+ */
+function LaserBlast(x, y, heading) {
+    Part.call(this, null, x, y, heading);
+    this.type = "LaserBlast";
+
+    this.outline="red";
+    this.fill="red";
+
+    var speed = 30;
+
+    this.dx = speed * Math.cos(heading);
+    this.dy = speed * Math.sin(heading);
+
+    this.vanish = function() {
+        //take ourselves out of the world objects
+        var toRemove = -1;
+        for(var i = 0; i< simState.worldObjects.length; i++) {
+            if(simState.worldObjects[i].part === this) {
+                toRemove = i;
+                break;
+            }
+        }
+        if(i >= 0) {
+            simState.worldObjects.splice(toRemove, 1);
+        }
+    }
+
+
+    this.update = function() {
+        this.x += this.dx;
+        this.y += this.dy;
+
+        //TODO, dont' hardcode the sizes
+        if(this.x < 0 || this.x > 800 || this.y < 0 || this.y > 600) {
+            this.vanish();
+        }
+    }
+}
+
+
+
 /****************************************** 
  * Utility Functions and Objects
  ******************************************/
@@ -841,6 +884,8 @@ function constructView(part) {
         return new RangeSensorView(part);
     } else if(part.type == "Wall") {
         return new WallView(part);
+    } else if(part.type == "LaserBlast") {
+        return new LaserBlastView(part);
     }
     // we don't know how to show this part.
     return undefined;
@@ -1323,6 +1368,24 @@ function WallView(part) {
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.stroke = "black"
+}
+
+
+/**
+ * Display the laser blast
+ * @param {*} part 
+ */
+function LaserBlastView(part) {
+    PartView.call(this, part);
+
+    //create my vector view
+    var points = [
+        {x: -10, y:-1},
+        {x: 10, y: -1},
+        {x: 10, y: 1},
+        {x: -10, y:1},
+    ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
 }
 
 
@@ -2135,6 +2198,7 @@ function gradbotInit() {
  * Start the simulation.
  */
 function simulationStart() {
+
     // clear the timer, if there is one
     if(simState.timer) {
         clearInterval(simState.timer);
@@ -2191,6 +2255,11 @@ function simulationStop() {
  */
 function simulationUpdate() {
     robot.update();
+
+    //update all the world objects
+    for(var i=0; i < simState.worldObjects.length; i++) {
+        simState.worldObjects[i].part.update();
+    }
     drawSim();
 }
 
