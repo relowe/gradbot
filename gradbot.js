@@ -46,6 +46,80 @@ function reduceAngle(a) {
 
 
 /**
+ * Compute the minimum distance from point e to the line segment
+ * ab. Each point is expected to be an object with fields x, y
+ * for the coordinates.
+ * @param {object} a - Endpoint a
+ * @param {object} b - Endpoint b
+ * @param {object} e - Endpoint e
+ * @returns {numeric} The minimum distance to ab
+ */
+function minLineDist(a, b, e) {
+    //vectors
+    var ab = {x: b.x - a.x, y: b.y - a.y};
+    var be = {x: e.x - b.x, y: e.y - b.y};
+    var ae = {x: e.x - a.x, y: e.y - a.y};
+
+    //dot products
+    ab_be = ab.x * be.x + ab.y * be.y;
+    ab_ae = ab.x * ae.x + ab.y * ae.y;
+    
+    //Minimum distance from e to the line segment
+    var result = 0;
+
+    if(ab_be > 0) {
+        // Case 1 - Point b is the closest
+        var y = e.y - b.y;
+        var x = e.x - b.x;
+        result = Math.sqrt(x * x + y * y);
+    } else if(ab_ae < 0) {
+        // Case 2 - Point a is the closest
+        var y = e.y - a.y;
+        var x = e.x - a.x;
+        result = Math.sqrt(x * x + y * y);
+    } else {
+        // Case 3 - Perpendicular distance
+        var x1 = ab.x;
+        var y1 = ab.y;
+        var x2 = ae.x;
+        var y2 = ae.y;
+        var mod = Math.sqrt(x1 * x1 + y1 * y1);
+        result = Math.abs(x1 * y2 - y1 * x2) / mod;
+    }
+
+    return result;
+}
+
+
+
+/**
+ * Find the minimum distance between point p and polygon poly.
+ * @param {object} p - The point as an x, y object.
+ * @param {object} poly - A list of points in the polygon
+ */
+function minPolyDist(p, poly) {
+    var result = Infinity;
+    var dist;
+
+    //close the path
+    poly = poly.concat([poly[0]]);
+
+    // check all the line segments
+    for(var i=0; i<poly.length - 1; i++) {
+        a = {x: poly[i].x, y: poly[i].y};
+        b = {x: poly[i+1].x, y: poly[i+1].y};
+        dist = minLineDist(a, b, p);
+        if(dist < result) {
+            result = dist;
+        }
+    }
+
+    return result;
+}
+
+
+
+/**
  * This is a prototype for a positionable object. It handles all the 
  * intricacies of moving an object around.
  * @param {number} x - x coordinate 
@@ -383,6 +457,20 @@ function Light(parent, x, y) {
 
 
 /**
+ * A wall, it just is!
+ * @param {*} parent 
+ * @param {*} x 
+ * @param {*} y 
+ */
+function Wall(parent, x, y) {
+    Part.call(this, parent, x, y);
+    this.type = "Wall";
+    this.outline="lightblue";
+    this.fill = "blue";
+}
+
+
+/**
  * A sensor which computes the range to an object.
  * @param {*} parent 
  * @param {*} x 
@@ -559,6 +647,7 @@ function VectorView(x, y, heading, scale, points) {
     this.points = points != undefined ? points : {};
     this.outline = undefined;
     this.fill = undefined;
+    this.polygon = [];
     
 
     /**
@@ -579,6 +668,7 @@ function VectorView(x, y, heading, scale, points) {
         var x;
         var y;
         var started = false;
+        this.polygon = [];
 
         //reset the extents
         this.resetExtents();
@@ -610,6 +700,9 @@ function VectorView(x, y, heading, scale, points) {
             // translate
             x += this.x;
             y += this.y;
+
+            // add to the polygon
+            this.polygon.push({x: x, y: y});
 
             //add the line or start the shape
             if(started) {
@@ -673,8 +766,9 @@ function constructView(part) {
         return new LightSensorView(part);
     } else if(part.type == "RangeSensor") {
         return new RangeSensorView(part);
+    } else if(part.type == "Wall") {
+        return new WallView(part);
     }
-
     // we don't know how to show this part.
     return undefined;
 }
@@ -978,6 +1072,7 @@ function LightView(part) {
         ry = x * sin_th + y * cos_th;
         x = rx + this.x;
         y = ry + this.y;
+        this.polygon = [{x: x, y: y}];
 
         //set the extents
         this.minx = x - this.radius * this.scale;
@@ -1105,6 +1200,35 @@ function RangeSensorView(part) {
         part.worldy = (this.view.miny + this.view.maxy)/2;
 
         //draw the filter
+        this.partDraw(canvas, context);
+    }
+}
+
+
+/**
+ * Display the wall in all of its rectangular glory!
+ * @param {*} part 
+ */
+function WallView(part) {
+    PartView.call(this, part);
+
+    //create my vector view
+    var points = [
+        {x: -5, y: -10},
+        {x: 5, y: -10},
+        {x: 5, y: 10},
+        {x: -5, y: 10},
+    ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.stroke = "black"
+
+    //this is a world object
+    this.partDraw = this.draw;
+    this.draw = function(canvas, context) {
+        this.x = part.x;
+        this.y = part.y;
+        this.heading = part.heading;
         this.partDraw(canvas, context);
     }
 }
@@ -1396,6 +1520,19 @@ function simAddLight(event) {
     var light = new Light(null, canvas.width/2, canvas.height/2);
 
     simState.worldObjects.push(constructView(light));
+    drawSim();
+}
+
+
+/**
+ * Add a wall to the simulator.
+ * @param {*} event 
+ */
+function simAddWall(event) {
+    var canvas = document.getElementById("simfg");
+    var wall = new Wall(null, canvas.width/2, canvas.height/2);
+
+    simState.worldObjects.push(constructView(wall));
     drawSim();
 }
 
@@ -1849,6 +1986,7 @@ function gradbotInit() {
 
     //set up the object buttons
     document.getElementById('simAddLight').onclick = simAddLight;
+    document.getElementById('simAddWall').onclick = simAddWall;
 
     //set up the build mouse events
     canvas = document.getElementById("buildCanvas");
@@ -2047,6 +2185,8 @@ function finishPart(part) {
         result = new LightSensor();
     } else if(part.type == "RangeSensor") {
         result = new RangeSensor();
+    } else if(part.type == "Wall") {
+        result = new Wall();
     } else {
         return undefined;
     }
