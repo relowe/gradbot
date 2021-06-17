@@ -394,6 +394,10 @@ function Chassis(x, y, heading, name)
 
     // deal with explosions
     this.explode = function() {
+        //terminate the robot thread
+        if(this.thread){
+            this.thread.terminate();
+        }
         this.blowedUp = true;
         this.explosionVelocities = [];
 
