@@ -750,6 +750,52 @@ function LaserBlast(x, y, heading) {
 }
 
 
+/**
+ * A frickin' laser beam.
+ */
+function Laser(parent, x, y, heading) {
+    Part.call(this, parent, x, y, heading);
+    this.type = "Laser";
+    this.charged = true;
+    this.lastUpdate = undefined;
+    this.chargeTime = 500;
+
+    //fire the laser beam
+    this.fire = function() {
+        // no charge, no pew
+        if(!this.charged) { return; }
+
+        //no more power.
+        this.charged = false;
+        this.lastUpdate = Date.now();
+
+        //fire!
+        var lb = new LaserBlast(this.parent.x, this.parent.y, this.parent.heading);
+        simState.worldObjects.push(constructView(lb));
+    }
+
+    //update the laser (charge it)
+    this.update = function() {
+        //already charged?
+        if(this.charged) { 
+            return;
+        }
+
+        var elapsed = Date.now() - this.lastUpdate;
+        if(elapsed > this.chargeTime) {
+            this.charged = true;
+            this.lastUpdate = undefined;
+        }
+    }
+
+
+    //fire the laser when we receive a message
+    this.receiveUser = function(obj) {
+        this.fire();
+    }
+}
+
+
 
 /****************************************** 
  * Utility Functions and Objects
@@ -886,6 +932,8 @@ function constructView(part) {
         return new WallView(part);
     } else if(part.type == "LaserBlast") {
         return new LaserBlastView(part);
+    } else if(part.type == "Laser") {
+        return new LaserView(part);
     }
     // we don't know how to show this part.
     return undefined;
@@ -1384,6 +1432,28 @@ function LaserBlastView(part) {
         {x: 10, y: -1},
         {x: 10, y: 1},
         {x: -10, y:1},
+    ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+}
+
+
+/**
+ * Display the laser.
+ * @param {*} part
+ */
+function LaserView(part) {
+    PartView.call(this, part);
+
+    //create my vector view
+    var points = [
+        {x: -3, y: 1.5 },
+        {x: 1.0, y: 1.5 },
+        {x: 1.0, y: 0.5 },
+        {x: 3, y: 0.5 },
+        {x: 3, y: -0.5 },
+        {x: 1.0, y:-0.5},
+        {x: 1.0, y: -1.5},
+        {x: -3, y: -1.5}
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
 }
@@ -2048,6 +2118,18 @@ function buildAddRangeSensor(event) {
 
 
 /**
+ * Handle adding a laser.
+ * @param {*} event
+ */
+function buildAddLaser(event) {
+    var laser = new Laser(robot);
+    robot.addPart(laser);
+    buildView.addPart(laser);
+    drawBuild();
+}
+
+
+/**
  * Handle the simulation go button.
  * @param {*} event 
  */
@@ -2216,6 +2298,7 @@ function gradbotInit() {
     document.getElementById("buildAddLight").onclick = buildAddLight;
     document.getElementById("buildAddLightSensor").onclick = buildAddLightSensor;
     document.getElementById("buildAddRangeSensor").onclick = buildAddRangeSensor;
+    document.getElementById("buildAddLaser").onclick = buildAddLaser;
 
 
     //activate our error handler
@@ -2438,6 +2521,8 @@ function finishPart(part) {
         result = new RangeSensor();
     } else if(part.type == "Wall") {
         result = new Wall();
+    } else if(part.type == "Laser") {
+        result = new Laser();
     } else {
         return undefined;
     }

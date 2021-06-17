@@ -140,6 +140,18 @@ function RangeSensor(source) {
 }
 
 
+function Laser(source) {
+    Part.call(this, source);
+
+    this.command = null;
+
+    this.fire = function() {
+        this.command = "fire";
+        postMessage(this.sendable());
+    }
+}
+
+
 /**
  * Construct a local model object from the source.
  * This selects the appropriate constructor and invokes it.
@@ -159,6 +171,8 @@ function constructPart(source) {
         return new LightSensor(source);
     } else if(source.type == "RangeSensor") {
         return new RangeSensor(source);
+    } else if(source.type == "Laser") {
+        return new Laser(source);
     }
 
     // this is an unknown part!
