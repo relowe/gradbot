@@ -133,6 +133,20 @@ function minPolyDist(p, poly) {
 }
 
 
+/**
+ * Collision detection.
+ * @param {object} view1 - First vector view.
+ * @param {object} view2 - Second vector view.
+ * @returns True if the views are in collision, false otherwise.
+ */
+function collision(view1, view2) {
+    return view1.minx <= view2.maxx && 
+           view1.maxx >= view2.minx &&
+           view1.miny <= view2.maxy &&
+           view1.maxy >= view2.miny;
+}
+
+
 
 /**
  * This is a prototype for a positionable object. It handles all the 
@@ -711,7 +725,7 @@ function LightSensor(parent, x, y) {
 /**
  * A blast, from a laser. What else would it be?
  */
-function LaserBlast(x, y, heading) {
+function LaserBlast(x, y, heading, firedBy) {
     Part.call(this, null, x, y, heading);
     this.type = "LaserBlast";
 
@@ -722,6 +736,7 @@ function LaserBlast(x, y, heading) {
 
     this.dx = speed * Math.cos(heading);
     this.dy = speed * Math.sin(heading);
+    this.firedBy = firedBy;
 
     this.vanish = function() {
         //take ourselves out of the world objects
@@ -770,7 +785,7 @@ function Laser(parent, x, y, heading) {
         this.lastUpdate = Date.now();
 
         //fire!
-        var lb = new LaserBlast(this.parent.x, this.parent.y, this.parent.heading);
+        var lb = new LaserBlast(this.parent.x, this.parent.y, this.parent.heading, this.parent);
         simState.worldObjects.push(constructView(lb));
     }
 
@@ -2399,15 +2414,35 @@ function simulationStop() {
  * Update one simulation frame.
  */
 function simulationUpdate() {
-    robot.update();
-
+    var bots = [robot];
+    var botViews = [simView];
     if(opponent) {
-        opponent.update();
+        bots.push(opponent);
+        botViews.push(opponent);
+    }
+
+    for(var i=0; i < bots.length; i++) {
+        bots[i].update();
     }
 
     //update all the world objects
+    var toVanish = [];
     for(var i=0; i < simState.worldObjects.length; i++) {
-        simState.worldObjects[i].part.update();
+        var obj = simState.worldObjects[i];
+        obj.part.update();
+
+        //check for laser blast collisions
+        if(obj.part.type == "LaserBlast") {
+            for(var j=0; j < botViews.length; j++) {
+                if(bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
+                    bots[j].hp--;
+                    toVanish.push(obj.part);
+                }
+            }
+        }
+    }
+    for(var i=0; i < toVanish.length; i++) {
+        toVanish[i].vanish();
     }
     drawSim();
 }
