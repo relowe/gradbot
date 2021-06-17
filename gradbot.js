@@ -2449,7 +2449,7 @@ function simulationUpdate() {
     var botViews = [simView];
     if(opponent) {
         bots.push(opponent);
-        botViews.push(opponent);
+        botViews.push(opponentView);
     }
 
     for(var i=0; i < bots.length; i++) {
