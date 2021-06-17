@@ -837,7 +837,7 @@ function Laser(parent, x, y, heading) {
         this.lastUpdate = Date.now();
 
         //fire!
-        var lb = new LaserBlast(this.parent.x, this.parent.y, this.parent.heading, this.parent);
+        var lb = new LaserBlast(this.worldx, this.worldy, this.parent.heading, this.parent);
         simState.worldObjects.push(constructView(lb));
     }
 
