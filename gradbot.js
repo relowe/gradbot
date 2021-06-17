@@ -369,6 +369,9 @@ function Chassis(x, y, heading, name)
 {
     Part.call(this, null, x, y, heading, name);
     this.type = "Chassis";
+    
+    //no thread at first
+    this.thread = null;
 
     //handle the subparts of the chassis
     this.parts = Array();
@@ -578,13 +581,23 @@ function RangeSensor(parent, x, y) {
 
     this.updateSensor = function() {
         var closest = Infinity; 
+        var bots = [ simView ];
+        if(opponent) {
+            bots.push(opponentView);
+        }
+        var objects = bots.concat(simState.worldObjects);
 
         //find the closest visible light source
-        for(var i in simState.worldObjects) {
-            var part = simState.worldObjects[i].part;
+        for(var i in objects) {
+            var part = objects[i].part;
+
+            //skip our parent part
+            if(this.parent === part) {
+                continue;
+            }
     
             //calculate displacement to the object
-            var dist = minPolyDist({x: this.worldx, y: this.worldy}, simState.worldObjects[i].view.polygon);
+            var dist = minPolyDist({x: this.worldx, y: this.worldy}, objects[i].view.polygon);
             var angle = reduceAngle(dist.angle);
             angle = reduceAngle(this.parent.heading - angle);
 
@@ -607,7 +620,9 @@ function RangeSensor(parent, x, y) {
 
 
         //pass the update into the web worker
-        simState.robotThread.postMessage({type: "update", update: {name: this.name, distance: this.distance}});
+        if(this.parent.thread) {
+            this.parent.thread.postMessage({type: "update", update: {name: this.name, distance: this.distance}});
+        }
     };
 
 
@@ -728,7 +743,9 @@ function LightSensor(parent, x, y) {
         }
 
         //pass the update into the web worker
-        simState.robotThread.postMessage({type: "update", update: {name: this.name, intensity: this.intensity}});
+        if(this.parent.thread) {
+            this.parent.thread.postMessage({type: "update", update: {name: this.name, intensity: this.intensity}});
+        }
     };
 
 
@@ -1817,10 +1834,6 @@ function simAddWall(event) {
 }
 
 
-function simOpenOpponent(event) {
-    
-}
-
 
 /*
  * Build Events
@@ -2327,6 +2340,7 @@ function gradbotInit() {
     //set up opponent handlers
     document.getElementById("simUpload").onchange = openOpponentFile;
     document.getElementById("simOpenOpponent").onclick = function() {
+        document.getElementById("simClear").click();
         document.getElementById("simUpload").click();
     };
     document.getElementById("simRemoveOpponent").onclick = function() {
@@ -2377,6 +2391,7 @@ function simulationStart() {
     simState.robotThread.onerror = gradbotError;
     simState.robotThread.onmessage = simulationReceiveMessage;
     simState.robotThread.postMessage({type: "start", robot: robot.sendable()});
+    robot.thread = simState.robotThread;
 
 
     //start the opponent thread (if there is one)
@@ -2385,6 +2400,7 @@ function simulationStart() {
         simState.opponentThread.onerror = gradbotError;
         simState.opponentThread.onmessage = opponentReceiveMessage;
         simState.opponentThread.postMessage({type: "start", robot: opponent.sendable()});
+        opponent.thread = simState.opponentThread;
     }
 
 
@@ -2424,12 +2440,14 @@ function simulationStop() {
     if(simState.robotThread) {
         simState.robotThread.terminate();
         simState.robotThread = null;
+        robot.thread = null;
     }
 
     //terminate the opponent thread
     if(simState.opponentThread) {
         simState.opponentThread.terminate();
         simState.opponentThread = null;
+        opponent.thread = null;
     }
 
     // remove the robot's abilityt to teleport on resume ^_^
