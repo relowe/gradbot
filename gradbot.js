@@ -646,13 +646,44 @@ function LightSensor(parent, x, y) {
     this.intensity = 0;
     this.freq = 10;  //frequency in hertz
 
+    this.getRobotLights = function(r) {
+        var lights = [];
+
+        for(var i=0; i<r.parts.length; i++) {
+            if(r.parts[i].type == "Light") {
+                lights.push(r.parts[i]);
+            }
+        }
+
+        return lights;
+    }
+
+
+    this.getWorldLights = function() {
+        var lights = [];
+        for(var i=0; i<simState.worldObjects.length; i++) {
+            var part = simState.worldObjects[i].part;
+
+            if(part.type=="Light") {
+                lights.push(part);
+            }
+        }
+        return lights;
+    }
+
+
 
     this.updateSensor = function() {
         var closest = Infinity; 
+        var lights = this.getWorldLights();
+        lights = lights.concat(this.getRobotLights(robot));
+        if(opponent) {
+            lights = lights.concat(this.getRobotLights(opponent));
+        }
 
         //find the closest visible light source
-        for(var i in simState.worldObjects) {
-            var part = simState.worldObjects[i].part;
+        for(var i in lights) {
+            var part = lights[i];
     
             //we only sense lights
             if(part.type != "Light") { 
@@ -665,8 +696,8 @@ function LightSensor(parent, x, y) {
             }
 
             //calculate displacement to the light
-            var dx = part.x - this.worldx;
-            var dy = part.y - this.worldy;
+            var dx = part.worldx - this.worldx;
+            var dy = part.worldy - this.worldy;
 
             //calculate the angle to the light
             var angle = reduceAngle(Math.atan2(dy, dx));
