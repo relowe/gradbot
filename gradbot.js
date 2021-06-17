@@ -2386,9 +2386,15 @@ function simulationStart() {
         clearInterval(simState.timer);
     }
 
-    //stop the motors
+    //reset the bots
     robot.left.setPower(0);
     robot.right.setPower(0);
+    robot.hp = 3;
+    if(opponent) {
+        opponent.left.setPower(0);
+        opponent.right.setPower(0);
+        opponent.hp = 3;
+    }
 
     //start the robot thread
     simState.robotThread = new Worker("userbot.js");
