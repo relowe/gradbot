@@ -2123,8 +2123,13 @@ function simDeletePart(event) {
 
     deselectPart(simState);
 
+    var partArray = [];
+    for(var i=0; i<simState.worldObjects.length; i++) {
+        partArray[i] = simState.worldObjects[i].part;
+    }
+
     // remove it from the robot parts list
-    simState.worldObjects.splice(simState.worldObjects.indexOf(part), 1);
+    simState.worldObjects.splice(partArray.indexOf(part), 1);
 
     // redraw the sim
     drawSim();
