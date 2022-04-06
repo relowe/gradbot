@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css?family=Muli&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+/* Style the tab */
+ .tab {
+		
+		
+		overflow: hidden;
+		border: 1px solid #ccc;
+		background-color: #ccc;
+		width: 1044px;
+		margin: auto;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+	display:inline-block;
+	margin-left:0px;
+	line-height:20px;
+	background-color: #87cefa;
+	/*float: left;*/
+	border: none;
+	outline: none;
+	cursor: pointer;
+	padding: 14px 16px;
+	transition: 0.3s;
+	font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+	background-color: #ddd;
+} /* Create an active/current tablink class */
+.tab button.active {
+		cursor:alias;
+		background-color: #ccc;
+
+}
+
+/* Style the tab content */
+.tabcontent {
+		display: none;
+		padding: 6px 12px;
+		border: 1px solid #ccc;
+		border-top: none;
+		width: 1020px;
+		margin: auto;
+}
+
+/* Canvas Container */
+.container {
+		position: relative;
+		margin: 0px;
+		padding: 0px;
+		top: 0px;
+		left: 0px;
+		width: 800px;
+		height: 600px;
+}
+
+/* contained canvases */
+.container canvas{
+		position: absolute;
+		top: 0px;
+		left: 0px;
+}
+
+/* toolbox div */
+.toolbox {
+		position: absolute;
+		top: 0px;
+		left: 800px;
+		right: 800px;
+		width: 200px;
+		height: 800px;
+		overflow: auto;
+		
+}
+
+.toolboxHead {
+		text-align: center;
+		border-top: 1px solid lightcoral;
+		border-bottom: 1px solid lightcoral;
+		height: 30px;
+		line-height: 30px;
+}
+
+.toolboxContent {
+	background-color:#87cefa;
+		width: 200px;
+		height: 570px;
+		overflow: auto;
+}
+
+.inner {
+		padding: 6px;
+}
+
+hr {
+		background-color: lightblue;
+		border: none;
+		height: 1px;
+}  .partEditorPane {
+	display: none;
+}
+
+input[type=text] {
+	width: 150px;
+} 
+
+#robotCode {
+	width: 800px;
+	height: 588px;
+	border: 1px solid lightblue;
+	font-family: monospace;
+	font-size: 14pt;
+	padding: 6px;
+}
+
+ul {
+	padding: 0px 20px;
+	margin: 0px;
+}
