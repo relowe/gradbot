@@ -71,21 +71,24 @@
 .toolbox {
 		position: absolute;
 		top: 0px;
-		left: 820px;
+		left: 800px;
+		right: 800px;
 		width: 200px;
-		height: 600px;
+		height: 800px;
 		overflow: auto;
-		border: 1px solid lightblue;
+		
 }
 
 .toolboxHead {
 		text-align: center;
+		border-top: 1px solid lightcoral;
 		border-bottom: 1px solid lightcoral;
 		height: 30px;
 		line-height: 30px;
 }
 
 .toolboxContent {
+	background-color:#87cefa;
 		width: 200px;
 		height: 570px;
 		overflow: auto;
