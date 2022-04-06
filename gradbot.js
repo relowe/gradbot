@@ -2510,6 +2510,17 @@ function simulationUpdate() {
                 }
             }
         }
+
+        // check for robot collisions
+        //if(obj.part.type == "Wall") {
+            //for(var j=0; j < botViews.length; j++) {
+                //if(collision(botViews[j].view, obj.view)) {
+                    //bots[j].hp--;
+                    //bots[j].left.setPower(0);
+                    //bots[j].right.setPower(0);
+                //}
+            //}
+        }
     }
     for(var i=0; i < toVanish.length; i++) {
         toVanish[i].vanish();
