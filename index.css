@@ -3,6 +3,9 @@
 * {
   box-sizing: border-box;
 }
+/*adding body */
+
+
 /* Style the tab */
  .tab {
 	overflow: hidden;
@@ -45,6 +48,7 @@
 /* Canvas Container */
 .container {
 		position: relative;
+		background-color: black;
 		margin: 0px;
 		padding: 0px;
 		top: 0px;
