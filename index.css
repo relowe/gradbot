@@ -5,17 +5,22 @@
 }
 /* Style the tab */
  .tab {
-	overflow: hidden;
-	border: 1px solid #ccc;
-	background-color: #ccc;
-	width: 1044px;
-	margin: auto;
+		
+		
+		overflow: hidden;
+		border: 1px solid #ccc;
+		background-color: #ccc;
+		width: 1044px;
+		margin: auto;
 }
 
 /* Style the buttons inside the tab */
 .tab button {
+	display:inline-block;
+	margin-left:0px;
+	line-height:20px;
 	background-color: #87cefa;
-	float: left;
+	/*float: left;*/
 	border: none;
 	outline: none;
 	cursor: pointer;
@@ -29,7 +34,9 @@
 	background-color: #ddd;
 } /* Create an active/current tablink class */
 .tab button.active {
+		cursor:alias;
 		background-color: #ccc;
+
 }
 
 /* Style the tab content */
