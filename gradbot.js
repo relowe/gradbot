@@ -2521,7 +2521,6 @@ function simulationUpdate() {
                 //}
             //}
         }
-    }
     for(var i=0; i < toVanish.length; i++) {
         toVanish[i].vanish();
     }
