@@ -2652,3 +2652,10 @@ function newRobot() {
     drawSim();
     drawBuild();
 }
+
+
+//Dark mode
+
+document.querySelector('[data-switch-dark]').addEventListener('click', function() {
+    document.body.classList.toggle('dark-class');
+  })
