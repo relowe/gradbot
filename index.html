@@ -1,125 +1,13 @@
 <!doctype html>
 <html lang = "en">
 <head>
-    <link rel="stylesheet" href="index.css">
     <title>Gradbot Simulator</title>
     <meta charset = "utf-8">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="index.css"/>
     <script src="gradbot.js"></script>
     <style>
         /* Style the tab */
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-            width: 1044px;
-            margin: auto;
-        }
-    
-        /* Style the buttons inside the tab */
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-    
-        /* Change background color of buttons on hover */
-        .tab button:hover {
-            background-color: #ddd;
-        }
-    
-        /* Create an active/current tablink class */
-        .tab button.active {
-            background-color: #ccc;
-        }
-    
-        /* Style the tab content */
-        .tabcontent {
-            display: none;
-            padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-top: none;
-            width: 1020px;
-            margin: auto;
-        }
-
-        /* Canvas Container */
-        .container {
-            position: relative;
-            margin: 0px;
-            padding: 0px;
-            top: 0px;
-            left: 0px;
-            width: 800px;
-            height: 600px;
-        }
-
-        /* contained canvases */
-        .container canvas{
-            position: absolute;
-            top: 0px;
-            left: 0px;
-        }
-
-        /* toolbox div */
-        .toolbox {
-            position: absolute;
-            top: 0px;
-            left: 820px;
-            width: 200px;
-            height: 600px;
-            overflow: auto;
-            border: 1px solid lightblue;
-        }
-
-        .toolboxHead {
-            text-align: center;
-            border-bottom: 1px solid lightcoral;
-            height: 30px;
-            line-height: 30px;
-        }
-
-        .toolboxContent {
-            width: 200px;
-            height: 570px;
-            overflow: auto;
-        }
-
-        .inner {
-            padding: 6px;
-        }
-
-        hr {
-            background-color: lightblue;
-            border: none;
-            height: 1px;
-        }
-
-        .partEditorPane {
-            display: none;
-        }
-
-        input[type=text] {
-            width: 150px;
-        } 
-
-        #robotCode {
-            width: 800px;
-            height: 588px;
-            border: 1px solid lightblue;
-            font-family: monospace;
-            font-size: 14pt;
-            padding: 6px;
-        }
-
-        ul {
-            padding: 0px 20px;
-            margin: 0px;
-        }
     </style>
     <script>
         window.onload = function () {
@@ -192,6 +80,8 @@
                         <input type="file" id="simUpload" style="display: none">
                         <button id="simOpenOpponent">Add/Change</button>
                         <button id="simRemoveOpponent">Remove</button>
+                        <br>
+                        *Note: refresh page after running simulation with opponent*
                         <hr>
                     </div>
                 </div>
@@ -267,8 +157,41 @@
                         </ul>
                     </div>
                 </div>
+                <div class="CommandListHead">
+                    <span class="bolded">Robot Commands</span>
+                </div>
+                <div class="toolboxContent">
+                    <span class="bolded">'side.setPower(level);'</span> <br>
+                    -------------------- <br>
+                    Sets the power level of <br>
+                    the motor on the specified <br>
+                    side of the robot. <br>
+                    Side can be left or right. <br>
+                    Level can range from <br>
+                    0 to 100.<br>
+                    <br>
+                    <span class="bolded">'await delay(number);'</span><br>
+                    -------------------- <br>
+                    Waits to move on to the <br>
+                    next command. Number is <br>
+                    the number of milliseconds <br>
+                    you would like the robot <br>
+                    to wait. <br>
+                    <br>
+                    <span class="bolded">'laser.fire;'</span><br>
+                    -------------------- <br>
+                    Fires the specified laser <br>
+                    one time. Use part name to <br>
+                    specify which laser to fire from. <br>
+
+
+                </div>
             </div>
         </div>
     </div>
+
+    <button class = 'theme-change'data-switch-dark aria-hidden> Change Theme </button>
+
+    <script src="gradbot.js"></script>
 </body>
 </html>

@@ -1,0 +1,28 @@
+$dark-theme-background: #000000;
+$dark-theme-color: #ffffff;
+$dark-font-size: 22px;
+
+$white-theme-background: #ffffff;
+$white-theme-color: #000000;
+$white-font-size : 22px;
+
+@mixin dark-theme {
+ font-color: $dark-font-size;
+ background-color: $dark-theme-background;
+  color: $dark-theme-color;
+}
+
+@mixin light-theme {
+  font-color: $white-font-size;
+  background-color: $white-theme-background;
+  color: $white-theme-color;
+}
+
+
+.dark-class {
+  @include dark-theme;
+}
+
+.light-class {
+  @include light-theme;
+}
