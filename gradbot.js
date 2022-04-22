@@ -2675,6 +2675,14 @@ function newRobot() {
 
 //Dark mode
 
-document.querySelector('[data-switch-dark]').addEventListener('click', function() {
-    document.body.classList.toggle('dark-class');
-  })
+// document.querySelector('[data-switch-dark]').addEventListener('click', function() {
+//     document.body.classList.toggle('dark-class');
+//   })
+
+document.onkeypress = function (e) {
+    e = e || window.event;
+
+    if (e.keyCode === 13) {
+        document.documentElement.classList.toggle('dark-mode');
+    }
+}

@@ -2,6 +2,9 @@
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  outline: 0;
+  padding: 0;
 }
 /* Style the tab */
  .tab {
@@ -122,4 +125,10 @@ input[type=text] {
 ul {
 	padding: 0px 20px;
 	margin: 0px;
+}
+
+/* Dark Mode */
+
+.dark-mode {
+    filter: invert(1) hue-rotate(180deg)
 }
