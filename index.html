@@ -3,8 +3,9 @@
 <head>
     <title>Gradbot Simulator</title>
     <meta charset = "utf-8">
-
+    <!-- <link rel="stylesheet" href="light-theme.css" id="theme-link"/> -->
     <link rel="stylesheet" href="index.css"/>
+
 
     <!-- <style>
         /* Style the tab */
@@ -16,6 +17,7 @@
     </script>
 </head>
 <body>
+    <button class="btn-toggle">Toggle Dark-Mode</button>
     <div class="tab">
             <button class="tablinks" id="simButton" onclick="openTab(event, 'Simulate')">Simulate</button>
             <button class="tablinks" id="buildButton" onclick="openTab(event, 'Build')">Build</button>
@@ -190,7 +192,8 @@
         </div>
     </div>
 
-    <!-- <button class = 'theme-change'data-switch-dark aria-hidden> Change Theme </button> -->
+<!-- 
+    <button class = 'btn-toggle'> Change Theme </button> -->
 
     <script src="gradbot.js"></script>
 </body>

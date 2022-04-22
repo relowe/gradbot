@@ -2684,5 +2684,15 @@ document.onkeypress = function (e) {
 
     if (e.keyCode === 13) {
         document.documentElement.classList.toggle('dark-mode');
-    }
-} // Press enter key to enter dark mode.
+    }}
+ // Press enter key to enter dark mode.
+
+//  const btn = document.querySelector(".btn-toggle");
+//  const theme = document.querySelector("#theme-link");
+//  btn.addEventListener("click", function() {
+//    if (theme.getAttribute("href") === "light-theme.css") {
+//      theme.href = "dark-theme.css";
+//    } else {
+//      theme.href = "light-theme.css";
+//    }
+//  });
