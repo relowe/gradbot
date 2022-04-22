@@ -2504,15 +2504,7 @@ function simulationUpdate() {
         if(obj.part.type == "Wall") {
             for(var j=0; j < botViews.length; j++) {
                 if(collision(botViews[j].view, obj.view)) {
-                    bots[j].left.setPower(0);
-                    bots[j].right.setPower(0);
-                }
-            }
-        }
-
-        if(opponent) {
-            for(var j=0; j < botViews.length; j++) {
-                if(collision(botViews[j].view, opponent.view)) {
+                    //bots[j].hp--;
                     bots[j].left.setPower(0);
                     bots[j].right.setPower(0);
                 }
@@ -2520,17 +2512,15 @@ function simulationUpdate() {
         }
 
         // check for robot collisions
-            //for(var i=0; i < botViews.length; i++) {
-            //    for(var j=0; j < botViews.length; j++){
-            //        if(collision(botViews[j].view, botviews[i].view)) {
-            //            bots[j].left.setPower(0);
-            //            bots[j].right.setPower(0);
-            //            bots[i].left.setPower(0);
-            //            bots[i].right.setPower(0);
-            //        }
-            //    }
-           // }
-       // }
+        //if(obj.part.type == "Wall") {
+            //for(var j=0; j < botViews.length; j++) {
+                //if(collision(botViews[j].view, obj.view)) {
+                    //bots[j].hp--;
+                    //bots[j].left.setPower(0);
+                    //bots[j].right.setPower(0);
+                //}
+            //}
+        }
     for(var i=0; i < toVanish.length; i++) {
         toVanish[i].vanish();
     }
