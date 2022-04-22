@@ -2685,4 +2685,4 @@ document.onkeypress = function (e) {
     if (e.keyCode === 13) {
         document.documentElement.classList.toggle('dark-mode');
     }
-}
+} // Press enter key to enter dark mode.
