@@ -2224,11 +2224,14 @@ function simulationGo(event) {
 
 function simulationReset(event) {
     document.getElementById("simGo").innerHTML = "Start";
-
+    var canvas = document.getElementById("simfg");
     //put the robot back in its original position and heading
     robot.moveTo(simState.robotStartX, simState.robotStartY);
     robot.face(simState.robotStartHeading);
 
+    for(var i=0; i<simState.worldObjects.length; i++) {
+        simState.worldObjects[i].part.moveTo(canvas.width/2, canvas.height/2);
+  }
     //clear the background
     graphPaperFill("simbg");
 
@@ -2257,7 +2260,8 @@ function simulationClear(event) {
         opponent.y = 500;
         opponent.heading = Math.PI;
     }
-    
+    //clear lights and walls
+    simState.worldObjects= [];
     //redraw 
     graphPaperFill("simbg");
     drawSim();
