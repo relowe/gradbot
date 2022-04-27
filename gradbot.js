@@ -2336,6 +2336,9 @@ function gradbotInit() {
     //select the simulation tab
     document.getElementById('simButton').click();
 
+    //make it so the dark mode button actually works
+    document.getElementById("darkMode").click = document.documentElement.classList.toggle('dark-mode');
+
     //set up file handlers
     document.getElementById("buildOpen").onclick = function() {
         deselectPart(buildState);
@@ -2500,11 +2503,13 @@ function simulationUpdate() {
         obj.part.update();
 
         //check for laser blast collisions
-        if(obj.part.type == "LaserBlast") {
-            for(var j=0; j < botViews.length; j++) {
-                if(collision(botViews[j].view, obj.view)) {
-                    bots[j].hp--;
-                    toVanish.push(obj.part);
+        if(obj.part.type == "LaserBlast" ) {
+            if(opponent){
+                for(var j=0; j < botViews.length; j++) {
+                    if(collision(botViews[j].view, obj.view)) {
+                        bots[j].hp--;
+                        toVanish.push(obj.part);
+                    }
                 }
             }
         }
@@ -2679,12 +2684,12 @@ function newRobot() {
 //     document.body.classList.toggle('dark-class');
 //   })
 
-document.onkeypress = function (e) {
-    e = e || window.event;
+//document.onkeypress = function (e) {
+    //e = e || window.event;
 
-    if (e.keyCode === 13) {
-        document.documentElement.classList.toggle('dark-mode');
-    }}
+    //if (e.keyCode === 13) {
+    //    document.documentElement.classList.toggle('dark-mode');
+    //}}
  // Press enter key to enter dark mode.
 
 //  const btn = document.querySelector(".btn-toggle");
