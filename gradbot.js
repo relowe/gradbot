@@ -1591,6 +1591,7 @@ function openTab(evt, tabId) {
     document.getElementById(tabId).style.display = "block";
     evt.currentTarget.className += " active";
 
+
     //handle switching to specific tabs
     if(tabId == "Simulate") {
         deselectPart(buildState);
@@ -2672,19 +2673,18 @@ function newRobot() {
     drawBuild();
 }
 
-
 //Dark mode
 
 // document.querySelector('[data-switch-dark]').addEventListener('click', function() {
 //     document.body.classList.toggle('dark-class');
 //   })
 
-document.onkeypress = function (e) {
-    e = e || window.event;
-
-    if (e.keyCode === 13) {
-        document.documentElement.classList.toggle('dark-mode');
-    }}
+//document.onkeypress = function (e) {
+//    e = e || window.event;
+//
+//    if (e.keyCode === 13) {
+//        document.documentElement.classList.toggle('dark-mode');
+//    }}
  // Press enter key to enter dark mode.
 
 //  const btn = document.querySelector(".btn-toggle");
