@@ -126,6 +126,9 @@ ul {
 	padding: 0px 20px;
 	margin: 0px;
 }
+.wrapper{
+	display: flex;
+}
 
 /* Dark Mode */
 
