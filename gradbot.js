@@ -2513,7 +2513,7 @@ function simulationUpdate() {
         // check for wall collisions
         if(obj.part.type == "Wall") {
             for(var j=0; j < botViews.length; j++) {
-                if(collision(botViews[j].view, obj.view)) {
+                if(bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
                     //bots[j].hp--;
                     bots[j].left.setPower(0);
                     bots[j].right.setPower(0);
