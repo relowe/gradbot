@@ -1471,14 +1471,17 @@ function RangeSensorView(part) {
  * @param {*} part 
  */
 function WallView(part) {
+    if (!part.resizeFactor){
+        part.resizeFactor = 1;
+    }
     PartView.call(this, part);
 
     //create my vector view
     var points = [
-        {x: -5, y: -10},
-        {x: 5, y: -10},
-        {x: 5, y: 10},
-        {x: -5, y: 10},
+        {x: -5 * part.resizeFactor, y: -10 * part.resizeFactor},
+        {x: 5 * part.resizeFactor, y: -10 * part.resizeFactor},
+        {x: 5 * part.resizeFactor, y: 10 * part.resizeFactor},
+        {x: -5 * part.resizeFactor, y: 10 * part.resizeFactor},
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -1539,6 +1542,7 @@ var buildView;
 const DRAG_NONE= 0;
 const DRAG_MOVE=1;
 const DRAG_ROTATE=2;
+const DRAG_RESIZE=3;
 
 //state of the simulator ui
 var simState = {
@@ -1749,6 +1753,8 @@ function simMouseDown(event) {
     } else if(document.getElementById('dragMove').checked) {
         simState.dragMode = DRAG_MOVE;
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
+    } else if(document.getElementById('dragResize').checked) {
+        simState.dragMode = DRAG_RESIZE;
     } else {
         simState.dragMode = DRAG_NONE;
     }
@@ -1767,6 +1773,19 @@ function simMouseUp(event) {
     // one last move (if that is what we are up to!)
     if(simState.dragMode == DRAG_MOVE) {
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
+    } else if (simState.dragMode == DRAG_RESIZE && simState.dragTarget.part.type == 'Wall'){
+        if (simState.dragTarget.part.resizeFactor < 5){
+            simState.dragTarget.part.resizeFactor = simState.dragTarget.part.resizeFactor + 1;
+        }else{
+            simState.dragTarget.part.resizeFactor = 1;
+        }
+        for (var i=0; simState.worldObjects.length; i++){
+            if (simState.worldObjects[i].part.name == simState.dragTarget.part.name){
+                simState.worldObjects.splice(i, 1);
+                break;
+            };
+        }
+        simState.worldObjects.push(new WallView(simState.dragTarget.part));
     }
 
     // end the drag mode
