@@ -1532,6 +1532,7 @@ function LaserView(part) {
 /****************************************** 
  * USER INTERFACE
  ******************************************/
+var world;
 var robot;
 var opponent;
 var opponentView;
@@ -2396,7 +2397,20 @@ function gradbotInit() {
 
     //activate our error handler
     window.onerror = gradbotError;
-
+    
+    //load world handlers under simulation tabs
+	document.getElementById("worldOpen").onclick = function() {
+		deselectPart(buildState);
+		document.getElementById("worldUpload").click();
+	};
+	document.getElementById("worldSave").onclick = saveWorldFile;
+	document.getElementById("worldUpload").onchange = openWorldFile ;
+	document.getElementById("worldNew").onclick = function() {
+		if(confirm("Are you sure you want to create a new World? Any unsaved changes will be lost!")) {
+			deselectPart(buildState);
+			newWorld();
+		}
+	}
 }
 
 
@@ -2562,6 +2576,64 @@ function simulationUpdate() {
 /******************************************
  * Storage Functions
  ******************************************/
+
+//World Save Funtions
+function saveWorld(world){
+	localStorage.setItem("world", JSON.stringify(world));
+}
+
+function saveWorldFile() {
+    var file = new Blob([JSON.stringify(world)]);
+    var a = document.getElementById('worldDownload');
+    a.href = URL.createObjectURL(file, {type: "text/plain"});
+    a.download = "world";
+    a.click();
+    
+    URL.revokeObjectURL(a.href);
+}
+
+function openWorldFile() {
+    var reader = new FileReader();
+    reader.onload = function() {
+        loadWorld(world, reader.result);
+
+        //rebuild the world for simulation
+        simView = new ChassisView(world);
+        buildView = new ChassisBuildView(world);
+
+        //redraw
+        graphPaperFill("simbg");
+        drawSim();
+        drawBuild();
+    };
+
+    reader.readAsText(this.files[0]);
+
+}
+
+function loadWorld(world, worldString) {
+
+    if(!worldString) worldString = localStorage.getItem("world");
+    if(!worldString) return;
+
+
+    var obj = JSON.parse(worldString);
+}
+
+function newWorld() {
+   robot = new Chassis(100, 100, 0);
+
+    //rebuild the robot views
+    simView = new ChassisView(robot);
+    buildView = new ChassisBuildView(robot);
+
+    //redraw
+    graphPaperFill("simbg");
+    drawSim();
+    drawBuild();
+}
+
+//Robot Save Functions
 function saveRobot(robot) {
     localStorage.setItem("robot", JSON.stringify(robot));
 }
