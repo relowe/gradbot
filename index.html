@@ -3,123 +3,13 @@
 <head>
     <title>Gradbot Simulator</title>
     <meta charset = "utf-8">
-    <script src="gradbot.js"></script>
-    <style>
+    <!-- <link rel="stylesheet" href="light-theme.css" id="theme-link"/> -->
+    <link rel="stylesheet" href="index.css"/>
+
+
+    <!-- <style>
         /* Style the tab */
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-            width: 1044px;
-            margin: auto;
-        }
-    
-        /* Style the buttons inside the tab */
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-    
-        /* Change background color of buttons on hover */
-        .tab button:hover {
-            background-color: #ddd;
-        }
-    
-        /* Create an active/current tablink class */
-        .tab button.active {
-            background-color: #ccc;
-        }
-    
-        /* Style the tab content */
-        .tabcontent {
-            display: none;
-            padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-top: none;
-            width: 1020px;
-            margin: auto;
-        }
-
-        /* Canvas Container */
-        .container {
-            position: relative;
-            margin: 0px;
-            padding: 0px;
-            top: 0px;
-            left: 0px;
-            width: 800px;
-            height: 600px;
-        }
-
-        /* contained canvases */
-        .container canvas{
-            position: absolute;
-            top: 0px;
-            left: 0px;
-        }
-
-        /* toolbox div */
-        .toolbox {
-            position: absolute;
-            top: 0px;
-            left: 820px;
-            width: 200px;
-            height: 600px;
-            overflow: auto;
-            border: 1px solid lightblue;
-        }
-
-        .toolboxHead {
-            text-align: center;
-            border-bottom: 1px solid lightcoral;
-            height: 30px;
-            line-height: 30px;
-        }
-
-        .toolboxContent {
-            width: 200px;
-            height: 570px;
-            overflow: auto;
-        }
-
-        .inner {
-            padding: 6px;
-        }
-
-        hr {
-            background-color: lightblue;
-            border: none;
-            height: 1px;
-        }
-
-        .partEditorPane {
-            display: none;
-        }
-
-        input[type=text] {
-            width: 150px;
-        } 
-
-        #robotCode {
-            width: 800px;
-            height: 588px;
-            border: 1px solid lightblue;
-            font-family: monospace;
-            font-size: 14pt;
-            padding: 6px;
-        }
-
-        ul {
-            padding: 0px 20px;
-            margin: 0px;
-        }
-    </style>
+    </style> -->
     <script>
         window.onload = function () {
             gradbotInit();
@@ -127,6 +17,7 @@
     </script>
 </head>
 <body>
+    <button class="btn-toggle" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark Mode</button>
     <div class="tab">
             <button class="tablinks" id="simButton" onclick="openTab(event, 'Simulate')">Simulate</button>
             <button class="tablinks" id="buildButton" onclick="openTab(event, 'Build')">Build</button>
@@ -143,10 +34,18 @@
                         <div class="toolboxHead">
                             Drag Mode
                         </div>
+                        <div class="wrapper">
                         <input type="radio" id="dragMove" name="dragMode" checked="checked" />
                         <label for="dragMove">Move</label>
+                        </div>
+                        <div class="wrapper">
                         <input type="radio" id="dragRotate" name="dragMode"/>
                         <label for="dragRotate">Rotate</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="dragResize" name="dragMode"/>
+                        <label for="dragResize">Resize</label>
+                        </div>
                         <hr/>
                         <div class="toolboxHead">
                             Simulation Controls
@@ -191,6 +90,17 @@
                         <input type="file" id="simUpload" style="display: none">
                         <button id="simOpenOpponent">Add/Change</button>
                         <button id="simRemoveOpponent">Remove</button>
+                        <br>
+                        *Note: refresh page after running simulation with opponent*
+                        <hr>
+                        
+                        <div class="toolboxHead">
+                            Manage World
+                        </div>
+                        <input type="file" id="simUpload" style="display: none">
+                        <button id="worldOpen">Open</button>
+                        <button id="worldSave">Save</button>
+                        <button id="worldNew">New</button>
                         <hr>
                     </div>
                 </div>
@@ -255,7 +165,9 @@
 
     <div class="tabcontent" id="Code">
         <div class="container">
+            <button class="tablinks" id="commandListButton" onclick="openTab(commands.html)">Robot Commands Guide</button>
             <textarea id="robotCode"></textarea>
+            
             <div class="toolbox">
                 <div class="toolboxHead">
                     Part List 
@@ -266,8 +178,17 @@
                         </ul>
                     </div>
                 </div>
+                <!--<div class="CommandListHead">
+                    <span class="bolded">Robot Commands</span>
+                </div>-->
+                
             </div>
         </div>
     </div>
+
+<!-- 
+    <button class = 'btn-toggle'> Change Theme </button> -->
+
+    <script src="gradbot.js"></script>
 </body>
 </html>

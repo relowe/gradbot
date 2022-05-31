@@ -1471,14 +1471,17 @@ function RangeSensorView(part) {
  * @param {*} part 
  */
 function WallView(part) {
+    if (!part.resizeFactor){
+        part.resizeFactor = 1;
+    }
     PartView.call(this, part);
 
     //create my vector view
     var points = [
-        {x: -5, y: -10},
-        {x: 5, y: -10},
-        {x: 5, y: 10},
-        {x: -5, y: 10},
+        {x: -5 * part.resizeFactor, y: -10 * part.resizeFactor},
+        {x: 5 * part.resizeFactor, y: -10 * part.resizeFactor},
+        {x: 5 * part.resizeFactor, y: 10 * part.resizeFactor},
+        {x: -5 * part.resizeFactor, y: 10 * part.resizeFactor},
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -1529,6 +1532,7 @@ function LaserView(part) {
 /****************************************** 
  * USER INTERFACE
  ******************************************/
+var world;
 var robot;
 var opponent;
 var opponentView;
@@ -1539,6 +1543,7 @@ var buildView;
 const DRAG_NONE= 0;
 const DRAG_MOVE=1;
 const DRAG_ROTATE=2;
+const DRAG_RESIZE=3;
 
 //state of the simulator ui
 var simState = {
@@ -1590,6 +1595,7 @@ function openTab(evt, tabId) {
     }
     document.getElementById(tabId).style.display = "block";
     evt.currentTarget.className += " active";
+
 
     //handle switching to specific tabs
     if(tabId == "Simulate") {
@@ -1748,6 +1754,8 @@ function simMouseDown(event) {
     } else if(document.getElementById('dragMove').checked) {
         simState.dragMode = DRAG_MOVE;
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
+    } else if(document.getElementById('dragResize').checked) {
+        simState.dragMode = DRAG_RESIZE;
     } else {
         simState.dragMode = DRAG_NONE;
     }
@@ -1766,6 +1774,19 @@ function simMouseUp(event) {
     // one last move (if that is what we are up to!)
     if(simState.dragMode == DRAG_MOVE) {
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
+    } else if (simState.dragMode == DRAG_RESIZE && simState.dragTarget.part.type == 'Wall'){
+        if (simState.dragTarget.part.resizeFactor < 5){
+            simState.dragTarget.part.resizeFactor = simState.dragTarget.part.resizeFactor + 1;
+        }else{
+            simState.dragTarget.part.resizeFactor = 1;
+        }
+        for (var i=0; simState.worldObjects.length; i++){
+            if (simState.worldObjects[i].part.name == simState.dragTarget.part.name){
+                simState.worldObjects.splice(i, 1);
+                break;
+            };
+        }
+        simState.worldObjects.push(new WallView(simState.dragTarget.part));
     }
 
     // end the drag mode
@@ -2123,8 +2144,13 @@ function simDeletePart(event) {
 
     deselectPart(simState);
 
+    var partArray = [];
+    for(var i=0; i<simState.worldObjects.length; i++) {
+        partArray[i] = simState.worldObjects[i].part;
+    }
+
     // remove it from the robot parts list
-    simState.worldObjects.splice(simState.worldObjects.indexOf(part), 1);
+    simState.worldObjects.splice(partArray.indexOf(part), 1);
 
     // redraw the sim
     drawSim();
@@ -2219,11 +2245,14 @@ function simulationGo(event) {
 
 function simulationReset(event) {
     document.getElementById("simGo").innerHTML = "Start";
-
+    var canvas = document.getElementById("simfg");
     //put the robot back in its original position and heading
     robot.moveTo(simState.robotStartX, simState.robotStartY);
     robot.face(simState.robotStartHeading);
 
+    for(var i=0; i<simState.worldObjects.length; i++) {
+        simState.worldObjects[i].part.moveTo(canvas.width/2, canvas.height/2);
+  }
     //clear the background
     graphPaperFill("simbg");
 
@@ -2252,7 +2281,8 @@ function simulationClear(event) {
         opponent.y = 500;
         opponent.heading = Math.PI;
     }
-    
+    //clear lights and walls
+    simState.worldObjects= [];
     //redraw 
     graphPaperFill("simbg");
     drawSim();
@@ -2367,7 +2397,20 @@ function gradbotInit() {
 
     //activate our error handler
     window.onerror = gradbotError;
-
+    
+    //load world handlers under simulation tabs
+	document.getElementById("worldOpen").onclick = function() {
+		deselectPart(buildState);
+		document.getElementById("worldUpload").click();
+	};
+	document.getElementById("worldSave").onclick = saveWorldFile;
+	document.getElementById("worldUpload").onchange = openWorldFile ;
+	document.getElementById("worldNew").onclick = function() {
+		if(confirm("Are you sure you want to create a new World? Any unsaved changes will be lost!")) {
+			deselectPart(buildState);
+			newWorld();
+		}
+	}
 }
 
 
@@ -2493,13 +2536,34 @@ function simulationUpdate() {
         //check for laser blast collisions
         if(obj.part.type == "LaserBlast") {
             for(var j=0; j < botViews.length; j++) {
-                if(bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
+                if(collision(botViews[j].view, obj.view)) {
                     bots[j].hp--;
                     toVanish.push(obj.part);
                 }
             }
         }
-    }
+
+        // check for wall collisions
+        if(obj.part.type == "Wall") {
+            for(var j=0; j < botViews.length; j++) {
+                if(bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
+                    //bots[j].hp--;
+                    bots[j].left.setPower(0);
+                    bots[j].right.setPower(0);
+                }
+            }
+        }
+
+        // check for robot collisions
+        //if(obj.part.type == "Wall") {
+            //for(var j=0; j < botViews.length; j++) {
+                //if(collision(botViews[j].view, obj.view)) {
+                    //bots[j].hp--;
+                    //bots[j].left.setPower(0);
+                    //bots[j].right.setPower(0);
+                //}
+            //}
+        }
     for(var i=0; i < toVanish.length; i++) {
         toVanish[i].vanish();
     }
@@ -2512,6 +2576,64 @@ function simulationUpdate() {
 /******************************************
  * Storage Functions
  ******************************************/
+
+//World Save Funtions
+function saveWorld(world){
+	localStorage.setItem("world", JSON.stringify(world));
+}
+
+function saveWorldFile() {
+    var file = new Blob([JSON.stringify(world)]);
+    var a = document.getElementById('worldDownload');
+    a.href = URL.createObjectURL(file, {type: "text/plain"});
+    a.download = "world";
+    a.click();
+    
+    URL.revokeObjectURL(a.href);
+}
+
+function openWorldFile() {
+    var reader = new FileReader();
+    reader.onload = function() {
+        loadWorld(world, reader.result);
+
+        //rebuild the world for simulation
+        simView = new ChassisView(world);
+        buildView = new ChassisBuildView(world);
+
+        //redraw
+        graphPaperFill("simbg");
+        drawSim();
+        drawBuild();
+    };
+
+    reader.readAsText(this.files[0]);
+
+}
+
+function loadWorld(world, worldString) {
+
+    if(!worldString) worldString = localStorage.getItem("world");
+    if(!worldString) return;
+
+
+    var obj = JSON.parse(worldString);
+}
+
+function newWorld() {
+   robot = new Chassis(100, 100, 0);
+
+    //rebuild the robot views
+    simView = new ChassisView(robot);
+    buildView = new ChassisBuildView(robot);
+
+    //redraw
+    graphPaperFill("simbg");
+    drawSim();
+    drawBuild();
+}
+
+//Robot Save Functions
 function saveRobot(robot) {
     localStorage.setItem("robot", JSON.stringify(robot));
 }
@@ -2641,3 +2763,27 @@ function newRobot() {
     drawSim();
     drawBuild();
 }
+
+//Dark mode
+
+// document.querySelector('[data-switch-dark]').addEventListener('click', function() {
+//     document.body.classList.toggle('dark-class');
+//   })
+
+//document.onkeypress = function (e) {
+//    e = e || window.event;
+//
+//    if (e.keyCode === 13) {
+//        document.documentElement.classList.toggle('dark-mode');
+//    }}
+ // Press enter key to enter dark mode.
+
+//  const btn = document.querySelector(".btn-toggle");
+//  const theme = document.querySelector("#theme-link");
+//  btn.addEventListener("click", function() {
+//    if (theme.getAttribute("href") === "light-theme.css") {
+//      theme.href = "dark-theme.css";
+//    } else {
+//      theme.href = "light-theme.css";
+//    }
+//  });
