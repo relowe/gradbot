@@ -2399,6 +2399,8 @@ function gradbotInit() {
     window.onerror = gradbotError;
     
     //load world handlers under simulation tabs
+    //
+    /*
 	document.getElementById("worldOpen").onclick = function() {
 		deselectPart(buildState);
 		document.getElementById("worldUpload").click();
@@ -2411,6 +2413,7 @@ function gradbotInit() {
 			newWorld();
 		}
 	}
+    */
 }
 
 
