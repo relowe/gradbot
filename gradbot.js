@@ -196,6 +196,91 @@ function Positionable(x, y, heading) {
  * Simulation Objects
  ******************************************/
 
+/**
+ * A document for a part.
+ * Functions are an array of dictionaries:
+ *   { name: name of the function
+ *     doc: explanation of the function
+ *     params: Array( {
+ *        name : name of parameter
+ *        doc : document of parameter
+ *     }
+ *  }
+ * Vars are an array of dictionaries:
+ *  { name: name of var, doc: document of var }
+ * @param {*} name - name of the part
+ */
+function PartDoc() {
+    this.functions = Array();
+    this.vars = Array();
+    this.showName = true;
+
+    this.display = function(parent, name) {
+        var ul = document.createElement("ul");
+        parent.appendChild(ul);
+
+        // process the functions
+        for(var i=0; i<this.functions.length; i++) {
+            var f = this.functions[i];
+
+            // create the list elements
+            var li = document.createElement("li");
+            var code = document.createElement("span");
+            var funDoc = document.createElement("span");
+            var parameterList = document.createElement("ul");
+
+            //create the function document
+            funDoc.innerHTML = f.doc;
+
+            //start off the function call
+            code.classList.add('code');
+            code.innerHTML = "";
+            if(this.showName) {
+                code.innerHTML = name + ".";
+            }
+            code.innerHTML += f.name + "(";
+
+            // process the parameters
+            for(var j=0; j < f.params.length; j++) {
+                var p = f.params[j];
+                if(j != 0) { code.innerHTML += ","; }
+                code.innerHTML += p.name;
+
+                var pli = document.createElement("li");
+                pli.innerHTML = "<span class=\"code\">" + p.name + "</span> - " + p.doc;
+                parameterList.appendChild(pli);
+
+            }
+
+            code.innerHTML += ")";
+            li.appendChild(code);
+            li.appendChild(document.createElement("br"));
+            li.appendChild(funDoc);
+            li.appendChild(parameterList);
+            ul.appendChild(li);
+        }
+
+        // process the vars
+        for(var i=0; i<this.vars.length; i++) {
+            var v = this.vars[i];
+            var li = document.createElement("li");
+            var code = document.createElement("span");
+            var varDoc = document.createElement("span");
+            code.classList.add('code');
+
+            code.innerHTML = "";
+            if(this.showName) {
+                code.innerHTML = name + ".";
+            }
+            code.innerHTML += v.name;
+            varDoc.innerHTML = " - " + v.doc;
+            li.appendChild(code);
+            li.appendChild(varDoc);
+            ul.appendChild(li);
+        }
+    };
+}
+
 
 /**
  * The Part object is the base of all robot parts. 
@@ -213,6 +298,7 @@ function Part(parent, x, y, heading, name)
     Positionable.call(this, x, y, heading);
     this.type = "part";
     this.name = name != undefined ? name : ("part" + partCount);
+    this.doc = new PartDoc();
     
     //position in world coordinates
     this.worldx = 0;
@@ -221,6 +307,7 @@ function Part(parent, x, y, heading, name)
     // the outline and fill color of the part
     this.outline = "black";
     this.fill = "white";
+
 
     //set up the functions By default, they do nothing
 
@@ -270,7 +357,7 @@ function Part(parent, x, y, heading, name)
         result = {};
         for (var attr in this) {
             //skip parents and functions
-            if (attr == "parent" || typeof this[attr] == "function") {
+            if (attr == "parent" || typeof this[attr] == "function" || attr == "doc") {
                 continue;
             }
             result[attr] = this[attr];
@@ -306,6 +393,17 @@ function Motor(parent, x, y, heading, name)
     Part.call(this, parent, x, y, heading, name);
     this.type = "Motor";
 
+    //document the motor
+    this.doc.functions = Array(
+        { name: 'setPower',
+          doc: 'Set the power of the motor from -100 to 100',
+          params: Array( { name: 'p', doc: 'power setting'})
+        }
+    );
+    this.doc.vars = Array(
+        {name: 'power', doc: 'The current power setting of the motor'}
+    );
+
 
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
@@ -331,6 +429,19 @@ function Marker(parent, x, y, name) {
     //construct the part
     Part.call(this, parent, x, y, 0, name);
     this.type = "Marker";
+
+    // document the part
+    this.doc.functions = Array(
+        { name: 'penDown', doc: 'Begin drawing.', params: Array()},
+        { name: 'penUp', doc: 'Stop drawing.', params: Array()},
+        { name: 'setColor', doc: 'Change drawing color.', params: Array(
+            {name: 'c', doc: 'color'}
+        )}
+    );
+    this.doc.vars = Array(
+        { name: 'color', doc: 'The current color of the marker' },
+        { name: 'penDrawing', doc: 'True if the pen is drawing.'}
+    );
 
     //by default we are coloring black
     this.color = "black";
@@ -542,6 +653,12 @@ function Light(parent, x, y) {
     this.type = "Light";
     this.radius = 3;
 
+    this.doc.functions = Array(
+        { name: 'setColor', doc: 'Change light color.', params: Array(
+            {name: 'c', doc: 'color'}
+        )}
+    );
+
 
     /**
      * Receive a message from the user thread
@@ -581,6 +698,10 @@ function RangeSensor(parent, x, y) {
     this.freq = 10;  //frequency in hertz
     this.worldx = 0;
     this.worldy = 0;
+
+    this.doc.vars = Array(
+        {name: 'distance', doc: 'distance to the nearest object'}
+    );
 
 
     this.updateSensor = function() {
@@ -664,6 +785,10 @@ function LightSensor(parent, x, y) {
     this.worldy = 0;
     this.intensity = 0;
     this.freq = 10;  //frequency in hertz
+
+    this.doc.vars = Array(
+        {name: 'intensity', doc: 'intensity of the sensed light'}
+    );
 
     this.getRobotLights = function(r) {
         var lights = [];
@@ -827,6 +952,10 @@ function Laser(parent, x, y, heading) {
     this.lastUpdate = undefined;
     this.chargeTime = 500;
 
+    this.doc.functions = Array(
+        {name: 'fire', doc: 'Fire the laser beam.', params: Array()}
+    );
+
     //fire the laser beam
     this.fire = function() {
         // no charge, no pew
@@ -860,6 +989,22 @@ function Laser(parent, x, y, heading) {
     this.receiveUser = function(obj) {
         this.fire();
     }
+}
+
+
+/**
+ * Document the system functions.
+ */
+function SystemFunctions() {
+    this.doc = new PartDoc();
+    this.doc.showName = false;
+    this.name = 'System Functions';
+
+    this.doc.functions = Array(
+        { name: 'await delay',
+          doc: 'Wait for a period of time to pass',
+          params: Array({name: 'ms', doc: 'delay in milliseconds'})}
+    );
 }
 
 
@@ -1606,6 +1751,7 @@ function openTab(evt, tabId) {
     } else if(tabId == "Code") {
         var partList = document.getElementById("codePartList");
         partList.innerHTML="";
+        addPartToPartList(partList, new SystemFunctions());
         addPartToPartList(partList, robot.left);
         addPartToPartList(partList, robot.right);
         for(var i=0; i < robot.parts.length; i++) {
@@ -1644,7 +1790,23 @@ function openTab(evt, tabId) {
 function addPartToPartList(partList, part) {
     var li = document.createElement('li');
     li.innerHTML = part.name + ": <i>" + part.type + "</i>";
+    li.onclick = function() {displayPartDoc(part); };
     partList.appendChild(li);
+}
+
+
+/**
+ * Display part documentation.
+ * @param {*} part
+ */
+function displayPartDoc(part) {
+    var doc = document.getElementById('codePartDoc');
+    doc.innerHTML = '';
+    var e = document.createElement('div');
+    e.classList.add('toolboxHead');
+    e.innerHTML = part.name;
+    doc.appendChild(e);
+    part.doc.display(doc, part.name);
 }
 
 
@@ -2747,6 +2909,7 @@ function finishPart(part) {
     }
 
     for(var attr in part) {
+        if(attr == "doc") continue;
         result[attr] = part[attr];
     }
 

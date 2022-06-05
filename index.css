@@ -122,12 +122,21 @@ input[type=text] {
 	padding: 6px;
 }
 
+
 ul {
 	padding: 0px 20px;
 	margin: 0px;
 }
 .wrapper{
 	display: flex;
+}
+
+#codePartList li:hover {
+    text-decoration: underline;
+}
+
+.code {
+	font-family: monospace;
 }
 
 /* Dark Mode */
