@@ -1683,6 +1683,7 @@ var opponent;
 var opponentView;
 var simView;
 var buildView;
+var flask;
 
 // dragmodes
 const DRAG_NONE= 0;
@@ -1757,7 +1758,7 @@ function openTab(evt, tabId) {
         for(var i=0; i < robot.parts.length; i++) {
             addPartToPartList(partList, robot.parts[i]);
         }
-        document.getElementById('robotCode').value = robot.code;
+        flask.updateCode(robot.code);
     }
 
     //handle previous tab transitions
@@ -1770,7 +1771,7 @@ function openTab(evt, tabId) {
         drawSim();
         graphPaperFill("simbg");
     } else if(simState.prevTab == "Code") {
-        robot.code = document.getElementById('robotCode').value;
+        robot.code = flask.getCode();
     } 
 
     //save robot in local store
@@ -2555,6 +2556,9 @@ function gradbotInit() {
     document.getElementById("buildAddLightSensor").onclick = buildAddLightSensor;
     document.getElementById("buildAddRangeSensor").onclick = buildAddRangeSensor;
     document.getElementById("buildAddLaser").onclick = buildAddLaser;
+
+    // set up code editor
+    flask = new CodeFlask('#robotCode', {language: 'js'});
 
 
     //activate our error handler
