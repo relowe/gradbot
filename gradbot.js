@@ -999,6 +999,7 @@ function SystemFunctions() {
     this.doc = new PartDoc();
     this.doc.showName = false;
     this.name = 'System Functions';
+    this.type = '';
 
     this.doc.functions = Array(
         { name: 'await delay',
