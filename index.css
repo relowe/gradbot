@@ -48,7 +48,13 @@
 		padding: 6px 12px;
 		border: 1px solid #ccc;
 		border-top: none;
-		width: 1020px;
+		width: 1044px;
+		margin: auto;
+}
+
+.pagecontent {
+		padding: 6px 12px;
+		width: 1044px;
 		margin: auto;
 }
 
@@ -139,8 +145,14 @@ ul {
 	font-family: monospace;
 }
 
+body {
+    background: white;
+    color: black;
+}
+
 /* Dark Mode */
 
 .dark-mode {
     filter: invert(1) hue-rotate(180deg)
 }
+

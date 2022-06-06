@@ -17,7 +17,9 @@
     </script>
 </head>
 <body>
+    <div class="pagecontent">
     <button class="btn-toggle" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark Mode</button>
+    </div>
     <div class="tab">
             <button class="tablinks" id="simButton" onclick="openTab(event, 'Simulate')">Simulate</button>
             <button class="tablinks" id="buildButton" onclick="openTab(event, 'Build')">Build</button>
@@ -188,9 +190,11 @@
             </div>
         </div>
     </div>
+    <div class="pagecontent">
+        Source Code On <a href="https://github.com/relowe/gradbot">
+            GitHub</a>
+    </div>
 
-<!-- 
-    <button class = 'btn-toggle'> Change Theme </button> -->
 
     <script src="codeflask.min.js"></script>
     <script src="gradbot.js"></script>
