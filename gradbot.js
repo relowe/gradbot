@@ -1432,7 +1432,7 @@ function MarkerView(part) {
 
         //draw a line if the pen is down and we have two endpoints
         this.updateLoc();
-        if(this.part.penDrawing && this.loc && this.prevLoc) {
+        if(this.part.penDrawing && this.loc && this.prevLoc && simState.running) {
             var canvas = document.getElementById("simbg");
             var context = canvas.getContext("2d");
             context.beginPath();
@@ -1708,7 +1708,8 @@ var simState = {
     opponentThread: null,
     worldObjects: [],
     editTarget: null,
-    editOriginalOutline: null
+    editOriginalOutline: null,
+    running : false,
 };
 
 
@@ -2597,6 +2598,9 @@ function gradbotInit() {
  */
 function simulationStart() {
 
+    // mark the simulation as running
+    simState.running = true;
+
     // clear the timer, if there is one
     if(simState.timer) {
         clearInterval(simState.timer);
@@ -2657,6 +2661,9 @@ function opponentReceiveMessage(message) {
  * Stop the simulation
  */
 function simulationStop() {
+    // Mark the simulation as not running
+    simState.running = false;
+
     // clear the timer, if there is one
     if(simState.timer) {
         clearInterval(simState.timer);
