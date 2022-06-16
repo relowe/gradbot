@@ -503,6 +503,9 @@ function Chassis(x, y, heading, name)
     // create the robot code
     this.code = "";
 
+    // set up the laser battery
+    this.laserBattery = 50;
+
     // deal with explosions
     this.explode = function() {
         //terminate the robot thread
@@ -638,6 +641,17 @@ function Chassis(x, y, heading, name)
 
         //not found!
         return null;
+    }
+
+
+    // reset the laser battery
+    this.resetLaserBattery = function() {
+        this.laserBattery = 50;
+    }
+
+    // deplete the laser battery by a certain amount
+    this.depleteLaserBattery = function(amount) {
+        this.laserBattery -= amount;
     }
 }
 
@@ -961,11 +975,17 @@ function Laser(parent, x, y, heading) {
         // no charge, no pew
         if(!this.charged) { return; }
 
+        // check that we have ample battery power
+        if(this.parent.laserBattery <= 0) {
+            return;
+        }
+
         //no more power.
         this.charged = false;
         this.lastUpdate = Date.now();
 
         //fire!
+        this.parent.depleteLaserBattery(1);
         var lb = new LaserBlast(this.worldx, this.worldy, this.parent.heading, this.parent);
         simState.worldObjects.push(constructView(lb));
     }
@@ -2609,10 +2629,12 @@ function simulationStart() {
     //reset the bots
     robot.left.setPower(0);
     robot.right.setPower(0);
+    robot.resetLaserBattery();
     robot.hp = 3;
     if(opponent) {
         opponent.left.setPower(0);
         opponent.right.setPower(0);
+        opnent.resetLaserBattery();
         opponent.hp = 3;
     }
 
