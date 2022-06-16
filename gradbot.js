@@ -2574,6 +2574,9 @@ function gradbotInit() {
         opponentView = null;
         drawSim();
     };
+    document.getElementById("simRoverOpponent").onclick = loadRoverOpponent;
+    document.getElementById("simCirclerOpponent").onclick = loadCirclerOpponent;
+    document.getElementById("simSpinnerOpponent").onclick = loadSpinnerOpponent;
 
     // add part buttons
     document.getElementById("buildAddMarker").onclick = buildAddMarker;
@@ -2634,7 +2637,7 @@ function simulationStart() {
     if(opponent) {
         opponent.left.setPower(0);
         opponent.right.setPower(0);
-        opnent.resetLaserBattery();
+        opponent.resetLaserBattery();
         opponent.hp = 3;
     }
 
@@ -2891,6 +2894,40 @@ function openOpponentFile() {
 
     reader.readAsText(this.files[0]);
 
+}
+
+
+function loadRoverOpponent() {
+    var rover = '{"x":95.31671683510646,"y":504.2753606734182,"heading":11.038709558823625,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":false,"lastUpdate":1655407045989,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":90.49773755656109,"speed":6.16289592760181},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":90.49773755656109,"speed":6.16289592760181},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nwhile(true) {\\n  await forward(10);\\n  laser.fire();\\n  await turnRight(90);\\n  laser.fire();\\n  await forward(7);\\n  laser.fire();\\n  await turnRight(90);\\n  laser.fire();\\n}","laserBattery":36}';
+    loadSampleOpponent(rover);
+
+}
+
+
+function loadCirclerOpponent() {
+    var circler='{"x":327.5469402567586,"y":167.76097113134486,"heading":13.770062022058815,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":59.55253896430367,"speed":4.05552790346908},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":53.56963298139768,"speed":3.6480920060331816},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\nvar count = 0;\\nvar r = 3;\\nvar vx = 0.25;\\nvar dr = -0.25;\\nvar delays;\\n\\nsetSpeed(0.4, 0);\\nfor(var i=0; i<5; i++) {\\n  laser.fire();\\n  await delay(1000);\\n}\\n\\n\\nwhile(true) {\\n  delays = Math.floor(0.628 * r / vx);\\n  vyaw = vx/r;\\n  setSpeed(vx, vyaw);\\n  count = count + 1;\\n  \\n  if(count % 20 ==  0) {\\n    laser.fire();\\n  }\\n  \\n  if(count % delays == 0) {\\n    r += dr;\\n    if(r >= 3 || r <= 0.5) {\\n      dr *= -1;\\n    }\\n  }\\n  await delay(100);\\n}","laserBattery":0}';
+    loadSampleOpponent(circler);
+}
+
+
+function loadSpinnerOpponent() {
+    var spinner='{"x":100,"y":100,"heading":0,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":100,"speed":6.81},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":-80,"speed":-5.4479999999999995},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nleft.setPower(100);\\nright.setPower(-80);\\n\\nwhile(true) {\\n  await delay(1000);\\n  laser.fire();\\n}","laserBattery":38}';
+    loadSampleOpponent(spinner);
+}
+
+function loadSampleOpponent(robotString) {
+    opponent = new Chassis();
+    loadRobot(opponent, robotString);
+    opponent.x = 700;
+    opponent.y = 500;
+    opponent.heading = Math.PI;
+
+    //rebuild the robot view
+    opponentView = new ChassisView(opponent);
+
+    //redraw
+    graphPaperFill("simbg");
+    drawSim();
 }
 
 
