@@ -594,6 +594,23 @@ function Chassis(x, y, heading, name)
         this.x += fwd * Math.cos(this.heading) * elapsed;
         this.y += fwd * Math.sin(this.heading) * elapsed;
         this.heading += yaw * elapsed;
+
+
+        //torroidal world!
+        var wxmax = simState.width + 40;
+        var wymax = simState.height + 40;
+        if(this.x <= -40) {
+            this.x = wxmax-1;
+        }
+        if(this.y <= -40) {
+            this.y = wymax-1;
+        }
+        if(this.x >= wxmax) {
+            this.x -= wxmax;
+        }
+        if(this.y >= wymax) {
+            this.y -= wymax;
+        }
     };
 
 
@@ -1730,6 +1747,8 @@ var simState = {
     editTarget: null,
     editOriginalOutline: null,
     running : false,
+    width: 0,
+    height: 0,
 };
 
 
@@ -2620,6 +2639,11 @@ function gradbotInit() {
  * Start the simulation.
  */
 function simulationStart() {
+
+    // get the simulation extents
+    simbg = document.getElementById("simbg");
+    simState.width = simbg.width;
+    simState.height = simbg.height;
 
     // mark the simulation as running
     simState.running = true;
