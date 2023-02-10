@@ -21,14 +21,15 @@
 	background-color: #eff0f6; /* Green */
 	border: none;
 	color: black;
+	/*font-weight: bold; */
 	padding: 3px 3px;
 	text-align: center;
 	text-decoration: none;
 	display: inline-block;
-	font-size: 16px;
+	font-size: 14px;
 	transition-duration: 0.4;
-	margin-top: 5px;
-	margin-bottom: 5px;
+	margin-top: 4px;
+	margin-bottom: 4px;
 }
 .tabcontent button:hover {
 	background-color: #05060f;
@@ -79,7 +80,11 @@
 /* Canvas Container */
 .container {
 		position: relative;
-		margin: 0px;
+		margin-left: 0px;
+		/*
+		margin-bottom: 10px;
+		margin-top: 10px;
+		*/
 		padding: 0px;
 		top: 0px;
 		left: 0px;
@@ -87,7 +92,7 @@
 		height: 600px;
 }
 
-/* contained canvases */
+/* contained canvases: grid */
 .container canvas{
 		position: absolute;
 		top: 0px;
@@ -97,10 +102,9 @@
 /* toolbox div */
 .toolbox {
 		position: absolute;
-		top: 0px;
 		left: 800px;
 		right: 800px;
-		width: 200px;
+		width: 220px; /* originally 200, changed to fill in white space */
 		height: 800px;
 		overflow: auto;
 		
@@ -111,28 +115,43 @@
 		color: black;
 		background-color: #d1efee;
 		text-decoration: none;
-		font-size: 22px;
-
-		border-top: 2px solid #d1efee;
+		font-size: 20px;
+		/*font-weight: bold; */
+		border-top: 1px solid #d1efee;
 		border-bottom: 2px solid #d1efee;
-		height: 30px;
+		height: 25px;
 		line-height: 30 px;
 		margin-top: 5px;
 		margin-bottom: 5px;
 }
 .toolboxSubHead {
 	text-align: center;
-	font-size: 18px;
+	font-size: 16px;
+	font-weight: bold;
 	border-top: 1px solid #d1efee;
 	border-bottom: 1px solid #d1efee;
 	height: 30px;
 	line-height: 30px;
 }
 
+.toolboxSubHead button {
+	background-color: #eff0f6; /* Green */
+	border: none;
+	color: black;
+	padding: 1px 1px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 14px;
+	transition-duration: 0.4;
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+
 .toolboxContent {
 	background-color:#87cefa;
-		width: 200px;
-		height: 570px;
+		width: 219px; /* originally 200, changed to fill in white space */
+		height: 600px;
 		overflow: auto;
 }
 

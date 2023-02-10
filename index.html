@@ -48,14 +48,14 @@
                         <input type="radio" id="dragResize" name="dragMode"/>
                         <label for="dragResize">Resize</label>
                         </div>
-                        <hr/>
+                       
                         <div class="toolboxHead">
                             Simulation Controls
                         </div>
                         <button id="simGo">Start</button>
                         <button id="simReset">Reset</button>
                         <button id="simClear">Clear</button>
-                        <hr/>
+                        
 
                         <div class="toolboxHead">
                             Object Editor
@@ -82,12 +82,13 @@
                         <div class="toolboxSubHead">
                             Add Object
                         </div>
-                        <button id="simAddLight">Light</button>
-                        <button id="simAddWall">Wall</button>
-                        <hr>
+                        <div class="toolboxSubHead">
+                            <button id="simAddLight">Light</button>
+                            <button id="simAddWall">Wall</button>
+                        </div>
 
                         <div class="toolboxHead">
-                            Manage Oponent
+                            Manage Opponent
                         </div>
                         <input type="file" id="simUpload" style="display: none">
                         <button id="simOpenOpponent">Add/Change</button>
@@ -96,14 +97,16 @@
                         *Note: refresh page after running simulation with opponent*
                         <hr>
 
-                        <div class="toolboxHead">
+                        <div class="toolboxSubHead">
                             Sample Opponents
                         </div>
-                        <button id="simRoverOpponent">Rover</button>
-                        <button id="simCirclerOpponent">Circler</button>
-                        <button id="simSpinnerOpponent">Spinner</button>
+                        <div class="toolboxSubHead">
+                            <button id="simRoverOpponent">Rover</button>
+                            <button id="simCirclerOpponent">Circler</button>
+                            <button id="simSpinnerOpponent">Spinner</button>
+                        </div>
                         
-                        <!--
+                        
                         <div class="toolboxHead">
                             Manage World
                         </div>
@@ -112,7 +115,7 @@
                         <button id="worldSave">Save</button>
                         <button id="worldNew">New</button>
                         <hr>
-                        -->
+                        
                     </div>
                 </div>
             </div>
