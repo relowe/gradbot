@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang = "en">
+<head>
+    <title>Gradbot Simulator</title>
+    <meta charset = "utf-8">
+    <!-- <link rel="stylesheet" href="light-theme.css" id="theme-link"/> -->
+    <link rel="stylesheet" href="index.css"/>
+
+
+    <!-- <style>
+        /* Style the tab */
+    </style> -->
+    <script>
+        window.onload = function () {
+            gradbotInit();
+        }
+    </script>
+</head>
+<body>
+    <div class="pagecontent">
+    <button class="btn-toggle" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark Mode</button>
+    </div>
+    <div class="tab">
+            <button class="tablinks" id="simButton" onclick="openTab(event, 'Simulate')">Simulate</button>
+            <button class="tablinks" id="buildButton" onclick="openTab(event, 'Build')">Build</button>
+            <button class="tablinks" id="codeButton" onclick="openTab(event, 'Code')">Code</button>
+    </div>
+
+    <div class="tabcontent" id='Simulate'>
+        <div class="container">
+            <canvas id="simbg" width="800" height="600"></canvas>
+            <canvas id="simfg" width="800" height="600"></canvas>
+            <div class="toolbox">
+                <div class="toolboxContent">
+                    <div class="inner">
+                        <div class="toolboxHead">
+                            Drag Mode
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="dragMove" name="dragMode" checked="checked" />
+                        <label for="dragMove">Move</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="dragRotate" name="dragMode"/>
+                        <label for="dragRotate">Rotate</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="dragResize" name="dragMode"/>
+                        <label for="dragResize">Resize</label>
+                        </div>
+                        <hr/>
+                        <div class="toolboxHead">
+                            Simulation Controls
+                        </div>
+                        <button id="simGo">Start</button>
+                        <button id="simReset">Reset</button>
+                        <button id="simClear">Clear</button>
+                        <hr/>
+
+                        <div class="toolboxHead">
+                            Object Editor
+                        </div>
+                        <div id="simPartEditor" class="partEditorPane">
+                            Type: <span id="simPartType"></span><hr>
+
+                            <label for="simPartName">Name</label>
+                            <input type="text" id="simPartName"><hr>
+
+                            <label for="simPartOutlineColor">Outline Color</label>
+                            <input type="text" id="simPartOutlineColor"><hr>
+
+                            <label for="simPartFillColor">Fill Color</label>
+                            <input type="text" id="simPartFillColor"><hr>
+
+                            <button id="simPartApply">Apply</button>
+                            <button id="simPartCancel">Cancel</button><hr>
+
+                            <button id="simPartDelete">Delete Part</button> <hr>
+                        </div>
+                        <hr>
+
+                        <div class="toolboxSubHead">
+                            Add Object
+                        </div>
+                        <button id="simAddLight">Light</button>
+                        <button id="simAddWall">Wall</button>
+                        <hr>
+
+                        <div class="toolboxHead">
+                            Manage Oponent
+                        </div>
+                        <input type="file" id="simUpload" style="display: none">
+                        <button id="simOpenOpponent">Add/Change</button>
+                        <button id="simRemoveOpponent">Remove</button>
+                        <br>
+                        *Note: refresh page after running simulation with opponent*
+                        <hr>
+
+                        <div class="toolboxHead">
+                            Sample Opponents
+                        </div>
+                        <button id="simRoverOpponent">Rover</button>
+                        <button id="simCirclerOpponent">Circler</button>
+                        <button id="simSpinnerOpponent">Spinner</button>
+                        
+                        <div class="toolboxHead">
+                            Simulation Speed
+                        </div>
+                        <button id="x1">x1</button>
+                        <button id="x5">x5</button>
+                        <button id="x10">x10</button>
+                        <button id="x25">x25</button>
+                        <hr/>
+                        <!--
+                        <div class="toolboxHead">
+                            Manage World
+                        </div>
+                        <input type="file" id="simUpload" style="display: none">
+                        <button id="worldOpen">Open</button>
+                        <button id="worldSave">Save</button>
+                        <button id="worldNew">New</button>
+                        <hr>
+                        -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabcontent" id="Build">
+        <div class="container">
+            <canvas id="buildCanvas" width="800" height="600"></canvas>
+            <div class="toolbox">
+                <div class="toolboxContent">
+                    <div class="inner">
+                        <div class="toolboxHead">
+                            Part Editor
+                        </div>
+                        <div id="buildPartEditor" class="partEditorPane">
+                            Type: <span id="buildPartType"></span><hr>
+
+                            <label for="buildPartName">Name</label>
+                            <input type="text" id="buildPartName"><hr>
+
+                            <label for="buildPartOutlineColor">Outline Color</label>
+                            <input type="text" id="buildPartOutlineColor"><hr>
+
+                            <label for="buildPartFillColor">Fill Color</label>
+                            <input type="text" id="buildPartFillColor"><hr>
+
+                            <button id="buildPartApply">Apply</button>
+                            <button id="buildPartCancel">Cancel</button><hr>
+
+                            <button id="buildPartDelete">Delete Part</button> <hr>
+                        </div>
+
+                        <div class="toolboxSubHead">
+                            Add Part
+                        </div>
+                        <button id="buildAddMarker">Marker</button><br>
+                        <button id="buildAddLight">Light</button><br>
+                        <button id="buildAddLightSensor">Light Sensor</button><br>
+                        <button id="buildAddRangeSensor">Range Finder</button><br>
+                        <button id="buildAddLaser">Laser</button><br>
+                        <hr>
+
+                        <div class="toolboxHead">
+                            Robot Management
+                        </div>
+
+                        <div id="buildFiles">
+                            <input type="file" id="buildUpload" style="display: none">
+                            <a href="" id="buildDownload" style="display: none"></a>
+                            <button id="buildOpen">Open</button>
+                            <button id="buildSave">Save</button>
+                            <button id="buildNew">New</button>
+                        </div>
+                        <hr>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabcontent" id="Code">
+        <div class="container">
+            <div id="robotCode"></div> 
+            <div class="toolbox">
+                <div class="toolboxHead">
+                    Part List 
+                </div>
+                <div class="toolboxContent">
+                    <div class="inner">
+                        <ul id="codePartList">
+                        </ul>
+                    </div>
+                    <hr/>
+                    <div class="inner" id="codePartDoc">
+                    </div>
+                </div>
+                <!--<div class="CommandListHead">
+                    <span class="bolded">Robot Commands</span>
+                </div>-->
+                
+            </div>
+        </div>
+    </div>
+    <div class="pagecontent">
+        Source Code On <a href="https://github.com/relowe/gradbot">
+            GitHub</a>
+    </div>
+
+
+    <script src="codeflask.min.js"></script>
+    <script src="gradbot.js"></script>
+</body>
+</html>
