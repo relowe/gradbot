@@ -2869,13 +2869,21 @@ function saveRobot(robot) {
 
 
 function saveRobotFile() {
-    var file = new Blob([JSON.stringify(robot)]);
-    var a = document.getElementById('buildDownload');
-    a.href = URL.createObjectURL(file, {type: "text/plain"});
-    a.download = "robot";
-    a.click();
-    
-    URL.revokeObjectURL(a.href);
+    /* !!!!! Addition By Sam Elfrink: Allows users to name their robot file !!!!!!*/
+    let text;
+    let robotname = prompt("Please enter your robot file name:", "Robot");
+    if (robotname == null || robotname == "") {
+        /* do nothing */
+        return;
+    } else {
+        var file = new Blob([JSON.stringify(robot)]);
+        var a = document.getElementById('buildDownload');
+        a.href = URL.createObjectURL(file, {type: "text/plain"});
+        a.download = robotname;
+        a.click();
+        
+        URL.revokeObjectURL(a.href);
+    }
 }
 
 
