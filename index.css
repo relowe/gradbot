@@ -174,7 +174,7 @@ input[type=text] {
 
 #robotCode {
 	width: 800px; /* was 800 */
-	height: 595px; /* was 588 */
+	height: 600px; /* was 588 */
 	border: 1px solid lightblue;
 	font-family: monospace;
 	font-size: 14pt;
