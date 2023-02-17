@@ -404,19 +404,19 @@ function Motor(parent, x, y, heading, name)
         {name: 'power', doc: 'The current power setting of the motor'}
     );
 
-    //GAVIN added multiplier
+
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
 
     //GAVIN'S UPDATED CODE STARTS HERE
     this.update = function() {
         var multi = getSpeedMult();
+        console.log(multi);
         //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
         //This maximum speed is roughly 6.81 radians per second
         this.speed = (6.18 * this.power / 100) * multi;       //Actual 6.18
     }
     //GAVIN'S UPDATED CODE ENDS HERE
-
 
     /**
      * Receive a message from the user thread
@@ -426,8 +426,6 @@ function Motor(parent, x, y, heading, name)
         //copy the power setting from the user model
         this.setPower(message.power);
     }
-
-    
 }
 
 
@@ -568,6 +566,7 @@ function Chassis(x, y, heading, name)
           this.explode();
           return;
         }
+
 
         //update all the sub parts
         for(var i in this.parts) {
@@ -2590,7 +2589,7 @@ function gradbotInit() {
         document.getElementById("simUpload").click();
     };
     document.getElementById("simRemoveOpponent").onclick = function() {
-        opponent = null;SimRover
+        opponent = null;
         if(simView.opponentThread) {
             simView.opponentThread.terminate();
         }
@@ -2609,6 +2608,14 @@ function gradbotInit() {
     document.getElementById("buildAddRangeSensor").onclick = buildAddRangeSensor;
     document.getElementById("buildAddLaser").onclick = buildAddLaser;
 
+    //ADDED BY GAVIN
+    //Set up Speed Multipliers
+    document.getElementById("x1").onclick = setSpeedMult1;
+    document.getElementById("x5").onclick = setSpeedMult5;
+    document.getElementById("x10").onclick = setSpeedMult10;
+    document.getElementById("x25").onclick = setSpeedMult25;
+    //ADDED BY GAVIN
+    
     // set up code editor
     flask = new CodeFlask('#robotCode', {language: 'js'});
 
@@ -2616,12 +2623,6 @@ function gradbotInit() {
     //activate our error handler
     window.onerror = gradbotError;
     
-    //Set up Speed Multipliers
-    document.getElementById("x1").onclick = setSpeedMult1;
-    document.getElementById("x5").onclick = setSpeedMult5;
-    document.getElementById("x10").onclick = setSpeedMult10;
-    document.getElementById("x25").onclick = setSpeedMult25;
-
     //load world handlers under simulation tabs
     //
     /*
@@ -2880,13 +2881,21 @@ function saveRobot(robot) {
 
 
 function saveRobotFile() {
-    var file = new Blob([JSON.stringify(robot)]);
-    var a = document.getElementById('buildDownload');
-    a.href = URL.createObjectURL(file, {type: "text/plain"});
-    a.download = "robot";
-    a.click();
-    
-    URL.revokeObjectURL(a.href);
+    /* !!!!! Addition By Sam Elfrink: Allows users to name their robot file !!!!!!*/
+    let text;
+    let robotname = prompt("Please enter your robot file name:", "Robot");
+    if (robotname == null || robotname == "") {
+        /* do nothing */
+        return;
+    } else {
+        var file = new Blob([JSON.stringify(robot)]);
+        var a = document.getElementById('buildDownload');
+        a.href = URL.createObjectURL(file, {type: "text/plain"});
+        a.download = robotname;
+        a.click();
+        
+        URL.revokeObjectURL(a.href);
+    }
 }
 
 
@@ -3039,7 +3048,6 @@ function newRobot() {
     drawBuild();
 }
 
-
 //GAVIN'S UPDATED CODE STARTS HERE
 var multiplyer = 1;
 
@@ -3062,6 +3070,7 @@ function getSpeedMult(){
     return multiplyer;
 }
 //GAVIN'S UPDATED CODE ENDS HERE
+
 //Dark mode
 
 // document.querySelector('[data-switch-dark]').addEventListener('click', function() {

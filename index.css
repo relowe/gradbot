@@ -16,6 +16,25 @@
 		width: 1044px;
 		margin: auto;
 }
+/* ADDDED: Sam Elfrink */
+.tabcontent button {
+	background-color: #eff0f6; /* Green */
+	border: none;
+	color: black;
+	/*font-weight: bold; */
+	padding: 3px 3px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+	transition-duration: 0.4;
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+.tabcontent button:hover {
+	background-color: #05060f;
+	color: white;
+}
 
 /* Style the buttons inside the tab */
 .tab button {
@@ -62,14 +81,18 @@
 .container {
 		position: relative;
 		margin: 0px;
+		/*margin-left: 0px;
+		margin-bottom: 10px;
+		margin-top: 10px;
+		*/
 		padding: 0px;
 		top: 0px;
 		left: 0px;
-		width: 800px;
-		height: 600px;
+		width: 800px; /* was 800 */
+		height: 600px; /* was 600 */
 }
 
-/* contained canvases */
+/* contained canvases: grid */
 .container canvas{
 		position: absolute;
 		top: 0px;
@@ -82,7 +105,7 @@
 		top: 0px;
 		left: 800px;
 		right: 800px;
-		width: 200px;
+		width: 220px; /* originally 200, changed to fill in white space */
 		height: 800px;
 		overflow: auto;
 		
@@ -90,16 +113,46 @@
 
 .toolboxHead {
 		text-align: center;
-		border-top: 1px solid lightcoral;
-		border-bottom: 1px solid lightcoral;
-		height: 30px;
-		line-height: 30px;
+		color: black;
+		background-color: #d1efee;
+		text-decoration: none;
+		font-size: 20px;
+		/*font-weight: bold; */
+		border-top: 1px solid #d1efee;
+		border-bottom: 2px solid #d1efee;
+		height: 25px;
+		line-height: 30 px;
+		margin-top: 5px;
+		margin-bottom: 5px;
+}
+.toolboxSubHead {
+	text-align: center;
+	font-size: 16px;
+	font-weight: bold;
+	border-top: 1px solid #d1efee;
+	border-bottom: 1px solid #d1efee;
+	height: 30px;
+	line-height: 30px;
+}
+
+.toolboxSubHead button {
+	background-color: #eff0f6; /* Green */
+	border: none;
+	color: black;
+	padding: 1px 1px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 14px;
+	transition-duration: 0.4;
+	margin-top: 3px;
+	margin-bottom: 3px;
 }
 
 .toolboxContent {
 	background-color:#87cefa;
-		width: 200px;
-		height: 570px;
+		width: 219px; /* originally 200, changed to fill in white space */
+		height: 600px;
 		overflow: auto;
 }
 
@@ -120,8 +173,8 @@ input[type=text] {
 } 
 
 #robotCode {
-	width: 800px;
-	height: 588px;
+	width: 800px; /* was 800 */
+	height: 600px; /* was 588 */
 	border: 1px solid lightblue;
 	font-family: monospace;
 	font-size: 14pt;

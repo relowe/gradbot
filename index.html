@@ -48,14 +48,14 @@
                         <input type="radio" id="dragResize" name="dragMode"/>
                         <label for="dragResize">Resize</label>
                         </div>
-                        <hr/>
+                       
                         <div class="toolboxHead">
                             Simulation Controls
                         </div>
                         <button id="simGo">Start</button>
                         <button id="simReset">Reset</button>
                         <button id="simClear">Clear</button>
-                        <hr/>
+                        
 
                         <div class="toolboxHead">
                             Object Editor
@@ -79,15 +79,16 @@
                         </div>
                         <hr>
 
-                        <div class="toolboxHead">
+                        <div class="toolboxSubHead">
                             Add Object
                         </div>
-                        <button id="simAddLight">Light</button>
-                        <button id="simAddWall">Wall</button>
-                        <hr>
+                        <div class="toolboxSubHead">
+                            <button id="simAddLight">Light</button>
+                            <button id="simAddWall">Wall</button>
+                        </div>
 
                         <div class="toolboxHead">
-                            Manage Oponent
+                            Manage Opponent
                         </div>
                         <input type="file" id="simUpload" style="display: none">
                         <button id="simOpenOpponent">Add/Change</button>
@@ -96,13 +97,15 @@
                         *Note: refresh page after running simulation with opponent*
                         <hr>
 
-                        <div class="toolboxHead">
+                        <div class="toolboxSubHead">
                             Sample Opponents
                         </div>
-                        <button id="simRoverOpponent">Rover</button>
-                        <button id="simCirclerOpponent">Circler</button>
-                        <button id="simSpinnerOpponent">Spinner</button>
-                        
+                        <div class="toolboxSubHead">
+                            <button id="simRoverOpponent">Rover</button>
+                            <button id="simCirclerOpponent">Circler</button>
+                            <button id="simSpinnerOpponent">Spinner</button>
+                        </div>
+
                         <!-- GAVIN'S UPDATED CODE STARTS HERE -->
                         <div class="toolboxHead">
                             Simulation Speed
@@ -114,7 +117,6 @@
                         <hr/>
                         <!-- GAVIN'S UPDATED CODE ENDS HERE -->
                         
-                        <!--
                         <div class="toolboxHead">
                             Manage World
                         </div>
@@ -123,7 +125,6 @@
                         <button id="worldSave">Save</button>
                         <button id="worldNew">New</button>
                         <hr>
-                        -->
                     </div>
                 </div>
             </div>
@@ -157,7 +158,7 @@
                             <button id="buildPartDelete">Delete Part</button> <hr>
                         </div>
 
-                        <div class="toolboxHead">
+                        <div class="toolboxSubHead">
                             Add Part
                         </div>
                         <button id="buildAddMarker">Marker</button><br>
@@ -187,24 +188,24 @@
 
     <div class="tabcontent" id="Code">
         <div class="container">
-            <div id="robotCode"></div> 
+            <div id="robotCode"></div>
             <div class="toolbox">
-                <div class="toolboxHead">
-                    Part List 
-                </div>
                 <div class="toolboxContent">
-                    <div class="inner">
-                        <ul id="codePartList">
-                        </ul>
-                    </div>
-                    <hr/>
-                    <div class="inner" id="codePartDoc">
-                    </div>
+                        <div class="toolboxHead">
+                            Part List
+                        </div>
+                        
+                            <div class="inner">
+                                <ul id="codePartList">
+                                </ul>
+                            </div>
+                            <hr/>
+                            <div class="inner" id="codePartDoc">
+                            </div>
                 </div>
-                <!--<div class="CommandListHead">
-                    <span class="bolded">Robot Commands</span>
-                </div>-->
-                
+                        <!--<div class="CommandListHead">
+                            <span class="bolded">Robot Commands</span>
+                        </div>-->
             </div>
         </div>
     </div>
