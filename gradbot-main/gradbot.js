@@ -335,11 +335,11 @@ function Part(parent, x, y, heading, name)
      */
     this.setPower = function(power) {
         //limit the power setting's range
-        //if(power > 100) {
-            //power = 100;
-        //} else if(power < -100) {
-            //power = -100;
-        //}
+        if(power > 100) {
+            power = 100;
+        } else if(power < -100) {
+            power = -100;
+        }
         this.power = power;
     };
 
@@ -404,14 +404,18 @@ function Motor(parent, x, y, heading, name)
         {name: 'power', doc: 'The current power setting of the motor'}
     );
 
-
+    //GAVIN added multiplier
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
+
+    //GAVIN'S UPDATED CODE STARTS HERE
     this.update = function() {
+        var multi = getSpeedMult();
         //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
         //This maximum speed is roughly 6.81 radians per second
-        this.speed = 6.81 * this.power / 100;
+        this.speed = (6.18 * this.power / 100) * multi;       //Actual 6.18
     }
+    //GAVIN'S UPDATED CODE ENDS HERE
 
 
     /**
@@ -564,7 +568,6 @@ function Chassis(x, y, heading, name)
           this.explode();
           return;
         }
-
 
         //update all the sub parts
         for(var i in this.parts) {
@@ -2587,7 +2590,7 @@ function gradbotInit() {
         document.getElementById("simUpload").click();
     };
     document.getElementById("simRemoveOpponent").onclick = function() {
-        opponent = null;
+        opponent = null;SimRover
         if(simView.opponentThread) {
             simView.opponentThread.terminate();
         }
@@ -2614,10 +2617,10 @@ function gradbotInit() {
     window.onerror = gradbotError;
     
     //Set up Speed Multipliers
-    document.getElementById("x1").onclick = setSpeedMult(1);
-    document.getElementById("x5").onclick = setSpeedMult(5);
-    document.getElementById("x10").onclick = setSpeedMult(10);
-    document.getElementById("x25").onclick = setSpeedMult(25);
+    document.getElementById("x1").onclick = setSpeedMult1;
+    document.getElementById("x5").onclick = setSpeedMult5;
+    document.getElementById("x10").onclick = setSpeedMult10;
+    document.getElementById("x25").onclick = setSpeedMult25;
 
     //load world handlers under simulation tabs
     //
@@ -3036,12 +3039,29 @@ function newRobot() {
     drawBuild();
 }
 
-function setSpeedMult(multi){
-    robot.left.setPower(multi * robot.left.power);
-    robot.right.setPower(multi * robot.right.power);
-    simState.worldObjects.
-    drawSim();
+
+//GAVIN'S UPDATED CODE STARTS HERE
+var multiplyer = 1;
+
+function setSpeedMult1(){
+    multiplyer = 1;
 }
+
+function setSpeedMult5(){
+    multiplyer = 5;
+}
+
+function setSpeedMult10(){
+    multiplyer = 10;
+}
+
+function setSpeedMult25(){
+    multiplyer = 25;
+}
+function getSpeedMult(){
+    return multiplyer;
+}
+//GAVIN'S UPDATED CODE ENDS HERE
 //Dark mode
 
 // document.querySelector('[data-switch-dark]').addEventListener('click', function() {
