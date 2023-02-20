@@ -85,6 +85,7 @@
                         <div class="toolboxSubHead">
                             <button id="simAddLight">Light</button>
                             <button id="simAddWall">Wall</button>
+                            <button id="simAddBox">Box</button>
                         </div>
 
                         <div class="toolboxHead">
@@ -93,8 +94,6 @@
                         <input type="file" id="simUpload" style="display: none">
                         <button id="simOpenOpponent">Add/Change</button>
                         <button id="simRemoveOpponent">Remove</button>
-                        <br>
-                        *Note: refresh page after running simulation with opponent*
                         <hr>
 
                         <div class="toolboxSubHead">
@@ -105,8 +104,16 @@
                             <button id="simCirclerOpponent">Circler</button>
                             <button id="simSpinnerOpponent">Spinner</button>
                         </div>
-                        
-                        
+                        <!-- GAVIN'S UPDATED CODE STARTS HERE -->
+                        <div class="toolboxHead">
+                            Simulation Speed
+                        </div>
+                        <button id="x1">x1</button>
+                        <button id="x5">x5</button>
+                        <button id="x10">x10</button>
+                        <button id="x25">x25</button>
+                        <hr/>
+                        <!-- GAVIN'S UPDATED CODE ENDS HERE -->
                         <div class="toolboxHead">
                             Manage World
                         </div>
@@ -115,7 +122,19 @@
                         <button id="worldSave">Save</button>
                         <button id="worldNew">New</button>
                         <hr>
-                        
+                        <div class="toolboxSubHead">
+                            World Properties
+                        </div>
+                        <!--CHASE'S UPDATED CODE STARTS HERE-->
+                        <div class="wrapper">
+                        <input type="radio" id="toroidal-mode" name="toroidal-mode" checked="checked">
+                        <label for="torodial">Toroidal</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="infinite-mode" name="toroidal-mode"/>
+                        <label for="infinite">Infinite</label>
+                        </div>
+                        <!--CHASE'S UPDATED CODE ENDS HERE-->
                     </div>
                 </div>
             </div>
@@ -131,6 +150,12 @@
                         <div class="toolboxHead">
                             Part Editor
                         </div>
+
+                         <!-- !!!!! Addition by Sam Elfrink: Drop Down parts editor -->
+                         <label for="partDropDown">Select a Part:</label>
+                         <select name="partDropDown" id="partDropDown" onchange="dropDownPartSelect()">
+                         </select>
+                         
                         <div id="buildPartEditor" class="partEditorPane">
                             Type: <span id="buildPartType"></span><hr>
 
