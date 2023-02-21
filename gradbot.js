@@ -26,7 +26,10 @@
  * Utility Functions and Objects
  ******************************************/
 
+//!!!!!!!! Sam Elfrink Additions !!!!!!!!!!
 var simulationMode = 'toroidal';
+var openNewRobot = 0; // check to see if a new robot has been opened
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * This function takes an angle in radians and reduces it so its range
@@ -348,7 +351,8 @@ function Part(parent, x, y, heading, name)
             // Adds the part to the drop-down list
             addList(name);
         }
-    }else {
+    }
+    else {
         this.name = name != undefined ? name : ("part" + partCount);
         this.doc = new PartDoc();
         addList(this.name);
@@ -359,10 +363,16 @@ function Part(parent, x, y, heading, name)
     this.name = name != undefined ? name : ("part" + partCount);
     this.doc = new PartDoc();
 
-    // !!!!!!!! Sam Elfrink Addition !!!!!!!!
+    // !!!!!!!! Sam Elfrink Addition !!!!!!!
     // add the new part name to the drop-down list
-    addList(this.name);
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+    //console.log("Part Function");
+    if (openNewRobot == 1) {
+        // do nothing
+    }
+    else {
+        addList(this.name);
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     //position in world coordinates
     this.worldx = 0;
@@ -1924,6 +1934,10 @@ function openTab(evt, tabId) {
         addPartToPartList(partList, robot.right);
         for(var i=0; i < robot.parts.length; i++) {
             addPartToPartList(partList, robot.parts[i]);
+
+            // !!!!!!! Sam Elfrink Addition !!!!!!!
+
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
         flask.updateCode(robot.code);
     }
@@ -2235,6 +2249,28 @@ function showPartEditor(view, state) {
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 }
 
+// !!!!!!!!!! Addition Sam Elfrink !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/**
+ * Show the editor for the part specified by "view".
+ * @param {*} view 
+ */
+function dropDownClick() {
+    
+    /*
+    //populate the type and name
+    document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
+    document.getElementById(state.prefix +"PartName").value = view.part.name;
+
+    //get the colors populated
+    document.getElementById(state.prefix + "PartOutlineColor").value = view.part.outline;
+    document.getElementById(state.prefix + "PartFillColor").value = view.part.fill;
+
+
+    //show the editor pane
+    document.getElementById(state.prefix + "PartEditor").style.display="block";
+    */
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Hide the part editor.
@@ -2280,13 +2316,15 @@ function selectPart(view, state) {
  * !!!!! Addition by Sam Elfrink: Drop Down menu for part editor !!!!!!
  * Very similar to the selectPart function, just triggered on the drop down click
  * Select the partview in the editor.
- * @param {*} view 
+ * @param {*} event 
  */
-function dropDownPartSelect() {
-    
-   
+function dropDownPartSelect(event) {
+    console.log(buildView);
+    buildState.dragTarget = buildView;
     //var state = buildState;
     //var view = buildState.PartView;
+    //buildState.editTarget.name;
+    
 
 
     // deselect (if needed) 
@@ -2299,8 +2337,11 @@ function dropDownPartSelect() {
     
     // set up the target
     buildState.editTarget = buildState.dragTarget;
+    console.log(buildState.dragTarget);
+    console.log(buildState.editTarget);
     
     //show the editor
+    //dropDownClick();
     showPartEditor(buildState.dragTarget, buildState);
 
     // color it coral
@@ -2453,6 +2494,8 @@ function buildMouseMove(event) {
 function buildMouseUp(event) {
     // if there was a drag target, it is now the selected object
     if(buildState.dragTarget) {
+        console.log(buildState.dragTarget);
+        console.log(buildState);
         selectPart(buildState.dragTarget, buildState);
     }
 
@@ -2519,6 +2562,19 @@ function buildDeletePart(event) {
 
     // remove it from the robot parts list
     robot.parts.splice(robot.parts.indexOf(part), 1);
+
+    //!!!!!! Addition Sam Elfrink !!!!!!!!
+    // delete the part from the drop-down list
+    var options = document.getElementById("partDropDown").options;
+     for (var i = 0; i < options.length; i++) {
+        if (options[i].text == part.name) {
+            options[i].selected = true;
+            break;
+        }
+    }
+    var dropDownElement = document.getElementById("partDropDown");
+    dropDownElement.remove(dropDownElement.selectedIndex);
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // rebuild the robot
     buildView = new ChassisBuildView(robot);
@@ -2759,6 +2815,11 @@ function gradbotInit() {
     canvas.onmousedown = buildMouseDown;
     canvas.onmouseup = buildMouseUp;
     canvas.onmousemove = buildMouseMove;
+
+    //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+    document.getElementById("partDropDown").onchange = dropDownPartSelect;
+
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up the build's form buttons
     document.getElementById("buildPartApply").onclick = buildApply;
@@ -3245,10 +3306,25 @@ function loadRobot(robot, robotString) {
     robot.right.parent = robot;
 
     /* handle the parts */
+    
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    // openNewRobot variable is used in the Part() to determine if new parts should be added to the drop-down list
+    openNewRobot = 1;
+    // Remove all elements of the drop-down list except for the first 3
+    document.getElementById("partDropDown").options.length = 3;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     robot.parts = [];
     for(var i=0; i<obj.parts.length; i++) {
         robot.addPart(finishPart(obj.parts[i]));
         robot.parts[i].parent = robot;
+        
+        // !!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!
+        // When a robot is opened, add the part names to the list
+        addList(robot.parts[i].name)
+        //console.log(robot);
+        //console.log(robot.parts[i]);
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 }
 
@@ -3288,6 +3364,11 @@ function finishPart(part) {
 
 function newRobot() {
     robot = new Chassis(100, 100, 0);
+
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    // Remove all elements of the drop-down list except for the first 3
+    document.getElementById("partDropDown").options.length = 3;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //rebuild the robot views
     simView = new ChassisView(robot);
