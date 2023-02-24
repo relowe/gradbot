@@ -368,7 +368,6 @@ function Part(parent, x, y, heading, name)
     
     if (loadRobotTrue == 1) {
         //do nothing
-        console.log("If called");
     }
     else {
         addList(this.name);
@@ -409,6 +408,21 @@ function Part(parent, x, y, heading, name)
      * @param {*} power - The power level.
      */
     this.setPower = function(power) {
+        //!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!
+        // check to make sure that the setPower() function isn't empty
+        if(power == undefined) {
+            let powerValue = prompt("Error: You must enter a power value between 1-100 in your code ( ex: left.setPower(70) ). You can change the value temporarily here.", "100");
+            
+            // set power to the prompt input
+            power = powerValue;
+            
+            // if the user still doesn't enter a value, default to 0
+            if (powerValue == null || powerValue == "") {
+                power = 0;
+            }
+        }
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         //limit the power setting's range
         if(power > 100) {
             power = 100;
@@ -2321,33 +2335,19 @@ function dropDownPartSelect(event) {
     // get part name from the drop-down menu
     var dropDownMenu = document.getElementById("partDropDown");
     var dropPartName = dropDownMenu.options[dropDownMenu.selectedIndex].text;
-    //console.log(buildView);
   
     // check for clicking on a robot subpart
     for(var i=0; i < buildView.subviews.length; i++) {
         var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
-        //console.log(partView);
-        //console.log(buildView.subviews[1]);
-        //console.log(partView.part.name);
-        //console.log(dropPartName);
+    
         // if the part selected matches the part current partview, select it
         //NOTE: THERE IS NO CHASSISS IN THE buildView.subviews ARRAY, so chassiss select doesn't work
         if(partView.part.name == dropPartName) {
-           //console.log(partView.part.name);
-            //console.log(dropPartName);
+        
             buildState.dragTarget = partView;
-            //if(buildState.dragTarget.part.type != "Motor") {
-            //    buildState.dragMode = DRAG_MOVE;
-            //}
             break;
         }
     }
-
-    //console.log(dropPartName);
-    //console.log(buildState.dragTarget);
-    //console.log(buildView);
-    //buildState.dragTarget = partView;
-    //buildState.dragTarget = buildView;
 
     // deselect (if needed) 
     if(buildState.editTarget != null) {
@@ -2359,10 +2359,7 @@ function dropDownPartSelect(event) {
     
     // set up the target
     buildState.editTarget = buildState.dragTarget;
-    //console.log(buildState.dragTarget);
-    //console.log(buildState.editTarget);
     
-
     //show the editor
     dropDownClick(buildState.dragTarget, buildState);
     //showPartEditor(buildState.dragTarget, buildState);
@@ -2518,8 +2515,6 @@ function buildMouseMove(event) {
 function buildMouseUp(event) {
     // if there was a drag target, it is now the selected object
     if(buildState.dragTarget) {
-        console.log(buildState.dragTarget);
-        console.log(buildState);
         selectPart(buildState.dragTarget, buildState);
     }
 
@@ -3352,10 +3347,7 @@ function loadRobot(robot, robotString) {
         
         // !!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!
         // When a robot is opened, add the part names to the list
-        //console.log(robot.parts[i].name);
         addList(robot.parts[i].name)
-        //console.log(robot);
-        //console.log(robot.parts[i]);
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
     loadRobotTrue = 0;
