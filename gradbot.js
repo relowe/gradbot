@@ -28,7 +28,7 @@
 
 //!!!!!!!! Sam Elfrink Additions !!!!!!!!!!
 var simulationMode = 'toroidal';
-var openNewRobot = 0; // check to see if a new robot has been opened
+var loadRobotTrue = 0;
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
@@ -365,9 +365,9 @@ function Part(parent, x, y, heading, name)
 
     // !!!!!!!! Sam Elfrink Addition !!!!!!!
     // add the new part name to the drop-down list
-    //console.log("Part Function");
-    if (openNewRobot == 1) {
-        // do nothing
+    
+    if (loadRobotTrue == 1) {
+        //do nothing
     }
     else {
         addList(this.name);
@@ -408,6 +408,21 @@ function Part(parent, x, y, heading, name)
      * @param {*} power - The power level.
      */
     this.setPower = function(power) {
+        //!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!
+        // check to make sure that the setPower() function isn't empty
+        if(power == undefined) {
+            let powerValue = prompt("Error: You must enter a power value between 1-100 in your code ( ex: left.setPower(70) ). You can change the value temporarily here.", "100");
+            
+            // set power to the prompt input
+            power = powerValue;
+            
+            // if the user still doesn't enter a value, default to 0
+            if (powerValue == null || powerValue == "") {
+                power = 0;
+            }
+        }
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         //limit the power setting's range
         if(power > 100) {
             power = 100;
@@ -920,6 +935,7 @@ function RangeSensor(parent, x, y) {
  * @param {*} y 
  */
 function LightSensor(parent, x, y) {
+
     Part.call(this, parent, x, y);
     this.type = "LightSensor"
     this.worldx = 0;
@@ -1934,10 +1950,6 @@ function openTab(evt, tabId) {
         addPartToPartList(partList, robot.right);
         for(var i=0; i < robot.parts.length; i++) {
             addPartToPartList(partList, robot.parts[i]);
-
-            // !!!!!!! Sam Elfrink Addition !!!!!!!
-
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
         flask.updateCode(robot.code);
     }
@@ -2250,13 +2262,14 @@ function showPartEditor(view, state) {
 }
 
 // !!!!!!!!!! Addition Sam Elfrink !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Same as the showPartEditor, but removed the auto select addition
 /**
  * Show the editor for the part specified by "view".
  * @param {*} view 
  */
-function dropDownClick() {
+function dropDownClick(view, state) {
     
-    /*
+    
     //populate the type and name
     document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
     document.getElementById(state.prefix +"PartName").value = view.part.name;
@@ -2268,7 +2281,7 @@ function dropDownClick() {
 
     //show the editor pane
     document.getElementById(state.prefix + "PartEditor").style.display="block";
-    */
+    
 }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2319,13 +2332,22 @@ function selectPart(view, state) {
  * @param {*} event 
  */
 function dropDownPartSelect(event) {
-    console.log(buildView);
-    buildState.dragTarget = buildView;
-    //var state = buildState;
-    //var view = buildState.PartView;
-    //buildState.editTarget.name;
+    // get part name from the drop-down menu
+    var dropDownMenu = document.getElementById("partDropDown");
+    var dropPartName = dropDownMenu.options[dropDownMenu.selectedIndex].text;
+  
+    // check for clicking on a robot subpart
+    for(var i=0; i < buildView.subviews.length; i++) {
+        var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
     
-
+        // if the part selected matches the part current partview, select it
+        //NOTE: THERE IS NO CHASSISS IN THE buildView.subviews ARRAY, so chassiss select doesn't work
+        if(partView.part.name == dropPartName) {
+        
+            buildState.dragTarget = partView;
+            break;
+        }
+    }
 
     // deselect (if needed) 
     if(buildState.editTarget != null) {
@@ -2333,19 +2355,17 @@ function dropDownPartSelect(event) {
     }
 
     // grab the original color 
-    //buildState.editOriginalOutline = buildState.part.outline;
+    buildState.editOriginalOutline = buildState.dragTarget.part.outline;
     
     // set up the target
     buildState.editTarget = buildState.dragTarget;
-    console.log(buildState.dragTarget);
-    console.log(buildState.editTarget);
     
     //show the editor
-    //dropDownClick();
-    showPartEditor(buildState.dragTarget, buildState);
+    dropDownClick(buildState.dragTarget, buildState);
+    //showPartEditor(buildState.dragTarget, buildState);
 
     // color it coral
-    //buildState.PartView.part.outline = "coral";
+    buildState.dragTarget.part.outline = "coral";
 
 
     // redraw the canvas
@@ -2409,6 +2429,7 @@ function applyEditor(state) {
     var dropDownElement = document.getElementById("partDropDown");
     dropDownElement.remove(dropDownElement.selectedIndex);
     // The new name is add to the drop-down list
+    //console.log("apply editor");
     addList(part.name);
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2494,8 +2515,6 @@ function buildMouseMove(event) {
 function buildMouseUp(event) {
     // if there was a drag target, it is now the selected object
     if(buildState.dragTarget) {
-        console.log(buildState.dragTarget);
-        console.log(buildState);
         selectPart(buildState.dragTarget, buildState);
     }
 
@@ -2785,6 +2804,11 @@ function gradbotInit() {
     simState.robotStartX = robot.x;
     simState.robotStartY = robot.y;
     simState.robotStartHeading = robot.heading;
+
+    //!!!!!!!!!!!!!!!Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+    // remove motors and chassis from the drop-down list
+    document.getElementById("partDropDown").options.length = 0;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //put the robot on the foreground of the simulator
     simView = new ChassisView(robot);
@@ -3308,10 +3332,12 @@ function loadRobot(robot, robotString) {
     /* handle the parts */
     
     // !!!!!! Sam Elfrink Addition !!!!!!!!!
-    // openNewRobot variable is used in the Part() to determine if new parts should be added to the drop-down list
-    openNewRobot = 1;
+    //openNewRobot variable is used in the Part() to determine if new parts should be added to the drop-down list
+    //openNewRobot = 1;
     // Remove all elements of the drop-down list except for the first 3
-    document.getElementById("partDropDown").options.length = 3;
+    document.getElementById("partDropDown").options.length = 0;
+    console.log("removed drop down");
+    loadRobotTrue = 1;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     robot.parts = [];
@@ -3322,10 +3348,9 @@ function loadRobot(robot, robotString) {
         // !!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!
         // When a robot is opened, add the part names to the list
         addList(robot.parts[i].name)
-        //console.log(robot);
-        //console.log(robot.parts[i]);
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
+    loadRobotTrue = 0;
 }
 
 
@@ -3367,7 +3392,7 @@ function newRobot() {
 
     // !!!!!! Sam Elfrink Addition !!!!!!!!!
     // Remove all elements of the drop-down list except for the first 3
-    document.getElementById("partDropDown").options.length = 3;
+    document.getElementById("partDropDown").options.length = 0;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //rebuild the robot views
