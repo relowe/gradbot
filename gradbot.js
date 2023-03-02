@@ -309,57 +309,6 @@ function Part(parent, x, y, heading, name)
     Positionable.call(this, x, y, heading);
     this.type = "part";
 
-    //!!!!! Addition by Sam Elfrink !!!!!!!
-    // Functionality to allow users to name their robot parts
-    /*
-    if (performance.navigation.type != performance.navigation.TYPE_RELOAD) {
-        
-        if(partCount == 1) {
-            name = partName;
-            this.name = name != undefined ? name : ("part" + partCount);
-            this.doc = new PartDoc();
-
-            // Adds the part to the drop-down list
-            addList(this.name);
-        }
-        else if (partCount == 2) {
-            name = partName;
-            this.name = name != undefined ? name : ("part" + partCount);
-            this.doc = new PartDoc();
-
-            // Adds the part to the drop-down list
-            addList(this.name);
-        }
-        else if (partCount == 3) {
-            name = partName;
-            this.name = name != undefined ? name : ("part" + partCount);
-            this.doc = new PartDoc();
-        
-            // Adds the part to the drop-down list
-            addList(this.name);
-        }
-        else{
-            partName = prompt("Please enter your part name. Beeeee as descriptive as possible (ex: right laser):");
-            // if the user doesn't enter a name, assign null
-            if (partName == "") {
-                partName = null;
-            } 
-            name = partName;
-            this.name = name != undefined ? name : ("part" + partCount);
-            this.doc = new PartDoc();
-
-            // Adds the part to the drop-down list
-            addList(name);
-        }
-    }
-    else {
-        this.name = name != undefined ? name : ("part" + partCount);
-        this.doc = new PartDoc();
-        addList(this.name);
-    }
-    */
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     this.name = name != undefined ? name : ("part" + partCount);
     this.doc = new PartDoc();
 
@@ -408,20 +357,27 @@ function Part(parent, x, y, heading, name)
      * @param {*} power - The power level.
      */
     this.setPower = function(power) {
+        
         //!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!
+        // NOTE: the userbot side of set power will trigger first
+        //console.log("setPower gradbot side");
         // check to make sure that the setPower() function isn't empty
         if(power == undefined) {
-            let powerValue = prompt("Error: You must enter a power value between 1-100 in your code ( ex: left.setPower(70) ). You can change the value temporarily here.", "100");
+            alert("Error: You left your power level blank. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
             
-            // set power to the prompt input
-            power = powerValue;
-            
-            // if the user still doesn't enter a value, default to 0
-            if (powerValue == null || powerValue == "") {
-                power = 0;
-            }
+            // set power to 0
+            power = 0;
+        }
+        /*
+        console.log(typeof(power));
+        console.log(typeof(this.power));
+        // if the power value isn't a number, set power to 0 and do nothing
+        if(typeof(power) != 'number') {
+            alert("Error: You put a non-number character for your power level. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
+            power = 0;
         }
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        */
 
         //limit the power setting's range
         if(power > 100) {
