@@ -26,6 +26,11 @@
  * Utility Functions and Objects
  ******************************************/
 
+//!!!!!!!! Sam Elfrink Additions !!!!!!!!!!
+var simulationMode = 'toroidal';
+var loadRobotTrue = 0;
+var wheelSize = .065 // original default wheel size
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * This function takes an angle in radians and reduces it so its range
@@ -140,13 +145,20 @@ function minPolyDist(p, poly) {
  * @returns True if the views are in collision, false otherwise.
  */
 function collision(view1, view2) {
-    return view1.minx <= view2.maxx && 
-           view1.maxx >= view2.minx &&
-           view1.miny <= view2.maxy &&
-           view1.maxy >= view2.miny;
-}
+    // Check for overlap in the x-axis
+    if (view1.minx < view2.maxx && view1.maxx > view2.minx) {
+      // Check for overlap in the y-axis
+      if (view1.miny < view2.maxy && view1.maxy > view2.miny) {
+        // The views overlap
+        return true;
+      }
+    }
+  
+    // The views do not overlap
+    return false;
+  }
 
-
+  
 
 /**
  * This is a prototype for a positionable object. It handles all the 
@@ -297,8 +309,20 @@ function Part(parent, x, y, heading, name)
     this.parent = parent;
     Positionable.call(this, x, y, heading);
     this.type = "part";
+
     this.name = name != undefined ? name : ("part" + partCount);
     this.doc = new PartDoc();
+
+    // !!!!!!!! Sam Elfrink Addition !!!!!!!
+    // add the new part name to the drop-down list
+    
+    if (loadRobotTrue == 1) {
+        //do nothing
+    }
+    else {
+        addList(this.name);
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     //position in world coordinates
     this.worldx = 0;
@@ -334,6 +358,28 @@ function Part(parent, x, y, heading, name)
      * @param {*} power - The power level.
      */
     this.setPower = function(power) {
+        
+        //!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!
+        // NOTE: the userbot side of set power will trigger first
+        //console.log("setPower gradbot side");
+        // check to make sure that the setPower() function isn't empty
+        if(power == undefined) {
+            alert("Error: You left your power level blank. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
+            
+            // set power to 0
+            power = 0;
+        }
+        /*
+        console.log(typeof(power));
+        console.log(typeof(this.power));
+        // if the power value isn't a number, set power to 0 and do nothing
+        if(typeof(power) != 'number') {
+            alert("Error: You put a non-number character for your power level. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
+            power = 0;
+        }
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        */
+
         //limit the power setting's range
         if(power > 100) {
             power = 100;
@@ -405,13 +451,18 @@ function Motor(parent, x, y, heading, name)
     );
 
 
+     //GAVIN added multiplier
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
+
+    //GAVIN'S UPDATED CODE STARTS HERE
     this.update = function() {
+        var multi = getSpeedMult();
         //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
         //This maximum speed is roughly 6.81 radians per second
-        this.speed = 6.81 * this.power / 100;
+        this.speed = (6.18 * this.power / 100) * multi;       //Actual 6.18
     }
+    //GAVIN'S UPDATED CODE ENDS HERE
 
 
     /**
@@ -494,7 +545,16 @@ function Chassis(x, y, heading, name)
     this.left = new Motor(this, -7, -7, 0, "left");
     this.right = new Motor(this, -7, 7, Math.PI, "right");
 
-
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!
+    // adding a wheel size variable to the chassis
+    console.log("Chassis called");
+    this.chassisWheelSize = document.getElementById("wheelSize").value;
+    
+    // update function to preserve wheel size and update it to the robot
+    this.updateWheel = function() {
+        this.chassisWheelSize = document.getElementById("wheelSize").value;
+    }
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //we start unexploded and healthy!
     this.hp = 3;
     this.blowedUp = false;
@@ -562,7 +622,10 @@ function Chassis(x, y, heading, name)
           this.explode();
           return;
         }
-
+        
+        // !!!!! Sam Elfrink Addition !!!!!!!!!
+        this.updateWheel();
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         //update all the sub parts
         for(var i in this.parts) {
@@ -575,7 +638,10 @@ function Chassis(x, y, heading, name)
         this.right.update();
 
         //compute our forward translation and yaw speeds
-        var r = .065; // 65mm diameter wheels
+        // !!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!
+        var r = wheelSize; // adjustable wheel size, 65mm diameter wheels by default
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //var r = .065; // 65mm diameter wheels
         var l = 0.238; // 238mm axel length
         var fwd = r/2 * (this.left.speed + this.right.speed) * 60;
         var yaw = r/l * (this.left.speed - this.right.speed);
@@ -595,22 +661,39 @@ function Chassis(x, y, heading, name)
         this.y += fwd * Math.sin(this.heading) * elapsed;
         this.heading += yaw * elapsed;
 
+        //CHASE'S UPDATED CODE STARTS HERE
+        // Update the position of the object based on the current simulation mode
+        switch(simulationMode) {
+            case 'toroidal':
+                var wxmax = simState.width + 40;
+                var wymax = simState.height + 40;
+                if(this.x <= -40) {
+                    this.x = wxmax-1;
+                }
+                if(this.y <= -40) {
+                    this.y = wymax-1;
+                }
+                if(this.x >= wxmax) {
+                    this.x -= wxmax;
+                }
+                if(this.y >= wymax) {
+                    this.y -= wymax;
+                }
+                break;
+            case 'infinite':
+                var wxmax = simState.width;
+                var wymax = simState.height;
+                var removeFlag = false;
 
-        //torroidal world!
-        var wxmax = simState.width + 40;
-        var wymax = simState.height + 40;
-        if(this.x <= -40) {
-            this.x = wxmax-1;
+                if(this.x < -40 || this.x > wxmax + 40 || this.y < -40 || this.y > wymax + 40) {
+                    removeFlag = true;
+                }
+                break;
+            default:
+                // Handle unrecognized simulation mode
+            break;
         }
-        if(this.y <= -40) {
-            this.y = wymax-1;
-        }
-        if(this.x >= wxmax) {
-            this.x -= wxmax;
-        }
-        if(this.y >= wymax) {
-            this.y -= wymax;
-        }
+        //CHASE'S UPDATED CODE ENDS HERE
     };
 
 
@@ -715,6 +798,20 @@ function Wall(parent, x, y) {
     this.fill = "blue";
 }
 
+/**
+ * what's in the fing box!
+ * @param {*} parent 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} size 
+ */
+function Box(parent, x, y, size) {
+    Part.call(this, parent, x, y);
+    this.type = "Box";
+    this.outline = "blue";
+    this.fill = "lightblue";
+    this.size = size;
+}
 
 /**
  * A sensor which computes the range to an object.
@@ -810,6 +907,7 @@ function RangeSensor(parent, x, y) {
  * @param {*} y 
  */
 function LightSensor(parent, x, y) {
+
     Part.call(this, parent, x, y);
     this.type = "LightSensor"
     this.worldx = 0;
@@ -1180,6 +1278,8 @@ function constructView(part) {
         return new RangeSensorView(part);
     } else if(part.type == "Wall") {
         return new WallView(part);
+    } else if(part.type == "Box") {
+        return new BoxView(part); 
     } else if(part.type == "LaserBlast") {
         return new LaserBlastView(part);
     } else if(part.type == "Laser") {
@@ -1672,6 +1772,30 @@ function WallView(part) {
 }
 
 
+
+/**
+ * Display the box!
+ * @param {*} part 
+ */
+function BoxView(part) {
+    if (!part.resizeFactor){
+        part.resizeFactor = 1;
+    }
+    PartView.call(this, part);
+
+     //create my vector view
+    var points = [
+        {x: -8 * part.resizeFactor, y: -8 * part.resizeFactor},
+        {x: 8 * part.resizeFactor, y: -8 * part.resizeFactor},
+        {x: 8 * part.resizeFactor, y: 8 * part.resizeFactor},
+        {x: -8 * part.resizeFactor, y: 8 * part.resizeFactor},
+    ];
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.stroke = "black"
+}
+
+
 /**
  * Display the laser blast
  * @param {*} part 
@@ -1822,7 +1946,24 @@ function openTab(evt, tabId) {
     simState.prevTab = tabId;
 }
 
-
+// !!!!!!!!! Sam Elfrink Addition !!!!!!!!!
+/**
+ * 
+ * @param {*} event 
+ */
+function changeWheelSize(state) {
+    event.preventDefault()
+    console.log("changeWheelSize() called");
+    var size = document.getElementById("wheelSize").value;
+    console.log("Size Variable:");
+    console.log(size);
+    //this.chassisWheelSize = size;
+    robot.update();
+    wheelSize = size;
+    console.log("wheelSize Variable:");
+    console.log(wheelSize);
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Add part to the partList element
@@ -2063,6 +2204,18 @@ function simAddWall(event) {
 }
 
 
+/**
+ * Add a box to the simulator.
+ * @param {*} event 
+ */
+function simAddBox(event) {
+    var canvas = document.getElementById("simfg");
+    var box = new Box(null, canvas.width/2, canvas.height/2, 50);
+
+    simState.worldObjects.push(constructView(box));
+    drawSim();
+}
+
 
 /*
  * Build Events
@@ -2084,8 +2237,42 @@ function showPartEditor(view, state) {
 
     //show the editor pane
     document.getElementById(state.prefix + "PartEditor").style.display="block";
+
+    //!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!!!!!!!
+    // If a part is click on the grid, the drop-down menu auto selects it
+    var options = document.getElementById("partDropDown").options;
+    for (var i = 0; i < options.length; i++) {
+        if (options[i].text == view.part.name) {
+            options[i].selected = true;
+            break;
+        }
+    }
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 }
 
+// !!!!!!!!!! Addition Sam Elfrink !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Same as the showPartEditor, but removed the auto select addition
+/**
+ * Show the editor for the part specified by "view".
+ * @param {*} view 
+ */
+function dropDownClick(view, state) {
+    
+    
+    //populate the type and name
+    document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
+    document.getElementById(state.prefix +"PartName").value = view.part.name;
+
+    //get the colors populated
+    document.getElementById(state.prefix + "PartOutlineColor").value = view.part.outline;
+    document.getElementById(state.prefix + "PartFillColor").value = view.part.fill;
+
+
+    //show the editor pane
+    document.getElementById(state.prefix + "PartEditor").style.display="block";
+    
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Hide the part editor.
@@ -2123,6 +2310,57 @@ function selectPart(view, state) {
     if(state.prefix == "build") {
         drawBuild();
     } else if(state.prefix == "sim") {
+        drawSim();
+    }
+}
+
+/**
+ * !!!!! Addition by Sam Elfrink: Drop Down menu for part editor !!!!!!
+ * Very similar to the selectPart function, just triggered on the drop down click
+ * Select the partview in the editor.
+ * @param {*} event 
+ */
+function dropDownPartSelect(event) {
+    // get part name from the drop-down menu
+    var dropDownMenu = document.getElementById("partDropDown");
+    var dropPartName = dropDownMenu.options[dropDownMenu.selectedIndex].text;
+  
+    // check for clicking on a robot subpart
+    for(var i=0; i < buildView.subviews.length; i++) {
+        var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
+    
+        // if the part selected matches the part current partview, select it
+        //NOTE: THERE IS NO CHASSISS IN THE buildView.subviews ARRAY, so chassiss select doesn't work
+        if(partView.part.name == dropPartName) {
+        
+            buildState.dragTarget = partView;
+            break;
+        }
+    }
+
+    // deselect (if needed) 
+    if(buildState.editTarget != null) {
+        deselectPart(buildState);
+    }
+
+    // grab the original color 
+    buildState.editOriginalOutline = buildState.dragTarget.part.outline;
+    
+    // set up the target
+    buildState.editTarget = buildState.dragTarget;
+    
+    //show the editor
+    dropDownClick(buildState.dragTarget, buildState);
+    //showPartEditor(buildState.dragTarget, buildState);
+
+    // color it coral
+    buildState.dragTarget.part.outline = "coral";
+
+
+    // redraw the canvas
+    if(buildState.prefix == "build") {
+        drawBuild();
+    } else if(buildState.prefix == "sim") {
         drawSim();
     }
 }
@@ -2174,6 +2412,15 @@ function applyEditor(state) {
     part.fill = fill;
     part.outline = outline;
     part.name = name;
+
+    // !!!!!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!!!!!!
+    // When a part is selected, the editor removes the name from the drop-down list
+    var dropDownElement = document.getElementById("partDropDown");
+    dropDownElement.remove(dropDownElement.selectedIndex);
+    // The new name is add to the drop-down list
+    //console.log("apply editor");
+    addList(part.name);
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // redraw the canvas
     if(state.prefix == "build") {
@@ -2274,6 +2521,15 @@ function buildApply(event) {
     applyEditor(buildState);
 }
 
+//!!!!!!!! Sam Elfrink Addition !!!!!!!!
+/**
+ * 
+ * @param {*} event 
+ */
+function wheelApply(event){
+    changeWheelSize(buildState);
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Handle the apply button for the sim part editor.
@@ -2324,6 +2580,19 @@ function buildDeletePart(event) {
     // remove it from the robot parts list
     robot.parts.splice(robot.parts.indexOf(part), 1);
 
+    //!!!!!! Addition Sam Elfrink !!!!!!!!
+    // delete the part from the drop-down list
+    var options = document.getElementById("partDropDown").options;
+     for (var i = 0; i < options.length; i++) {
+        if (options[i].text == part.name) {
+            options[i].selected = true;
+            break;
+        }
+    }
+    var dropDownElement = document.getElementById("partDropDown");
+    dropDownElement.remove(dropDownElement.selectedIndex);
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     // rebuild the robot
     buildView = new ChassisBuildView(robot);
     drawBuild();
@@ -2360,6 +2629,18 @@ function simDeletePart(event) {
     drawSim();
 }
 
+/**
+ * !!!!!!! Addition by Sam Elfrink !!!!!!
+ * Added function to add an item to the parts drop down list
+ * @param {*} event 
+ */
+function addList(name) {
+        var partDropDown = document.getElementById("partDropDown");
+        var option = document.createElement("OPTION");
+        option.innerHTML = name;
+        //option.value = document.getElementById("txtValue").value;
+        partDropDown.options.add(option);
+}
 
 /**
  * Handle adding a marker. 
@@ -2522,6 +2803,11 @@ function gradbotInit() {
     simState.robotStartY = robot.y;
     simState.robotStartHeading = robot.heading;
 
+    //!!!!!!!!!!!!!!!Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+    // remove motors and chassis from the drop-down list
+    document.getElementById("partDropDown").options.length = 0;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //put the robot on the foreground of the simulator
     simView = new ChassisView(robot);
     drawSim();
@@ -2544,12 +2830,18 @@ function gradbotInit() {
     //set up the object buttons
     document.getElementById('simAddLight').onclick = simAddLight;
     document.getElementById('simAddWall').onclick = simAddWall;
+    document.getElementById('simAddBox').onclick = simAddBox;
 
     //set up the build mouse events
     canvas = document.getElementById("buildCanvas");
     canvas.onmousedown = buildMouseDown;
     canvas.onmouseup = buildMouseUp;
     canvas.onmousemove = buildMouseMove;
+
+    //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+    document.getElementById("partDropDown").onchange = dropDownPartSelect;
+
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up the build's form buttons
     document.getElementById("buildPartApply").onclick = buildApply;
@@ -2577,6 +2869,10 @@ function gradbotInit() {
             newRobot();
         }
     }
+
+     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+     document.getElementById("changeWheelSize").onclick = wheelApply;
+     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up opponent handlers
     document.getElementById("simUpload").onchange = openOpponentFile;
@@ -2610,7 +2906,30 @@ function gradbotInit() {
 
     //activate our error handler
     window.onerror = gradbotError;
-    
+
+    //CHASE'S UPDATED CODE STARTS HERE
+    // Change the world state
+    var toroidalButton = document.getElementById("toroidal-mode");
+    var infiniteButton = document.getElementById("infinite-mode");
+
+    // Add click event listeners to the buttons
+    toroidalButton.addEventListener("click", function() {
+    simulationMode = "toroidal";
+    });
+
+    infiniteButton.addEventListener("click", function() {
+    simulationMode = "infinite";
+    });
+    //CHASE'S UPDATED CODE ENDS HERE
+
+    //GAVIN'S UPDATED CODE STARTS HERE
+    //Set up Speed Multipliers
+    document.getElementById("x1").onclick = setSpeedMult1;
+    document.getElementById("x5").onclick = setSpeedMult5;
+    document.getElementById("x10").onclick = setSpeedMult10;
+    document.getElementById("x25").onclick = setSpeedMult25;
+    //GAVIN'S UPDATED CODE ENDS HERE
+
     //load world handlers under simulation tabs
     //
     /*
@@ -2741,6 +3060,7 @@ function simulationStop() {
 }
 
 
+
 /**
  * Update one simulation frame.
  */
@@ -2782,6 +3102,34 @@ function simulationUpdate() {
                 }
             }
         }
+
+        // keep track of boxes in contact with bot
+        var boxesInContact = [];
+
+        // check for box collisions
+        if (obj.part.type === "Box") {
+            for (var j = 0; j < botViews.length; j++) {
+                if (collision(botViews[j].view, obj.view)) {
+                // check if box is already in contact with bot
+                    if (!boxesInContact.includes(obj.part)) {
+                        // change box color to red
+                        obj.part.fill = "red";
+                        // add box to list of boxes in contact with bot
+                        boxesInContact.push(obj.part);
+                    }
+                } else {
+                    // box is not in contact with bot, so revert back to original color
+                    obj.part.fill = "lightblue";
+                    // remove box from list of boxes in contact with bot
+                    const index = boxesInContact.indexOf(obj.part);
+                    if (index !== -1) {
+                        boxesInContact.splice(index, 1);
+                    }
+                }
+            }
+        }
+
+  
 
         // check for robot collisions
         //if(obj.part.type == "Wall") {
@@ -2869,13 +3217,21 @@ function saveRobot(robot) {
 
 
 function saveRobotFile() {
-    var file = new Blob([JSON.stringify(robot)]);
-    var a = document.getElementById('buildDownload');
-    a.href = URL.createObjectURL(file, {type: "text/plain"});
-    a.download = "robot";
-    a.click();
-    
-    URL.revokeObjectURL(a.href);
+    /* !!!!! Addition By Sam Elfrink: Allows users to name their robot file !!!!!!*/
+    let text;
+    let robotname = prompt("Please enter your robot file name:", "Robot");
+    if (robotname == null || robotname == "") {
+        /* do nothing */
+        return;
+    } else {
+        var file = new Blob([JSON.stringify(robot)]);
+        var a = document.getElementById('buildDownload');
+        a.href = URL.createObjectURL(file, {type: "text/plain"});
+        a.download = robotname;
+        a.click();
+        
+        URL.revokeObjectURL(a.href);
+    }
 }
 
 
@@ -2975,12 +3331,33 @@ function loadRobot(robot, robotString) {
     robot.left.parent = robot;
     robot.right.parent = robot;
 
+
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    //handle the wheel size
+    console.log(robot.chassisWheelSize);
+    wheelSize = robot.chassisWheelSize;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     /* handle the parts */
+    
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    // Remove all elements of the drop-down list except for the first 3
+    document.getElementById("partDropDown").options.length = 0;
+    console.log("removed drop down");
+    loadRobotTrue = 1;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     robot.parts = [];
     for(var i=0; i<obj.parts.length; i++) {
         robot.addPart(finishPart(obj.parts[i]));
         robot.parts[i].parent = robot;
+        
+        // !!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!
+        // When a robot is opened, add the part names to the list
+        addList(robot.parts[i].name)
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
+    loadRobotTrue = 0;
 }
 
 
@@ -3000,6 +3377,8 @@ function finishPart(part) {
         result = new RangeSensor();
     } else if(part.type == "Wall") {
         result = new Wall();
+    } else if(part.type == "Box") {
+        result = new Box();
     } else if(part.type == "Laser") {
         result = new Laser();
     } else {
@@ -3018,6 +3397,11 @@ function finishPart(part) {
 function newRobot() {
     robot = new Chassis(100, 100, 0);
 
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    // Remove all elements of the drop-down list except for the first 3
+    document.getElementById("partDropDown").options.length = 0;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //rebuild the robot views
     simView = new ChassisView(robot);
     buildView = new ChassisBuildView(robot);
@@ -3027,6 +3411,29 @@ function newRobot() {
     drawSim();
     drawBuild();
 }
+
+//GAVIN'S UPDATED CODE STARTS HERE
+var multiplyer = 1;
+
+function setSpeedMult1(){
+    multiplyer = 1;
+}
+
+function setSpeedMult5(){
+    multiplyer = 5;
+}
+
+function setSpeedMult10(){
+    multiplyer = 10;
+}
+
+function setSpeedMult25(){
+    multiplyer = 25;
+}
+function getSpeedMult(){
+    return multiplyer;
+}
+//GAVIN'S UPDATED CODE ENDS HERE
 
 //Dark mode
 
