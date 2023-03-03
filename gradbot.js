@@ -29,6 +29,7 @@
 //!!!!!!!! Sam Elfrink Additions !!!!!!!!!!
 var simulationMode = 'toroidal';
 var loadRobotTrue = 0;
+var wheelSize = .065 // original default wheel size
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
@@ -625,7 +626,10 @@ function Chassis(x, y, heading, name)
         this.right.update();
 
         //compute our forward translation and yaw speeds
-        var r = .065; // 65mm diameter wheels
+        // !!!!!!!!!!!!!!!! Samuel Elfrink Addition !!!!!!!!!!!!!!!!!!
+        var r = wheelSize; // adjustable wheel size, 65mm diameter wheels by default
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //var r = .065; // 65mm diameter wheels
         var l = 0.238; // 238mm axel length
         var fwd = r/2 * (this.left.speed + this.right.speed) * 60;
         var yaw = r/l * (this.left.speed - this.right.speed);
@@ -1930,7 +1934,18 @@ function openTab(evt, tabId) {
     simState.prevTab = tabId;
 }
 
-
+// !!!!!!!!! Samuel Elfrink Addition !!!!!!!!!
+function changeWheelSize() {
+    event.preventDefault()
+    console.log("changeWheelSize() called");
+    var size = document.getElementById("wheelSize").value;
+    console.log("Size Variable:");
+    console.log(size);
+    wheelSize = size;
+    console.log("wheelSize Variable:");
+    console.log(wheelSize);
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Add part to the partList element
@@ -2827,6 +2842,10 @@ function gradbotInit() {
             newRobot();
         }
     }
+
+     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+     document.getElementById("changeWheelSize").onclick = changeWheelSize;
+     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up opponent handlers
     document.getElementById("simUpload").onchange = openOpponentFile;
