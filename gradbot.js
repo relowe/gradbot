@@ -545,7 +545,16 @@ function Chassis(x, y, heading, name)
     this.left = new Motor(this, -7, -7, 0, "left");
     this.right = new Motor(this, -7, 7, Math.PI, "right");
 
-
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!
+    // adding a wheel size variable to the chassis
+    console.log("Chassis called");
+    this.chassisWheelSize = document.getElementById("wheelSize").value;
+    
+    // update function to preserve wheel size and update it to the robot
+    this.updateWheel = function() {
+        this.chassisWheelSize = document.getElementById("wheelSize").value;
+    }
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //we start unexploded and healthy!
     this.hp = 3;
     this.blowedUp = false;
@@ -613,7 +622,10 @@ function Chassis(x, y, heading, name)
           this.explode();
           return;
         }
-
+        
+        // !!!!! Sam Elfrink Addition !!!!!!!!!
+        this.updateWheel();
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         //update all the sub parts
         for(var i in this.parts) {
@@ -626,7 +638,7 @@ function Chassis(x, y, heading, name)
         this.right.update();
 
         //compute our forward translation and yaw speeds
-        // !!!!!!!!!!!!!!!! Samuel Elfrink Addition !!!!!!!!!!!!!!!!!!
+        // !!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!
         var r = wheelSize; // adjustable wheel size, 65mm diameter wheels by default
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //var r = .065; // 65mm diameter wheels
@@ -1934,13 +1946,19 @@ function openTab(evt, tabId) {
     simState.prevTab = tabId;
 }
 
-// !!!!!!!!! Samuel Elfrink Addition !!!!!!!!!
-function changeWheelSize() {
+// !!!!!!!!! Sam Elfrink Addition !!!!!!!!!
+/**
+ * 
+ * @param {*} event 
+ */
+function changeWheelSize(state) {
     event.preventDefault()
     console.log("changeWheelSize() called");
     var size = document.getElementById("wheelSize").value;
     console.log("Size Variable:");
     console.log(size);
+    //this.chassisWheelSize = size;
+    robot.update();
     wheelSize = size;
     console.log("wheelSize Variable:");
     console.log(wheelSize);
@@ -2503,6 +2521,15 @@ function buildApply(event) {
     applyEditor(buildState);
 }
 
+//!!!!!!!! Sam Elfrink Addition !!!!!!!!
+/**
+ * 
+ * @param {*} event 
+ */
+function wheelApply(event){
+    changeWheelSize(buildState);
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Handle the apply button for the sim part editor.
@@ -2844,7 +2871,7 @@ function gradbotInit() {
     }
 
      //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
-     document.getElementById("changeWheelSize").onclick = changeWheelSize;
+     document.getElementById("changeWheelSize").onclick = wheelApply;
      //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up opponent handlers
@@ -3304,11 +3331,16 @@ function loadRobot(robot, robotString) {
     robot.left.parent = robot;
     robot.right.parent = robot;
 
+
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    //handle the wheel size
+    console.log(robot.chassisWheelSize);
+    wheelSize = robot.chassisWheelSize;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     /* handle the parts */
     
     // !!!!!! Sam Elfrink Addition !!!!!!!!!
-    //openNewRobot variable is used in the Part() to determine if new parts should be added to the drop-down list
-    //openNewRobot = 1;
     // Remove all elements of the drop-down list except for the first 3
     document.getElementById("partDropDown").options.length = 0;
     console.log("removed drop down");
