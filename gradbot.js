@@ -3346,6 +3346,8 @@ function loadRobot(robot, robotString) {
     //handle the wheel size
     console.log(robot.chassisWheelSize);
     wheelSize = robot.chassisWheelSize;
+     // set wheelsize of the text file to the wheelsize value on the webpage
+    document.getElementById("wheelSize").value = wheelSize;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     /* handle the parts */
