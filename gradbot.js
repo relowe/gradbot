@@ -460,7 +460,7 @@ function Motor(parent, x, y, heading, name)
         var multi = getSpeedMult();
         //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
         //This maximum speed is roughly 6.81 radians per second
-        this.speed = (6.18 * this.power / 100) * multi;       //Actual 6.18
+        this.speed = (6.81 * this.power / 100) * multi;
     }
     //GAVIN'S UPDATED CODE ENDS HERE
 
@@ -2838,6 +2838,16 @@ function gradbotInit() {
     canvas.onmouseup = buildMouseUp;
     canvas.onmousemove = buildMouseMove;
 
+    // Gavin Added 02/22/2023
+    //set up world handlers
+    document.getElementById("worldOpen").onclick = function() {
+        deselectPart(simState); //Might need to fix 
+        document.getElementById("worldUpload").click();
+    };
+    document.getElementById("worldSave").onclick = saveWorldFile;
+    document.getElementById("worldUpload").onchange = openWorldFile ;
+    //End of Gavin Added
+	
     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
     document.getElementById("partDropDown").onchange = dropDownPartSelect;
 
@@ -3003,7 +3013,7 @@ function simulationStart() {
 
 
     //set the timer going!
-    simState.timer = setInterval(simulationUpdate, 1000/30);
+    simState.timer = setInterval(simulationUpdate, 1000/60); //Gavin changed 1000/30 to 1000/60
 }
 
 
@@ -3434,6 +3444,92 @@ function getSpeedMult(){
     return multiplyer;
 }
 //GAVIN'S UPDATED CODE ENDS HERE
+
+//Edited by GAVIN 02/22/2023
+
+function openWorldFile() {
+    var reader = new FileReader();
+    reader.onload = function() {
+        loadWorld(world, reader.result);
+
+        //redraw
+        graphPaperFill("simbg");
+        drawSim();
+        drawBuild();
+    };
+
+    reader.readAsText(this.files[0]);
+
+}
+
+function saveWorldFile() {
+    //let text;
+    let worldname = prompt("Please enter your world file name:", "World");
+    if (worldname == null || worldname == "") {
+        //do nothing 
+        return;
+    } else {
+        var file = new Blob([JSON.stringify(simState)]);
+        var a = document.getElementById('worldDownload');
+        a.href = URL.createObjectURL(file, {type: "text/plain"});
+        a.download = worldname;
+        a.click();
+        
+        URL.revokeObjectURL(a.href);
+    }
+}
+
+
+//set up handlers for premade maps
+document.getElementById("combatWorld").onclick = loadCombatWorld;
+document.getElementById("mazeWorld").onclick = loadMazeWorld;
+document.getElementById("pacmanWorld").onclick = loadPacmanWorld;
+
+function loadCombatWorld() {
+    var combatWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":11,"y":580,"heading":0,"view":{"x":11,"y":580,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":1,"y":560},{"x":21,"y":560},{"x":21,"y":600},{"x":1,"y":600}],"minx":1,"miny":560,"maxx":21,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":11,"y":580,"heading":0,"type":"Wall","name":"BOTTOMWALL","worldx":11,"worldy":580,"outline":"blue","fill":"blue","power":0,"resizeFactor":1}},"lastX":11,"lastY":580,"robotStartX":300,"robotStartY":309,"robotStartHeading":0,"timer":17,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":9,"y":19,"heading":0,"view":{"x":9,"y":19,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":-1,"y":-1},{"x":19,"y":-1},{"x":19,"y":39},{"x":-1,"y":39}],"minx":-1,"miny":-1,"maxx":19,"maxy":39,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":9,"y":19,"heading":0,"type":"Wall","name":"part6","worldx":9,"worldy":19,"outline":"blue","fill":"blue","power":0,"resizeFactor":1}},{"x":791,"y":19,"heading":0,"view":{"x":791,"y":19,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":781,"y":-1},{"x":801,"y":-1},{"x":801,"y":39},{"x":781,"y":39}],"minx":781,"miny":-1,"maxx":801,"maxy":39,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":791,"y":19,"heading":0,"type":"Wall","name":"RIGHTWALL","worldx":791,"worldy":19,"outline":"lightblue","fill":"blue","power":0,"resizeFactor":1}},{"x":10,"y":20,"heading":0,"view":{"x":10,"y":20,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":0,"y":0},{"x":20,"y":0},{"x":20,"y":40},{"x":0,"y":40}],"minx":0,"miny":0,"maxx":20,"maxy":40,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":20,"heading":0,"type":"Wall","name":"TOPWALL","worldx":10,"worldy":20,"outline":"lightblue","fill":"blue","power":0,"resizeFactor":1}},{"x":11,"y":580,"heading":0,"view":{"x":11,"y":580,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":1,"y":560},{"x":21,"y":560},{"x":21,"y":600},{"x":1,"y":600}],"minx":1,"miny":560,"maxx":21,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":11,"y":580,"heading":0,"type":"Wall","name":"BOTTOMWALL","worldx":11,"worldy":580,"outline":"blue","fill":"blue","power":0,"resizeFactor":1}}],"editTarget":null,"editOriginalOutline":"lightblue","running":false,"width":800,"height":600}'
+    loadWorld(combatWorld);
+    
+}
+
+function loadMazeWorld() {
+    var mazeWorld = 
+    loadWorld(mazeWorld);
+
+}
+
+function loadPacmanWorld() {
+    var pacmanWorld = 
+    loadWorld(pacmanWorld);
+
+}
+
+
+function loadWorld(worldString) {
+
+    if(!worldString) worldString = localStorage.getItem("world");
+    if(!worldString) return;
+
+    var obj = JSON.parse(worldString);
+
+    /* grab the attributes */
+    for(var attr in obj) {
+        if(attr == "part") { continue; }
+        robot[attr] = obj[attr];
+    }
+
+    /* handle the parts */
+
+    //simState.worldObjects = [];
+    for(var i=0; i<obj.worldObjects.length; i++) {
+        //simState.worldObjects[i] = obj.worldObjects[i];
+        var wall = new Wall(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+        simState.worldObjects.push(constructView(wall));
+        //finishPart(wall);
+        console.log(simState.worldObjects[i]);
+        drawSim();
+    }
+}
+//End of Edited by GAVIN 02/22/2023
 
 //Dark mode
 
