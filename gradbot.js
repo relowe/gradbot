@@ -2845,7 +2845,7 @@ function gradbotInit() {
         document.getElementById("worldUpload").click();
     };
     document.getElementById("worldSave").onclick = saveWorldFile;
-    document.getElementById("worldUpload").onchange = openWorldFile ;
+    document.getElementById("worldNew").onchange = openWorldFile ;
     //End of Gavin Added
 	
     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
