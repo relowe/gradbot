@@ -318,8 +318,11 @@ function Part(parent, x, y, heading, name)
     
     if (loadRobotTrue == 1) {
         //do nothing
+        //console.log("loadRobotTrue = 1");
     }
     else {
+        //console.log("loadRobotTrue = 0");
+        //console.log("Addlist Part function called");
         addList(this.name);
     }
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2428,6 +2431,7 @@ function applyEditor(state) {
     dropDownElement.remove(dropDownElement.selectedIndex);
     // The new name is add to the drop-down list
     //console.log("apply editor");
+    //console.log("Addlist ApplyEditor function called");
     addList(part.name);
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3380,11 +3384,14 @@ function openRobotFile() {
 
 //Chase new openOpponentFile()
 function openOpponentFile() {
+    
+    loadRobotTrue = 1; // Sam Elfrink Addition
+    
     opponentType = "custom";
     var reader = new FileReader();
     reader.onload = function() {
         opponent = new Chassis();
-        loadRobot(opponent, reader.result);
+        loadRobotOpp(opponent, reader.result);
         opponent.x = 700;
         opponent.y = 500;
         opponent.heading = Math.PI;
@@ -3397,26 +3404,6 @@ function openOpponentFile() {
         drawSim();
     };
     console.log(this.files[0]);
-    reader.readAsText(this.files[0]);
-
-}
-
-function resetOpenOpponentFile() {
-    var reader = new FileReader();
-    reader.onload = function() {
-        opponent = new Chassis();
-        loadRobot(opponent, reader.result);
-        opponent.x = 700;
-        opponent.y = 500;
-        opponent.heading = Math.PI;
-
-        //rebuild the robot view
-        opponentView = new ChassisView(opponent);
-
-        //redraw
-        graphPaperFill("simbg");
-        drawSim();
-    };
     reader.readAsText(this.files[0]);
 
 }
@@ -3446,7 +3433,7 @@ function loadSpinnerOpponent() {
 
 function loadSampleOpponent(robotString) {
     opponent = new Chassis();
-    loadRobot(opponent, robotString);
+    loadRobotOpp(opponent, robotString);
     opponent.x = 700;
     opponent.y = 500;
     opponent.heading = Math.PI;
@@ -3459,8 +3446,57 @@ function loadSampleOpponent(robotString) {
     drawSim();
 }
 
+//Created a new function so that opponent parts do not show up in Drop Down
+function loadRobotOpp(robot, robotString) {
+    loadRobotTrue = 1;
+    //console.log("loadRobotOpp Function");
+    if(!robotString) robotString = localStorage.getItem("robot");
+    if(!robotString) return;
+
+
+    var obj = JSON.parse(robotString);
+
+    /* grab the attributes */
+    for(var attr in obj) {
+        if(attr == "parts") { continue; }
+        robot[attr] = obj[attr];
+    }
+
+    /* handle the motors */
+    robot.left = finishPart(obj.left);
+    robot.right = finishPart(obj.right);
+    robot.left.parent = robot;
+    robot.right.parent = robot;
+
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    //handle the wheel size
+    //wheelSize = robot.chassisWheelSize;
+    // set wheelsize of the text file to the wheelsize value on the webpage
+    //document.getElementById("wheelSize").value = wheelSize;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /* handle the parts */
+    
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    // Remove all elements of the drop-down list except for the first 3
+    //document.getElementById("partDropDown").options.length = 0;
+    //console.log("loadRobotTrue set to 1");
+    //loadRobotTrue = 1;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    robot.parts = [];
+    for(var i=0; i<obj.parts.length; i++) {
+        robot.addPart(finishPart(obj.parts[i]));
+        robot.parts[i].parent = robot;
+    }
+
+    //console.log("loadRobotTrue set to 0");
+    loadRobotTrue = 0;
+}
+
 
 function loadRobot(robot, robotString) {
+    
     if(!robotString) robotString = localStorage.getItem("robot");
     if(!robotString) return;
 
@@ -3491,6 +3527,7 @@ function loadRobot(robot, robotString) {
     // !!!!!! Sam Elfrink Addition !!!!!!!!!
     // Remove all elements of the drop-down list except for the first 3
     document.getElementById("partDropDown").options.length = 0;
+    //console.log("loadRobotTrue set to 1");
     loadRobotTrue = 1;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3501,9 +3538,11 @@ function loadRobot(robot, robotString) {
         
         // !!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!
         // When a robot is opened, add the part names to the list
+        //console.log("Addlist loadrobot function called");
         addList(robot.parts[i].name)
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
+    //console.log("loadRobotTrue set to 0");
     loadRobotTrue = 0;
 }
 
