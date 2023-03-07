@@ -379,7 +379,7 @@ function Part(parent, x, y, heading, name)
         }
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         */
-
+        
         //limit the power setting's range
         if(power > 100) {
             power = 100;
@@ -555,6 +555,7 @@ function Chassis(x, y, heading, name)
         this.chassisWheelSize = document.getElementById("wheelSize").value;
     }
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //we start unexploded and healthy!
     this.hp = 3;
     this.blowedUp = false;
@@ -622,7 +623,7 @@ function Chassis(x, y, heading, name)
           this.explode();
           return;
         }
-        
+
         // !!!!! Sam Elfrink Addition !!!!!!!!!
         this.updateWheel();
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -661,7 +662,6 @@ function Chassis(x, y, heading, name)
         this.y += fwd * Math.sin(this.heading) * elapsed;
         this.heading += yaw * elapsed;
 
-        //CHASE'S UPDATED CODE STARTS HERE
         // Update the position of the object based on the current simulation mode
         switch(simulationMode) {
             case 'toroidal':
@@ -693,7 +693,6 @@ function Chassis(x, y, heading, name)
                 // Handle unrecognized simulation mode
             break;
         }
-        //CHASE'S UPDATED CODE ENDS HERE
     };
 
 
@@ -1863,6 +1862,9 @@ var simState = {
     robotStartX: 100,
     robotStartY: 100,
     robotStartHeading: 0,
+    opponentStartX: 700,
+    opponentStartY: 500,
+    opponentStartHeading: Math.PI,
     timer: null,
     prevTab: null,
     robotThread: null,
@@ -2084,6 +2086,14 @@ function simMouseDown(event) {
             }
         }
     }
+
+    //Chase: Move opponent with drag mode
+    if(opponent){
+        if(opponentView.view.encloses(event.offsetX, event.offsetY)){
+            simState.dragTarget = opponentView;
+        }
+    }
+    
     
     if(!simState.dragTarget) {
         return false;
@@ -2328,11 +2338,10 @@ function dropDownPartSelect(event) {
     // check for clicking on a robot subpart
     for(var i=0; i < buildView.subviews.length; i++) {
         var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
-    
+       
         // if the part selected matches the part current partview, select it
         //NOTE: THERE IS NO CHASSISS IN THE buildView.subviews ARRAY, so chassiss select doesn't work
         if(partView.part.name == dropPartName) {
-        
             buildState.dragTarget = partView;
             break;
         }
@@ -2348,7 +2357,7 @@ function dropDownPartSelect(event) {
     
     // set up the target
     buildState.editTarget = buildState.dragTarget;
-    
+
     //show the editor
     dropDownClick(buildState.dragTarget, buildState);
     //showPartEditor(buildState.dragTarget, buildState);
@@ -2511,7 +2520,6 @@ function buildMouseUp(event) {
     buildState.dragTarget = null;
     buildState.dragMode = DRAG_NONE;
 }
-
 
 /**
  * Handle the apply button for the build part editor.
@@ -2702,7 +2710,7 @@ function buildAddLaser(event) {
     drawBuild();
 }
 
-
+//Chase new go event
 /**
  * Handle the simulation go button.
  * @param {*} event 
@@ -2713,10 +2721,6 @@ function simulationGo(event) {
     if(text == "Start") {
         event.target.innerHTML = "Pause";
         
-        //preserve the starting pose of the robot
-        simState.robotStartX = robot.x;
-        simState.robotStartY = robot.y;
-        simState.robotStartHeading = robot.heading;
         simulationStart();
     } else if(text == "Pause") {
         event.target.innerHTML = "Resume";
@@ -2725,15 +2729,125 @@ function simulationGo(event) {
         event.target.innerHTML = "Pause";
         simulationStart();
     }
+
+    if (robot.blowedUp == true && event.target.innerHTML == "Resume"){
+        robot.thread = null;
+        if(simState.robotThread) {
+            simState.robotThread.terminate();
+        }
+        alert("Oops, looks like your robot has been destroyed. Hit reset.");
+        return;
+    }
+
+    //preserve the starting pose of the robot
+    simState.robotStartX = robot.x;
+    simState.robotStartY = robot.y;
+    simState.robotStartHeading = robot.heading;
+
+    
+    if(opponent){
+        //preserve the starting pose of the opponent
+        simState.opponentStartX = opponent.x;
+        simState.opponentStartY = opponent.y;
+        simState.opponentStartHeading = opponent.heading;
+        
+        //allows the player to resume without the bot
+        if (opponent.blowedUp == true && event.target.innerHTML == "Resume"){
+            opponent = null;
+            if(simView.opponentThread) {
+                simView.opponentThread.terminate();
+            }
+
+            simView.opponentThread = null;
+            opponentView = null;
+            simState.opponentThread = null;
+        }
+    }       
 }
 
-
+//Chase new reset event
 function simulationReset(event) {
     document.getElementById("simGo").innerHTML = "Start";
     var canvas = document.getElementById("simfg");
     //put the robot back in its original position and heading
     robot.moveTo(simState.robotStartX, simState.robotStartY);
     robot.face(simState.robotStartHeading);
+
+    //refuel and powered up
+    robot.left.setPower(0);
+    robot.right.setPower(0);
+    robot.resetLaserBattery();
+    robot.hp = 3;
+
+    //MAYDAY!
+    if (robot.blowedUp == true){
+        console.log('blowedUp')
+        robot.thread = null;
+        if(simState.robotThread) {
+            simState.robotThread.terminate();
+        }
+        
+        //Six Million Dollar Bot
+        robot = new Chassis();
+        robot.x = 100;
+        robot.y = 100;
+        robot.heading = 0;
+        loadRobot(robot);
+        simView = new ChassisView(robot); 
+        buildView = new ChassisBuildView(robot);
+        simState.robotThread = new Worker("userbot.js");
+        simState.robotThread.onerror = gradbotError;
+        simState.robotThread.onmessage = simulationReceiveMessage;
+        simState.robotThread.postMessage({type: "start", robot: robot.sendable()});
+        robot.thread = simState.robotThread;
+
+        //refreshed stats
+        robot.left.setPower(0);
+        robot.right.setPower(0);
+        robot.resetLaserBattery();
+        robot.hp = 3;
+    }  
+
+    if(opponent){
+        //put the opponent back in its original position and heading
+        opponent.moveTo(simState.opponentStartX, simState.opponentStartY);
+        opponent.face(simState.opponentStartHeading);
+
+        //Tis but a scratch 
+        opponent.left.setPower(0);
+        opponent.right.setPower(0);
+        opponent.resetLaserBattery();
+        opponent.hp = 3;
+    
+        //checks if opponent exploded and removes the mess after reset
+        if (opponent.blowedUp == true){
+            console.log('blowedUp')
+            opponent = null;
+            if(simView.opponentThread) {
+                simView.opponentThread.terminate();
+            }
+            simView.opponentThread = null;
+            opponentView = null;
+            simState.opponentThread.terminate();
+            simState.opponentThread = null;
+    
+            // Respawn the correct opponent
+            switch(opponentType) {
+                case "rover":
+                    loadRoverOpponent();
+                    break;
+                case "circler":
+                    loadCirclerOpponent();
+                    break;
+                case "spinner":
+                    loadSpinnerOpponent();
+                    break;
+                case "custom":
+                    document.getElementById('simUpload').click();          
+                    break;
+            }
+        }
+    }
 
     //clear the background
     graphPaperFill("simbg");
@@ -2744,7 +2858,7 @@ function simulationReset(event) {
     drawSim();
 }
 
-
+//Chase new clear event
 /**
  * Handle simulation clear.
  * @param {*} event
@@ -2758,11 +2872,12 @@ function simulationClear(event) {
     robot.heading = 0;
 
     // reset the opponent
-    if(opponent) {
+    if(opponent){
         opponent.x = 700;
         opponent.y = 500;
         opponent.heading = Math.PI;
     }
+    
 
     //clear lights and walls
     if(simState.worldObjects.length != 0) {
@@ -2774,6 +2889,16 @@ function simulationClear(event) {
     //redraw 
     graphPaperFill("simbg");
     drawSim();
+}
+
+
+/**
+ * Gradbot Error Handler
+ * @param {*} event 
+ */
+function gradbotError(message) {
+    document.getElementById("simReset").click();
+    alert(message);
 }
 
 
@@ -2847,7 +2972,7 @@ function gradbotInit() {
     document.getElementById("worldSave").onclick = saveWorldFile;
     document.getElementById("worldNew").onchange = openWorldFile ;
     //End of Gavin Added
-	
+
     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
     document.getElementById("partDropDown").onchange = dropDownPartSelect;
 
@@ -2880,9 +3005,9 @@ function gradbotInit() {
         }
     }
 
-     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
-     document.getElementById("changeWheelSize").onclick = wheelApply;
-     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+    document.getElementById("changeWheelSize").onclick = wheelApply;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up opponent handlers
     document.getElementById("simUpload").onchange = openOpponentFile;
@@ -2899,6 +3024,7 @@ function gradbotInit() {
         opponentView = null;
         drawSim();
     };
+    
     document.getElementById("simRoverOpponent").onclick = loadRoverOpponent;
     document.getElementById("simCirclerOpponent").onclick = loadCirclerOpponent;
     document.getElementById("simSpinnerOpponent").onclick = loadSpinnerOpponent;
@@ -2917,7 +3043,6 @@ function gradbotInit() {
     //activate our error handler
     window.onerror = gradbotError;
 
-    //CHASE'S UPDATED CODE STARTS HERE
     // Change the world state
     var toroidalButton = document.getElementById("toroidal-mode");
     var infiniteButton = document.getElementById("infinite-mode");
@@ -2930,7 +3055,6 @@ function gradbotInit() {
     infiniteButton.addEventListener("click", function() {
     simulationMode = "infinite";
     });
-    //CHASE'S UPDATED CODE ENDS HERE
 
     //GAVIN'S UPDATED CODE STARTS HERE
     //Set up Speed Multipliers
@@ -2982,18 +3106,6 @@ function simulationStart() {
         clearInterval(simState.timer);
     }
 
-    //reset the bots
-    robot.left.setPower(0);
-    robot.right.setPower(0);
-    robot.resetLaserBattery();
-    robot.hp = 3;
-    if(opponent) {
-        opponent.left.setPower(0);
-        opponent.right.setPower(0);
-        opponent.resetLaserBattery();
-        opponent.hp = 3;
-    }
-
     //start the robot thread
     simState.robotThread = new Worker("userbot.js");
     simState.robotThread.onerror = gradbotError;
@@ -3003,14 +3115,16 @@ function simulationStart() {
 
 
     //start the opponent thread (if there is one)
-    if(opponent) {
+    if(opponent){
+        if(simState.opponentThread) {
+            simState.opponentThread.terminate();
+        }
         simState.opponentThread = new Worker("userbot.js");
         simState.opponentThread.onerror = gradbotError;
         simState.opponentThread.onmessage = opponentReceiveMessage;
         simState.opponentThread.postMessage({type: "start", robot: opponent.sendable()});
         opponent.thread = simState.opponentThread;
     }
-
 
     //set the timer going!
     simState.timer = setInterval(simulationUpdate, 1000/60); //Gavin changed 1000/30 to 1000/60
@@ -3264,8 +3378,9 @@ function openRobotFile() {
 
 }
 
-
+//Chase new openOpponentFile()
 function openOpponentFile() {
+    opponentType = "custom";
     var reader = new FileReader();
     reader.onload = function() {
         opponent = new Chassis();
@@ -3281,14 +3396,35 @@ function openOpponentFile() {
         graphPaperFill("simbg");
         drawSim();
     };
-
+    console.log(this.files[0]);
     reader.readAsText(this.files[0]);
 
 }
 
+function resetOpenOpponentFile() {
+    var reader = new FileReader();
+    reader.onload = function() {
+        opponent = new Chassis();
+        loadRobot(opponent, reader.result);
+        opponent.x = 700;
+        opponent.y = 500;
+        opponent.heading = Math.PI;
 
+        //rebuild the robot view
+        opponentView = new ChassisView(opponent);
+
+        //redraw
+        graphPaperFill("simbg");
+        drawSim();
+    };
+    reader.readAsText(this.files[0]);
+
+}
+
+//Chase new opponents
 function loadRoverOpponent() {
     var rover = '{"x":95.31671683510646,"y":504.2753606734182,"heading":11.038709558823625,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":false,"lastUpdate":1655407045989,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":90.49773755656109,"speed":6.16289592760181},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":90.49773755656109,"speed":6.16289592760181},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nwhile(true) {\\n  await forward(10);\\n  laser.fire();\\n  await turnRight(90);\\n  laser.fire();\\n  await forward(7);\\n  laser.fire();\\n  await turnRight(90);\\n  laser.fire();\\n}","laserBattery":36}';
+    opponentType = "rover";
     loadSampleOpponent(rover);
 
 }
@@ -3296,14 +3432,17 @@ function loadRoverOpponent() {
 
 function loadCirclerOpponent() {
     var circler='{"x":327.5469402567586,"y":167.76097113134486,"heading":13.770062022058815,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":59.55253896430367,"speed":4.05552790346908},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":53.56963298139768,"speed":3.6480920060331816},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\nvar count = 0;\\nvar r = 3;\\nvar vx = 0.25;\\nvar dr = -0.25;\\nvar delays;\\n\\nsetSpeed(0.4, 0);\\nfor(var i=0; i<5; i++) {\\n  laser.fire();\\n  await delay(1000);\\n}\\n\\n\\nwhile(true) {\\n  delays = Math.floor(0.628 * r / vx);\\n  vyaw = vx/r;\\n  setSpeed(vx, vyaw);\\n  count = count + 1;\\n  \\n  if(count % 20 ==  0) {\\n    laser.fire();\\n  }\\n  \\n  if(count % delays == 0) {\\n    r += dr;\\n    if(r >= 3 || r <= 0.5) {\\n      dr *= -1;\\n    }\\n  }\\n  await delay(100);\\n}","laserBattery":0}';
+    opponentType = "circler";
     loadSampleOpponent(circler);
 }
 
 
 function loadSpinnerOpponent() {
     var spinner='{"x":100,"y":100,"heading":0,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":100,"speed":6.81},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":-80,"speed":-5.4479999999999995},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nleft.setPower(100);\\nright.setPower(-80);\\n\\nwhile(true) {\\n  await delay(1000);\\n  laser.fire();\\n}","laserBattery":38}';
+    opponentType = "spinner";
     loadSampleOpponent(spinner);
 }
+//end of Chase new opponents
 
 function loadSampleOpponent(robotString) {
     opponent = new Chassis();
@@ -3322,7 +3461,6 @@ function loadSampleOpponent(robotString) {
 
 
 function loadRobot(robot, robotString) {
-
     if(!robotString) robotString = localStorage.getItem("robot");
     if(!robotString) return;
 
@@ -3341,12 +3479,10 @@ function loadRobot(robot, robotString) {
     robot.left.parent = robot;
     robot.right.parent = robot;
 
-
     // !!!!!! Sam Elfrink Addition !!!!!!!!!
     //handle the wheel size
-    console.log(robot.chassisWheelSize);
     wheelSize = robot.chassisWheelSize;
-     // set wheelsize of the text file to the wheelsize value on the webpage
+    // set wheelsize of the text file to the wheelsize value on the webpage
     document.getElementById("wheelSize").value = wheelSize;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3355,7 +3491,6 @@ function loadRobot(robot, robotString) {
     // !!!!!! Sam Elfrink Addition !!!!!!!!!
     // Remove all elements of the drop-down list except for the first 3
     document.getElementById("partDropDown").options.length = 0;
-    console.log("removed drop down");
     loadRobotTrue = 1;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3448,7 +3583,6 @@ function getSpeedMult(){
 //GAVIN'S UPDATED CODE ENDS HERE
 
 //Edited by GAVIN 02/22/2023
-
 function openWorldFile() {
     var reader = new FileReader();
     reader.onload = function() {
@@ -3459,10 +3593,9 @@ function openWorldFile() {
         drawSim();
         drawBuild();
     };
-
     reader.readAsText(this.files[0]);
-
 }
+
 
 function saveWorldFile() {
     //let text;
@@ -3531,7 +3664,6 @@ function loadWorld(worldString) {
         drawSim();
     }
 }
-//End of Edited by GAVIN 02/22/2023
 
 //Dark mode
 
