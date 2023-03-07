@@ -315,18 +315,20 @@ function Part(parent, x, y, heading, name)
 
     // !!!!!!!! Sam Elfrink Addition !!!!!!!
     // add the new part name to the drop-down list
-    
+   
     if (loadRobotTrue == 1) {
         //do nothing
         //console.log("loadRobotTrue = 1");
+        //console.log("Don't add list");
     }
     else {
         //console.log("loadRobotTrue = 0");
         //console.log("Addlist Part function called");
+        //console.log(this.name);
         addList(this.name);
     }
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+
     //position in world coordinates
     this.worldx = 0;
     this.worldy = 0;
@@ -2922,6 +2924,11 @@ function gradbotError(message) {
  * Initialize the gradbot interface.
  */
 function gradbotInit() {
+    
+    // Sam Elfrink Addition
+    loadRobotTrue = 1;
+
+    console.log("gradbotInit called");
     //fill the simulation background with graph paper
     graphPaperFill('simbg');
 
@@ -2933,8 +2940,17 @@ function gradbotInit() {
     simState.robotStartHeading = robot.heading;
 
     //!!!!!!!!!!!!!!!Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+     // Sam Elfrink Addition
+     loadRobotTrue = 0;
     // remove motors and chassis from the drop-down list
-    document.getElementById("partDropDown").options.length = 0;
+    //var dropDownElementInit = document.getElementById("partDropDown");
+    //var firstListName = dropDownElementInit.options[0].text;
+    //var firstListName = dropDownElementInit.options[dropDownElementInit.selectedIndex].value;
+    //console.log(firstListName);
+    //if(firstListName == 'chassis'){
+    //    document.getElementById("partDropDown").options.length = 0;
+    //}
+    //document.getElementById("partDropDown").options.length = 0;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //put the robot on the foreground of the simulator
@@ -3468,21 +3484,6 @@ function loadRobotOpp(robot, robotString) {
     robot.left.parent = robot;
     robot.right.parent = robot;
 
-    // !!!!!! Sam Elfrink Addition !!!!!!!!!
-    //handle the wheel size
-    //wheelSize = robot.chassisWheelSize;
-    // set wheelsize of the text file to the wheelsize value on the webpage
-    //document.getElementById("wheelSize").value = wheelSize;
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    /* handle the parts */
-    
-    // !!!!!! Sam Elfrink Addition !!!!!!!!!
-    // Remove all elements of the drop-down list except for the first 3
-    //document.getElementById("partDropDown").options.length = 0;
-    //console.log("loadRobotTrue set to 1");
-    //loadRobotTrue = 1;
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     robot.parts = [];
     for(var i=0; i<obj.parts.length; i++) {
@@ -3510,8 +3511,15 @@ function loadRobot(robot, robotString) {
     }
 
     /* handle the motors */
+
+    // !!!!!!! Sam Elfrink Addition !!!!!!!!
+    loadRobotTrue = 1; // prevent unwanted parts from the drop down
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     robot.left = finishPart(obj.left);
     robot.right = finishPart(obj.right);
+
+
     robot.left.parent = robot;
     robot.right.parent = robot;
 
@@ -3528,7 +3536,7 @@ function loadRobot(robot, robotString) {
     // Remove all elements of the drop-down list except for the first 3
     document.getElementById("partDropDown").options.length = 0;
     //console.log("loadRobotTrue set to 1");
-    loadRobotTrue = 1;
+    //loadRobotTrue = 1;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     robot.parts = [];
@@ -3538,7 +3546,6 @@ function loadRobot(robot, robotString) {
         
         // !!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!
         // When a robot is opened, add the part names to the list
-        //console.log("Addlist loadrobot function called");
         addList(robot.parts[i].name)
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
