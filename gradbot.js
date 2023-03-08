@@ -3018,7 +3018,7 @@ function gradbotInit() {
         document.getElementById("worldUpload").click();
     };
     document.getElementById("worldSave").onclick = saveWorldFile;
-    document.getElementById("worldNew").onchange = openWorldFile ;
+    document.getElementById("worldUpload").onchange = openWorldFile ;
     //End of Gavin Added
 
     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
@@ -3327,47 +3327,6 @@ function simulationUpdate() {
  ******************************************/
 
 //World Save Funtions
-function saveWorld(world){
-	localStorage.setItem("world", JSON.stringify(world));
-}
-
-function saveWorldFile() {
-    var file = new Blob([JSON.stringify(world)]);
-    var a = document.getElementById('worldDownload');
-    a.href = URL.createObjectURL(file, {type: "text/plain"});
-    a.download = "world";
-    a.click();
-    
-    URL.revokeObjectURL(a.href);
-}
-
-function openWorldFile() {
-    var reader = new FileReader();
-    reader.onload = function() {
-        loadWorld(world, reader.result);
-
-        //rebuild the world for simulation
-        simView = new ChassisView(world);
-        buildView = new ChassisBuildView(world);
-
-        //redraw
-        graphPaperFill("simbg");
-        drawSim();
-        drawBuild();
-    };
-
-    reader.readAsText(this.files[0]);
-
-}
-
-function loadWorld(world, worldString) {
-
-    if(!worldString) worldString = localStorage.getItem("world");
-    if(!worldString) return;
-
-
-    var obj = JSON.parse(worldString);
-}
 
 function newWorld() {
    robot = new Chassis(100, 100, 0);
@@ -3660,8 +3619,7 @@ function getSpeedMult(){
 function openWorldFile() {
     var reader = new FileReader();
     reader.onload = function() {
-        loadWorld(world, reader.result);
-
+        loadWorld(reader.result);
         //redraw
         graphPaperFill("simbg");
         drawSim();
@@ -3672,7 +3630,7 @@ function openWorldFile() {
 
 
 function saveWorldFile() {
-    //let text;
+    let text;
     let worldname = prompt("Please enter your world file name:", "World");
     if (worldname == null || worldname == "") {
         //do nothing 
@@ -3730,14 +3688,40 @@ function loadWorld(worldString) {
 
     //simState.worldObjects = [];
     for(var i=0; i<obj.worldObjects.length; i++) {
-        //simState.worldObjects[i] = obj.worldObjects[i];
+        console.log(i);
+        console.log(obj.worldObjects[i]);
+        //Check for Wall
+        if(obj.worldObjects[i].part.type == "Wall"){
         var wall = new Wall(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+        wall.name = obj.worldObjects[i].part.name;
+        wall.outline = obj.worldObjects[i].part.outline;
+        wall.fill = obj.worldObjects[i].part.fill;
         simState.worldObjects.push(constructView(wall));
+        }
+
+        //Check for Light
+        if(obj.worldObjects[i].part.type == "Light"){
+        var light = new Light(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+        light.name = obj.worldObjects[i].part.name;
+        light.outline = obj.worldObjects[i].part.outline;
+        light.fill = obj.worldObjects[i].part.fill;
+        simState.worldObjects.push(constructView(light));
+        }
+
+        //Check for Box
+        if(obj.worldObjects[i].part.type == "Box"){
+        var box = new Box(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+        box.name = obj.worldObjects[i].part.name;
+        box.outline = obj.worldObjects[i].part.outline;
+        box.fill = obj.worldObjects[i].part.fill;
+        simState.worldObjects.push(constructView(box));
+        }
         //finishPart(wall);
         console.log(simState.worldObjects[i]);
         drawSim();
     }
 }
+//End of Edited by GAVIN 02/22/2023
 
 //Dark mode
 
