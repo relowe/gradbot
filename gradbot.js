@@ -2404,6 +2404,27 @@ function deselectPart(state) {
     }
 }
 
+//!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!!!!!!!
+// check to see if a string input is a valid javascript variable name
+function isVariableName(string) {
+    // Check to make sure the input is a string
+    if(typeof string !== 'string') {
+        return false;
+    }
+    // Check for whitepace before or after
+    if(string.trim() !== string) {
+        return false;
+    }
+    // try the value as a variable
+    try {
+        new Function(string, 'var ' + string);
+    } catch (_) {
+        return false;
+    }
+    // return true if it passes the test
+    return true;
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Apply the editor to the given state.
@@ -2412,9 +2433,16 @@ function applyEditor(state) {
     //get the color from the editor
     var fill = document.getElementById(state.prefix + "PartFillColor").value;
     var outline = document.getElementById(state.prefix + "PartOutlineColor").value;
-
+    
     //get the part name
     var name = document.getElementById(state.prefix + "PartName").value;
+
+    // !!!!! Sam Elfrink Addition !!!!!!!!!
+    if(isVariableName(name) == false) {
+        alert("Part name must be a valid JavaScript variable name");
+        return;
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //get the part we are editing
     var part = state.editTarget.part;
