@@ -800,6 +800,7 @@ function Wall(parent, x, y) {
     this.type = "Wall";
     this.outline="lightblue";
     this.fill = "blue";
+    this.rotated = false;       //Added by Gavin 03/09/2023
 }
 
 /**
@@ -1757,23 +1758,44 @@ function RangeSensorView(part) {
  * Display the wall in all of its rectangular glory!
  * @param {*} part 
  */
+
+//UPDATED AND EDITED BY GAVIN 03/08/2023
 function WallView(part) {
     if (!part.resizeFactor){
         part.resizeFactor = 1;
     }
+    if (!part.resizeFactorHeight){
+        part.resizeFactorHeight = 1;
+    }
+    if (!part.resizeFactorWidth){
+        part.resizeFactorWidth = 1;
+    }
     PartView.call(this, part);
 
     //create my vector view
-    var points = [
-        {x: -5 * part.resizeFactor, y: -10 * part.resizeFactor},
-        {x: 5 * part.resizeFactor, y: -10 * part.resizeFactor},
-        {x: 5 * part.resizeFactor, y: 10 * part.resizeFactor},
-        {x: -5 * part.resizeFactor, y: 10 * part.resizeFactor},
-    ];
+    if((simState.dragMode == DRAG_ROTATE90 && part.rotated == true) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == true)){
+        var points = [
+            {x: -10 * part.resizeFactor, y: -5 * part.resizeFactor},
+            {x: 10 * part.resizeFactorHeight, y: -5 * part.resizeFactor},
+            {x: 10 * part.resizeFactorHeight, y: 5 * part.resizeFactorWidth},
+            {x: -10 * part.resizeFactor, y: 5 * part.resizeFactorWidth},
+        ];
+        console.log("Rotated Height Resize: ", part.resizeFactorHeight);
+    }
+    if((simState.dragMode == DRAG_ROTATE90 && part.rotated == false) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == false)){
+        var points = [
+            {x: -5 * part.resizeFactor, y: -10 * part.resizeFactorHeight},
+            {x: 5 * part.resizeFactorWidth, y: -10 * part.resizeFactorHeight},
+            {x: 5 * part.resizeFactorWidth, y: 10 * part.resizeFactor},
+            {x: -5 * part.resizeFactor, y: 10 * part.resizeFactor},
+        ];
+        console.log("Upright Height Resize: ", part.resizeFactorHeight);
+    }
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.stroke = "black"
 }
+//END OF UPDATED AND EDITED BY GAVIN 03/08/2023
 
 
 
@@ -1855,7 +1877,9 @@ var flask;
 const DRAG_NONE= 0;
 const DRAG_MOVE=1;
 const DRAG_ROTATE=2;
-const DRAG_RESIZE=3;
+const DRAG_RESIZEHEIGHT=3;      //Updated By Gavin 03/08/2023
+const DRAG_RESIZEWIDTH=4;       //Added By Gavin 03/08/2023
+const DRAG_ROTATE90=5;          //Added By Gavin 03/08/2023
 
 //state of the simulator ui
 var simState = {
@@ -1880,6 +1904,7 @@ var simState = {
     running : false,
     width: 0,
     height: 0,
+    rotated: false,         //Added By Gavin 03/08/2023
 };
 
 
@@ -2114,9 +2139,17 @@ function simMouseDown(event) {
     } else if(document.getElementById('dragMove').checked) {
         simState.dragMode = DRAG_MOVE;
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
-    } else if(document.getElementById('dragResize').checked) {
-        simState.dragMode = DRAG_RESIZE;
-    } else {
+
+    //UPDATED AND ADDED BY GAVIN 03/08/2023
+    } else if(document.getElementById('dragResizeHeight').checked) {
+        simState.dragMode = DRAG_RESIZEHEIGHT;  //Updated by Gavin 03/08/2023
+    }else if(document.getElementById('dragResizeWidth').checked) {
+        simState.dragMode = DRAG_RESIZEWIDTH;  //Updated by Gavin 03/08/2023
+    } else if(document.getElementById('dragRotate90').checked) {
+        simState.dragMode = DRAG_ROTATE90;  //Updated by Gavin 03/08/2023
+    } 
+    //END OF UPDATED AND ADDED BY GAVIN 03/08/2023
+    else {
         simState.dragMode = DRAG_NONE;
     }
 
@@ -2134,11 +2167,13 @@ function simMouseUp(event) {
     // one last move (if that is what we are up to!)
     if(simState.dragMode == DRAG_MOVE) {
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
-    } else if (simState.dragMode == DRAG_RESIZE && simState.dragTarget.part.type == 'Wall'){
-        if (simState.dragTarget.part.resizeFactor < 5){
-            simState.dragTarget.part.resizeFactor = simState.dragTarget.part.resizeFactor + 1;
+    } 
+    //Updated and Added by Gavin 03/08/2023
+    else if (simState.dragMode == DRAG_RESIZEHEIGHT && simState.dragTarget.part.type == 'Wall'){
+        if (simState.dragTarget.part.resizeFactorHeight < 100){
+            simState.dragTarget.part.resizeFactorHeight = simState.dragTarget.part.resizeFactorHeight + 1;
         }else{
-            simState.dragTarget.part.resizeFactor = 1;
+            simState.dragTarget.part.resizeFactorHeight = 1;
         }
         for (var i=0; simState.worldObjects.length; i++){
             if (simState.worldObjects[i].part.name == simState.dragTarget.part.name){
@@ -2148,6 +2183,44 @@ function simMouseUp(event) {
         }
         simState.worldObjects.push(new WallView(simState.dragTarget.part));
     }
+
+    else if (simState.dragMode == DRAG_RESIZEWIDTH && simState.dragTarget.part.type == 'Wall'){
+        if (simState.dragTarget.part.resizeFactorWidth < 100){
+            simState.dragTarget.part.resizeFactorWidth = simState.dragTarget.part.resizeFactorWidth + 1;
+        }else{
+            simState.dragTarget.part.resizeFactorWidth = 1;
+        }
+        for (var i=0; simState.worldObjects.length; i++){
+            if (simState.worldObjects[i].part.name == simState.dragTarget.part.name){
+                simState.worldObjects.splice(i, 1);
+                break;
+            };
+        }
+        simState.worldObjects.push(new WallView(simState.dragTarget.part));
+    }
+
+    else if (simState.dragMode == DRAG_ROTATE90 && simState.dragTarget.part.type == 'Wall'){
+       
+        simState.dragTarget.part.rotated ^= true;
+        console.log(simState.dragTarget.part.rotated);
+        var part = simState.dragTarget.part;
+        deselectPart(simState);
+
+        var partArray = [];
+
+        for(var i=0; i<simState.worldObjects.length; i++) {
+            partArray[i] = simState.worldObjects[i].part;
+        }
+
+        // remove it from the robot parts list
+        simState.worldObjects.splice(partArray.indexOf(part), 1);
+
+        // redraw the sim
+        drawSim();
+        simState.worldObjects.push(new WallView(simState.dragTarget.part));
+
+    }
+    //End of Updated and Added by Gavin 03/08/2023
 
     // end the drag mode
     simState.dragMode = DRAG_NONE;
@@ -2179,7 +2252,7 @@ function simMouseMove(event) {
 
     //process rotation
     if(simState.dragMode == DRAG_ROTATE) {
-        simState.dragTarget.part.rotate((event.offsetY-simState.lastY) * 0.1);
+        simState.dragTarget.part.rotate((event.offsetY-simState.lastY) * .01); //.01 actual
     }
 
     //record this position
@@ -2212,9 +2285,11 @@ function simAddLight(event) {
  */
 function simAddWall(event) {
     var canvas = document.getElementById("simfg");
+    simState.rotated = false;   //Added by Gavin 03/09/2023
     var wall = new Wall(null, canvas.width/2, canvas.height/2);
 
     simState.worldObjects.push(constructView(wall));
+    console.log(wall);
     drawSim();
 }
 
@@ -3653,9 +3728,8 @@ document.getElementById("mazeWorld").onclick = loadMazeWorld;
 document.getElementById("pacmanWorld").onclick = loadPacmanWorld;
 
 function loadCombatWorld() {
-    var combatWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":11,"y":580,"heading":0,"view":{"x":11,"y":580,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":1,"y":560},{"x":21,"y":560},{"x":21,"y":600},{"x":1,"y":600}],"minx":1,"miny":560,"maxx":21,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":11,"y":580,"heading":0,"type":"Wall","name":"BOTTOMWALL","worldx":11,"worldy":580,"outline":"blue","fill":"blue","power":0,"resizeFactor":1}},"lastX":11,"lastY":580,"robotStartX":300,"robotStartY":309,"robotStartHeading":0,"timer":17,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":9,"y":19,"heading":0,"view":{"x":9,"y":19,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":-1,"y":-1},{"x":19,"y":-1},{"x":19,"y":39},{"x":-1,"y":39}],"minx":-1,"miny":-1,"maxx":19,"maxy":39,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":9,"y":19,"heading":0,"type":"Wall","name":"part6","worldx":9,"worldy":19,"outline":"blue","fill":"blue","power":0,"resizeFactor":1}},{"x":791,"y":19,"heading":0,"view":{"x":791,"y":19,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":781,"y":-1},{"x":801,"y":-1},{"x":801,"y":39},{"x":781,"y":39}],"minx":781,"miny":-1,"maxx":801,"maxy":39,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":791,"y":19,"heading":0,"type":"Wall","name":"RIGHTWALL","worldx":791,"worldy":19,"outline":"lightblue","fill":"blue","power":0,"resizeFactor":1}},{"x":10,"y":20,"heading":0,"view":{"x":10,"y":20,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":0,"y":0},{"x":20,"y":0},{"x":20,"y":40},{"x":0,"y":40}],"minx":0,"miny":0,"maxx":20,"maxy":40,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":20,"heading":0,"type":"Wall","name":"TOPWALL","worldx":10,"worldy":20,"outline":"lightblue","fill":"blue","power":0,"resizeFactor":1}},{"x":11,"y":580,"heading":0,"view":{"x":11,"y":580,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":1,"y":560},{"x":21,"y":560},{"x":21,"y":600},{"x":1,"y":600}],"minx":1,"miny":560,"maxx":21,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":11,"y":580,"heading":0,"type":"Wall","name":"BOTTOMWALL","worldx":11,"worldy":580,"outline":"blue","fill":"blue","power":0,"resizeFactor":1}}],"editTarget":null,"editOriginalOutline":"lightblue","running":false,"width":800,"height":600}'
+    var combatWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":289,"y":421,"heading":0,"view":{"x":289,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":401},{"x":299,"y":401},{"x":299,"y":441},{"x":279,"y":441}],"minx":279,"miny":401,"maxx":299,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":289,"y":421,"heading":0,"type":"Wall","name":"part31","worldx":289,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},"lastX":289,"lastY":421,"robotStartX":100,"robotStartY":100,"robotStartHeading":0,"opponentStartX":700,"opponentStartY":500,"opponentStartHeading":3.141592653589793,"timer":null,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":21,"y":590,"heading":0,"view":{"x":21,"y":590,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":1,"y":580},{"x":801,"y":580},{"x":801,"y":600},{"x":1,"y":600}],"minx":1,"miny":580,"maxx":801,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":21,"y":590,"heading":0,"type":"Wall","name":"part6","worldx":401,"worldy":590,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":791,"y":582,"heading":0,"view":{"x":791,"y":582,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":781,"y":2},{"x":801,"y":2},{"x":801,"y":602},{"x":781,"y":602}],"minx":781,"miny":2,"maxx":801,"maxy":602,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":791,"y":582,"heading":0,"type":"Wall","name":"part5","worldx":791,"worldy":302,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":10,"y":582,"heading":0,"view":{"x":10,"y":582,"heading":0,"scale":2,"points":[{"x":-5,"y":-300},{"x":5,"y":-300},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":-18},{"x":20,"y":-18},{"x":20,"y":602},{"x":0,"y":602}],"minx":0,"miny":-18,"maxx":20,"maxy":602,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":582,"heading":0,"type":"Wall","name":"part4","worldx":10,"worldy":292,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":30,"resizeFactorWidth":1}},{"x":19,"y":9,"heading":0,"view":{"x":19,"y":9,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-1,"y":-1},{"x":799,"y":-1},{"x":799,"y":19},{"x":-1,"y":19}],"minx":-1,"miny":-1,"maxx":799,"maxy":19,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":19,"y":9,"heading":0,"type":"Wall","name":"part7","worldx":399,"worldy":9,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":390,"y":40,"heading":0,"view":{"x":390,"y":40,"heading":0,"scale":2,"points":[{"x":-5,"y":-20},{"x":15,"y":-20},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":380,"y":0},{"x":420,"y":0},{"x":420,"y":60},{"x":380,"y":60}],"minx":380,"miny":0,"maxx":420,"maxy":60,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":390,"y":40,"heading":0,"type":"Wall","name":"part8","worldx":400,"worldy":30,"outline":"blue","fill":"blue","power":0,"rotated":0,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":3}},{"x":390,"y":581,"heading":0,"view":{"x":390,"y":581,"heading":0,"scale":2,"points":[{"x":-5,"y":-20},{"x":15,"y":-20},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":380,"y":541},{"x":420,"y":541},{"x":420,"y":601},{"x":380,"y":601}],"minx":380,"miny":541,"maxx":420,"maxy":601,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":390,"y":581,"heading":0,"type":"Wall","name":"part10","worldx":400,"worldy":571,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":3}},{"x":141,"y":112,"heading":0,"view":{"x":141,"y":112,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":102},{"x":181,"y":102},{"x":181,"y":122},{"x":121,"y":122}],"minx":121,"miny":102,"maxx":181,"maxy":122,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":141,"y":112,"heading":0,"type":"Wall","name":"part12","worldx":151,"worldy":112,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":141,"y":491,"heading":0,"view":{"x":141,"y":491,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":481},{"x":181,"y":481},{"x":181,"y":501},{"x":121,"y":501}],"minx":121,"miny":481,"maxx":181,"maxy":501,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":141,"y":491,"heading":0,"type":"Wall","name":"part15","worldx":151,"worldy":491,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":639,"y":491,"heading":0,"view":{"x":639,"y":491,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":619,"y":481},{"x":679,"y":481},{"x":679,"y":501},{"x":619,"y":501}],"minx":619,"miny":481,"maxx":679,"maxy":501,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":639,"y":491,"heading":0,"type":"Wall","name":"part14","worldx":649,"worldy":491,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":640,"y":110,"heading":0,"view":{"x":640,"y":110,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":620,"y":100},{"x":680,"y":100},{"x":680,"y":120},{"x":620,"y":120}],"minx":620,"miny":100,"maxx":680,"maxy":120,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":640,"y":110,"heading":0,"type":"Wall","name":"part16","worldx":650,"worldy":110,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":671,"y":381,"heading":0,"view":{"x":671,"y":381,"heading":0,"scale":2,"points":[{"x":-5,"y":-90},{"x":5,"y":-90},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":661,"y":201},{"x":681,"y":201},{"x":681,"y":401},{"x":661,"y":401}],"minx":661,"miny":201,"maxx":681,"maxy":401,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":671,"y":381,"heading":0,"type":"Wall","name":"part18","worldx":671,"worldy":301,"outline":"lightblue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":682,"y":211,"heading":0,"view":{"x":682,"y":211,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":662,"y":201},{"x":702,"y":201},{"x":702,"y":221},{"x":662,"y":221}],"minx":662,"miny":201,"maxx":702,"maxy":221,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":682,"y":211,"heading":0,"type":"Wall","name":"part20","worldx":682,"worldy":211,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":682,"y":391,"heading":0,"view":{"x":682,"y":391,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":662,"y":381},{"x":702,"y":381},{"x":702,"y":401},{"x":662,"y":401}],"minx":662,"miny":381,"maxx":702,"maxy":401,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":682,"y":391,"heading":0,"type":"Wall","name":"part21","worldx":682,"worldy":391,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":121,"y":392,"heading":0,"view":{"x":121,"y":392,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":101,"y":382},{"x":141,"y":382},{"x":141,"y":402},{"x":101,"y":402}],"minx":101,"miny":382,"maxx":141,"maxy":402,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":121,"y":392,"heading":0,"type":"Wall","name":"part25","worldx":121,"worldy":392,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":131,"y":380,"heading":0,"view":{"x":131,"y":380,"heading":0,"scale":2,"points":[{"x":-5,"y":-90},{"x":5,"y":-90},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":200},{"x":141,"y":200},{"x":141,"y":400},{"x":121,"y":400}],"minx":121,"miny":200,"maxx":141,"maxy":400,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":131,"y":380,"heading":0,"type":"Wall","name":"part27","worldx":131,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":510,"y":179,"heading":0,"view":{"x":510,"y":179,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":500,"y":159},{"x":520,"y":159},{"x":520,"y":199},{"x":500,"y":199}],"minx":500,"miny":159,"maxx":520,"maxy":199,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":510,"y":179,"heading":0,"type":"Wall","name":"part22","worldx":510,"worldy":179,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":511,"y":421,"heading":0,"view":{"x":511,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":501,"y":401},{"x":521,"y":401},{"x":521,"y":441},{"x":501,"y":441}],"minx":501,"miny":401,"maxx":521,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":511,"y":421,"heading":0,"type":"Wall","name":"part25","worldx":511,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":479,"y":169,"heading":0,"view":{"x":479,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":459,"y":159},{"x":499,"y":159},{"x":499,"y":179},{"x":459,"y":179}],"minx":459,"miny":159,"maxx":499,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":479,"y":169,"heading":0,"type":"Wall","name":"part23","worldx":489,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":479,"y":169,"heading":0,"view":{"x":479,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":459,"y":159},{"x":519,"y":159},{"x":519,"y":179},{"x":459,"y":179}],"minx":459,"miny":159,"maxx":519,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":479,"y":169,"heading":0,"type":"Wall","name":"part23","worldx":489,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":550,"y":300,"heading":0,"view":{"x":550,"y":300,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":15,"y":-10},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":540,"y":280},{"x":580,"y":280},{"x":580,"y":320},{"x":540,"y":320}],"minx":540,"miny":280,"maxx":580,"maxy":320,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":550,"y":300,"heading":0,"type":"Wall","name":"part24","worldx":560,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":480,"y":431,"heading":0,"view":{"x":480,"y":431,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":460,"y":421},{"x":500,"y":421},{"x":500,"y":441},{"x":460,"y":441}],"minx":460,"miny":421,"maxx":500,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":480,"y":431,"heading":0,"type":"Wall","name":"part26","worldx":490,"worldy":431,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":480,"y":431,"heading":0,"view":{"x":480,"y":431,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":460,"y":421},{"x":520,"y":421},{"x":520,"y":441},{"x":460,"y":441}],"minx":460,"miny":421,"maxx":520,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":480,"y":431,"heading":0,"type":"Wall","name":"part26","worldx":490,"worldy":431,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":230,"y":301,"heading":0,"view":{"x":230,"y":301,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":10,"y":-10},{"x":10,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":220,"y":281},{"x":250,"y":281},{"x":250,"y":321},{"x":220,"y":321}],"minx":220,"miny":281,"maxx":250,"maxy":321,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":230,"y":301,"heading":0,"type":"Wall","name":"part28","worldx":240,"worldy":301,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":230,"y":301,"heading":0,"view":{"x":230,"y":301,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":15,"y":-10},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":220,"y":281},{"x":260,"y":281},{"x":260,"y":321},{"x":220,"y":321}],"minx":220,"miny":281,"maxx":260,"maxy":321,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":230,"y":301,"heading":0,"type":"Wall","name":"part28","worldx":240,"worldy":301,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":291,"y":180,"heading":0,"view":{"x":291,"y":180,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":281,"y":160},{"x":301,"y":160},{"x":301,"y":200},{"x":281,"y":200}],"minx":281,"miny":160,"maxx":301,"maxy":200,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":291,"y":180,"heading":0,"type":"Wall","name":"part29","worldx":291,"worldy":180,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":289,"y":421,"heading":0,"view":{"x":289,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":401},{"x":299,"y":401},{"x":299,"y":441},{"x":279,"y":441}],"minx":279,"miny":401,"maxx":299,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":289,"y":421,"heading":0,"type":"Wall","name":"part31","worldx":289,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":121,"y":209,"heading":0,"view":{"x":121,"y":209,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":101,"y":199},{"x":141,"y":199},{"x":141,"y":219},{"x":101,"y":219}],"minx":101,"miny":199,"maxx":141,"maxy":219,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":121,"y":209,"heading":0,"type":"Wall","name":"part27","worldx":121,"worldy":209,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":301,"y":169,"heading":0,"view":{"x":301,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":281,"y":159},{"x":341,"y":159},{"x":341,"y":179},{"x":281,"y":179}],"minx":281,"miny":159,"maxx":341,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":301,"y":169,"heading":0,"type":"Wall","name":"part30","worldx":311,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":299,"y":432,"heading":0,"view":{"x":299,"y":432,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":422},{"x":339,"y":422},{"x":339,"y":442},{"x":279,"y":442}],"minx":279,"miny":422,"maxx":339,"maxy":442,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":299,"y":432,"heading":0,"type":"Wall","name":"part32","worldx":309,"worldy":432,"outline":"blue","fill":"blue","power":0,"rotated":1,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}}],"editTarget":null,"editOriginalOutline":"blue","running":false,"width":0,"height":0,"rotated":false}';
     loadWorld(combatWorld);
-    
 }
 
 function loadMazeWorld() {
@@ -3688,11 +3762,13 @@ function loadWorld(worldString) {
 
     //simState.worldObjects = [];
     for(var i=0; i<obj.worldObjects.length; i++) {
-        console.log(i);
-        console.log(obj.worldObjects[i]);
         //Check for Wall
         if(obj.worldObjects[i].part.type == "Wall"){
         var wall = new Wall(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+        wall.rotated = obj.worldObjects[i].part.rotated;
+        wall.resizeFactor = obj.worldObjects[i].part.resizeFactor;
+        wall.resizeFactorHeight = obj.worldObjects[i].part.resizeFactorHeight;
+        wall.resizeFactorWidth = obj.worldObjects[i].part.resizeFactorWidth;
         wall.name = obj.worldObjects[i].part.name;
         wall.outline = obj.worldObjects[i].part.outline;
         wall.fill = obj.worldObjects[i].part.fill;
@@ -3716,8 +3792,7 @@ function loadWorld(worldString) {
         box.fill = obj.worldObjects[i].part.fill;
         simState.worldObjects.push(constructView(box));
         }
-        //finishPart(wall);
-        console.log(simState.worldObjects[i]);
+
         drawSim();
     }
 }
