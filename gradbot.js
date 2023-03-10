@@ -30,6 +30,7 @@
 var simulationMode = 'toroidal';
 var loadRobotTrue = 0;
 var wheelSize = .065 // original default wheel size
+var opponentClicked = 0; // check to see if the opponent as been clicked
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
@@ -755,7 +756,24 @@ function Chassis(x, y, heading, name)
 
     // deplete the laser battery by a certain amount
     this.depleteLaserBattery = function(amount) {
+        
+        //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
+        // clear the current HUD
+        drawPlayerHUDClear(); 
+        if(opponentClicked == 1) {
+            drawOpponentHUDClear();
+        }
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         this.laserBattery -= amount;
+
+        //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
+        // display the new HUD with the current battery count
+        drawPlayerHUD(); 
+        if(opponentClicked == 1) {
+            drawOpponentHUD(); 
+        }
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 }
 
@@ -2067,6 +2085,129 @@ function drawBuild() {
     buildView.draw(canvas, context);
 }
 
+//!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+/**
+ * Draws the hud on the canvas.
+ */
+function drawPlayerHUD() {
+    
+    var simCanvas = document.getElementById("simbg"); 
+    var context = simCanvas.getContext("2d");
+    //drawSim();
+    //context.clearRect(0,0,40000,40000);
+
+    // SetUp player and opponent titles
+    
+    context.font = "20px Trebuchet MS"; 
+    textAlign = "center";
+    context.fillStyle = "black"; 
+    context.color = "black";
+    context.fillText("Player 1",550,20);
+   
+    
+    // set up lives and power level
+    context.font = "15px Trebuchet MS"; 
+    textAlign = "center";
+    //context.fillStyle = "black"; 
+    //context.color = "black";
+
+    // player 1 info
+    context.fillText("Lives:",550,40); // x,y
+    //context.fillText(playerHealthPoints,595,40);
+    context.fillText(robot.hp,595,40);
+    context.fillText("Laser Power:", 550, 60);
+    context.fillText(robot.laserBattery,645,60);
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+/**
+ * Draws the hud on the canvas.
+ */
+function drawOpponentHUD() {
+    
+    var simCanvas = document.getElementById("simbg"); 
+    var context = simCanvas.getContext("2d");
+    
+    // SetUp player and opponent titles
+    context.font = "20px Trebuchet MS"; 
+    textAlign = "center";
+    context.fillStyle = "black"; 
+    context.color = "black";
+    context.fillText("Player 2",680,20);
+    
+    // set up lives and power level
+    context.font = "15px Trebuchet MS"; 
+    textAlign = "center";
+
+    context.fillStyle = "black"; 
+    context.color = "black";
+    
+    //player 2 info
+    context.fillText("Lives:",680,40); // x,y
+    context.fillText(opponent.hp,725,40);
+    context.fillText("Laser Power:", 680, 60);
+    context.fillText(opponent.laserBattery,775,60);
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+/**
+ *  Draws a white overlay over the player HUD text to clear it
+ */
+function drawPlayerHUDClear() {
+    var simCanvas = document.getElementById("simbg"); 
+    var context = simCanvas.getContext("2d");
+
+    // SetUp player and opponent titles
+    
+    context.font = "20px Trebuchet MS"; 
+    textAlign = "center";
+    context.fillStyle = "white"; 
+    context.color = "white";
+    context.fillText("Player 1",550,20);
+   
+    
+    // set up lives and power level
+    context.font = "15px Trebuchet MS"; 
+    textAlign = "center";
+
+    // player 1 info
+    context.fillText("Lives:",550,40); // x,y
+    //context.fillText(playerHealthPoints,595,40);
+    context.fillText(robot.hp,595,40);
+    context.fillText("Laser Power:", 550, 60);
+    context.fillText(robot.laserBattery,645,60);
+    
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+/**
+ * Draws a white overlay over the opponent HUD text to clear it
+ */
+function drawOpponentHUDClear() {
+        var simCanvas = document.getElementById("simbg"); 
+        var context = simCanvas.getContext("2d");
+        
+        // SetUp player and opponent titles
+        context.font = "20px Trebuchet MS"; 
+        textAlign = "center";
+        context.fillStyle = "white"; 
+        context.color = "white";
+        context.fillText("Player 2",680,20);
+        
+        // set up lives and power level
+        context.font = "15px Trebuchet MS"; 
+        textAlign = "center";
+        
+        //player 2 info
+        context.fillText("Lives:",680,40); // x,y
+        context.fillText(opponent.hp,725,40);
+        context.fillText("Laser Power:", 680, 60);
+        context.fillText(opponent.laserBattery,775,60);
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Fill the canvas with the given ID with a graph paper like pattern.
@@ -2825,6 +2966,14 @@ function buildAddLaser(event) {
  * @param {*} event 
  */
 function simulationGo(event) {
+
+    //!!!!! Sam Elfrink Addition !!!!!!!!!
+    drawPlayerHUD();
+    if(opponentClicked == 1){
+        drawOpponentHUD();
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     var text = event.target.innerHTML;
 
     if(text == "Start") {
@@ -3333,7 +3482,23 @@ function simulationUpdate() {
         if(obj.part.type == "LaserBlast") {
             for(var j=0; j < botViews.length; j++) {
                 if(bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
+                    
+                    //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
+                    drawPlayerHUDClear();
+                    if(opponentClicked == 1) {
+                        drawOpponentHUDClear();
+                    }
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                     bots[j].hp--;
+
+                    //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
+                    drawPlayerHUD();
+                    if(opponentClicked == 1) {
+                        drawOpponentHUD(); // Elfrink
+                    }
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                     toVanish.push(obj.part);
                 }
             }
@@ -3527,7 +3692,11 @@ function loadSampleOpponent(robotString) {
 //Created a new function so that opponent parts do not show up in Drop Down
 function loadRobotOpp(robot, robotString) {
     loadRobotTrue = 1;
-    //console.log("loadRobotOpp Function");
+
+    // !!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+    opponentClicked = 1;
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
     if(!robotString) robotString = localStorage.getItem("robot");
     if(!robotString) return;
 
