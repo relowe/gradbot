@@ -3027,6 +3027,7 @@ function simulationGo(event) {
         
         //allows the player to resume without the bot
         if (opponent.blowedUp == true && event.target.innerHTML == "Resume"){
+            opponentClicked = 0;
             opponent = null;
             if(simView.opponentThread) {
                 simView.opponentThread.terminate();
