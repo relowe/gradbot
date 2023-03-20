@@ -3067,7 +3067,13 @@ function simulationReset(event) {
         robot.x = 100;
         robot.y = 100;
         robot.heading = 0;
+        
+        addListTrue = 1; // Sam Elfrink
+
         loadRobot(robot);
+        
+        addListTrue = 0; // Sam Elfrink
+        
         simView = new ChassisView(robot); 
         buildView = new ChassisBuildView(robot);
         simState.robotThread = new Worker("userbot.js");
