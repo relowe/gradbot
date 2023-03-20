@@ -28,6 +28,7 @@
 
 //!!!!!!!! Sam Elfrink Additions !!!!!!!!!!
 var simulationMode = 'toroidal';
+var addListTrue = 0; //zzzzz
 var loadRobotTrue = 0;
 var wheelSize = .065 // original default wheel size
 var opponentClicked = 0; // check to see if the opponent as been clicked
@@ -2678,7 +2679,9 @@ function applyEditor(state) {
     // The new name is add to the drop-down list
     //console.log("apply editor");
     //console.log("Addlist ApplyEditor function called");
+    addListTrue = 1;
     addList(part.name);
+    addListTrue = 0;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // redraw the canvas
@@ -2895,9 +2898,12 @@ function simDeletePart(event) {
 function addList(name) {
         var partDropDown = document.getElementById("partDropDown");
         var option = document.createElement("OPTION");
-        option.innerHTML = name;
-        //option.value = document.getElementById("txtValue").value;
-        partDropDown.options.add(option);
+        //console.log(addListTrue);
+        if(addListTrue == 1) {
+            option.innerHTML = name;
+            //option.value = document.getElementById("txtValue").value;
+            partDropDown.options.add(option);
+        }
 }
 
 /**
@@ -2905,10 +2911,12 @@ function addList(name) {
  * @param {*} event 
  */
 function buildAddMarker(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var marker = new Marker(robot);
     robot.addPart(marker);
     buildView.addPart(marker);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 
@@ -2917,11 +2925,13 @@ function buildAddMarker(event) {
  * @param {*} event
  */
 function buildAddLight(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var light = new Light(robot);
     light.radius = 1;
     robot.addPart(light);
     buildView.addPart(light);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 
@@ -2930,10 +2940,12 @@ function buildAddLight(event) {
  * @param {*} event
  */
 function buildAddLightSensor(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var sensor = new LightSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 
@@ -2942,10 +2954,12 @@ function buildAddLightSensor(event) {
  * @param {*} event
  */
 function buildAddRangeSensor(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var sensor = new RangeSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 
@@ -2954,10 +2968,12 @@ function buildAddRangeSensor(event) {
  * @param {*} event
  */
 function buildAddLaser(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var laser = new Laser(robot);
     robot.addPart(laser);
     buildView.addPart(laser);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 //Chase new go event
@@ -3609,6 +3625,7 @@ function saveRobotFile() {
 function openRobotFile() {
     var reader = new FileReader();
     reader.onload = function() {
+        addListTrue = 1; //zzz Sam Elfrink 
         loadRobot(robot, reader.result);
 
         //rebuild the robot views
@@ -3619,6 +3636,7 @@ function openRobotFile() {
         graphPaperFill("simbg");
         drawSim();
         drawBuild();
+        addListTrue = 0; //zzz Sam Elfrink 
     };
 
     reader.readAsText(this.files[0]);
