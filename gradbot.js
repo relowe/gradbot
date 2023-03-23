@@ -28,10 +28,14 @@
 
 //!!!!!!!! Sam Elfrink Additions !!!!!!!!!!
 var simulationMode = 'toroidal';
-var addListTrue = 0; //zzzzz
+var addListTrue = 0; 
 var loadRobotTrue = 0;
 var wheelSize = .065 // original default wheel size
 var opponentClicked = 0; // check to see if the opponent as been clicked
+let blackList = ["Part","Motor","Marker","Chassis","chassis","Light","LightSensor","RangeSensor","Laser","constructPart","delay","left","right","runRobot","onmessage","getRobotFunction","updateRobot"]; // blacklist of part names
+let newPartList = []; // An array for the new parts
+var selectPartName; // The name of the current select part
+var cancelAdd = 0; // determines whether the name should be added to newPartList
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
@@ -2536,6 +2540,12 @@ function hidePartEditor(state) {
  * @param {*} view 
  */
 function selectPart(view, state) {
+
+    // Sam Elfrink Addition zzzz
+    selectPartName = view.part.name;
+    console.log(selectPartName);
+    // end of addition
+    
     // deselect (if needed) 
     if(state.editTarget != null) {
         deselectPart(state);
@@ -2671,9 +2681,44 @@ function applyEditor(state) {
     var name = document.getElementById(state.prefix + "PartName").value;
 
     // !!!!! Sam Elfrink Addition !!!!!!!!!
+    // check to make sure the new part name is a valid javascript variable
     if(isVariableName(name) == false) {
         alert("Part name must be a valid JavaScript variable name");
         return;
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    // !!!!! Sam Elfrink Addition !!!!!!!!!
+    // Check to make sure new part name is not one 
+    // of the function names in userbot
+    let i = 0;
+    while (i < blackList.length) {
+        if(name == blackList[i]) {
+            alert("Part name cannot be a default gradbot name.");
+            return;
+        }
+        i++;
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    // !!!!! Sam Elfrink Addition !!!!!!!!!
+    // check to make sure the part name was changed
+    if(name != selectPartName) {
+        // Check to make sure new part name already used
+        let j = 0;
+        while (j < newPartList.length) {
+            if(name == newPartList[j]) {
+                alert("Part name must be unique.");
+                return;
+            }
+            j++;
+        }
+        // remove the old name from the list
+        var index = newPartList.indexOf(selectPartName);
+        newPartList.splice(index, 1);
+    }
+    else {
+        cancelAdd = 1;
     }
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2843,6 +2888,14 @@ function simCancel(event) {
 function buildDeletePart(event) {
     var part = buildState.editTarget.part;
 
+    // Sam Elfrink Addition 
+    console.log(newPartList);
+    var index = newPartList.indexOf(part.name);
+    console.log(part.name);
+    console.log(index);
+    newPartList.splice(index, 1);
+    // end Sam Elfrink Addition
+
     if(part.type == "Motor" || part.type == "Chassis") {
         alert("You cannot remove this part.");
         return;
@@ -2912,14 +2965,24 @@ function simDeletePart(event) {
  * @param {*} event 
  */
 function addList(name) {
-        var partDropDown = document.getElementById("partDropDown");
-        var option = document.createElement("OPTION");
-        //console.log(addListTrue);
-        if(addListTrue == 1) {
-            option.innerHTML = name;
-            //option.value = document.getElementById("txtValue").value;
-            partDropDown.options.add(option);
-        }
+
+    // !!!!!!!! Sam Elfrink Addition !!!!!!!
+    // add the part name to the list, unless it didn't change
+    if(cancelAdd != 1) {
+        newPartList.push(name);
+        console.log(newPartList);
+    }
+    cancelAdd = 0;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    var partDropDown = document.getElementById("partDropDown");
+    var option = document.createElement("OPTION");
+    //console.log(addListTrue);
+    if(addListTrue == 1) {
+          option.innerHTML = name;
+          //option.value = document.getElementById("txtValue").value;
+          partDropDown.options.add(option);
+    }
 }
 
 /**
@@ -3083,6 +3146,11 @@ function simulationGo(event) {
 function simulationReset(event) {
     document.getElementById("simGo").innerHTML = "Start";
     var canvas = document.getElementById("simfg");
+
+    // Sam Elfrink Addition
+    // prompts the user to reupload their picture
+    //document.getElementById("pictureUpload").click();
+
     //put the robot back in its original position and heading
     robot.moveTo(simState.robotStartX, simState.robotStartY);
     robot.face(simState.robotStartHeading);
