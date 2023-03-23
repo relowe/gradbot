@@ -2992,6 +2992,29 @@ function buildAddLaser(event) {
     addListTrue = 0; //Sam Elfrink zzzz
 }
 
+// !!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!
+// handle the PNG background upload
+/**
+ * Handle the simulation go button.
+ * @param {*} event 
+ */
+function backgroundPhotoDraw(event) {
+    var reader = new FileReader();
+    reader.onload = function(event) {
+        var canvas = document.getElementById("simbg");
+        var context = canvas.getContext("2d");
+        console.log("yo");
+        const img = new Image();
+        img.onload = () => {
+            console.log("loop");
+            context.drawImage(img, 0, 0, 800, 600);
+        };
+        img.src = event.target.result;
+    }
+    reader.readAsDataURL(event.target.files[0]);
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 //Chase new go event
 /**
  * Handle the simulation go button.
@@ -3257,6 +3280,13 @@ function gradbotInit() {
     canvas.onmousedown = simMouseDown;
     canvas.onmouseup = simMouseUp;
     canvas.onmousemove = simMouseMove;
+
+    //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!
+    document.getElementById('backgroundChange').onclick = function() {
+        document.getElementById("pictureUpload").click();
+    };
+    document.getElementById('pictureUpload').onchange = backgroundPhotoDraw;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up the sim buttons
     document.getElementById('simGo').onclick = simulationGo;

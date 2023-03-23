@@ -16,6 +16,7 @@
         }
     </script>
 </head>
+<!-- <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js'></script>Sam Elfrink -->
 <body>
     <div class="pagecontent">
     <button class="btn-toggle" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark Mode</button>
@@ -57,7 +58,10 @@
                         <input type="radio" id="dragResizeWidth" name="dragMode"/>
                         <label for="dragResizeWidth">Resize Wall Width</label>
                         </div>
+
                        <!-- END OF UPDATED AND ADDED BY GAVIN 03/08/2023-->
+
+
                         <div class="toolboxHead">
                             Simulation Controls
                         </div>
@@ -155,6 +159,14 @@
                         <label for="infinite">Infinite</label>
                         </div>
                         <!--CHASE'S UPDATED CODE ENDS HERE-->
+
+                        <!-- Sam Elfrink Addition      -->
+                        <hr>
+                        <button id="backgroundChange">Change Background</button>
+                        <input type="file" accept="image/png" id="pictureUpload" name="backgroundphoto" style="display: none">
+                        <!-- <label for="backgroundphoto">Choose a background photo:</label>
+                        <input type="file" accept="image/png" id="simUpload" name="backgroundphoto"> -->
+                        <!-- Sam Elfrink Code ends here---------------------------->                        
                     </div>
                 </div>
             </div>
