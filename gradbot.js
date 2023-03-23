@@ -2510,7 +2510,8 @@ function showPartEditor(view, state) {
  */
 function dropDownClick(view, state) {
     
-    
+    selectPartName = view.part.name;
+    console.log(selectPartName);
     //populate the type and name
     document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
     document.getElementById(state.prefix +"PartName").value = view.part.name;
