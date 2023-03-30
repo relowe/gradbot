@@ -26,6 +26,13 @@
  * Utility Functions and Objects
  ******************************************/
 
+//!!!!!!!! Sam Elfrink Additions !!!!!!!!!!
+var simulationMode = 'toroidal';
+var addListTrue = 0; //zzzzz
+var loadRobotTrue = 0;
+var wheelSize = .065 // original default wheel size
+var opponentClicked = 0; // check to see if the opponent as been clicked
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * This function takes an angle in radians and reduces it so its range
@@ -140,13 +147,20 @@ function minPolyDist(p, poly) {
  * @returns True if the views are in collision, false otherwise.
  */
 function collision(view1, view2) {
-    return view1.minx <= view2.maxx && 
-           view1.maxx >= view2.minx &&
-           view1.miny <= view2.maxy &&
-           view1.maxy >= view2.miny;
-}
+    // Check for overlap in the x-axis
+    if (view1.minx < view2.maxx && view1.maxx > view2.minx) {
+      // Check for overlap in the y-axis
+      if (view1.miny < view2.maxy && view1.maxy > view2.miny) {
+        // The views overlap
+        return true;
+      }
+    }
+  
+    // The views do not overlap
+    return false;
+  }
 
-
+  
 
 /**
  * This is a prototype for a positionable object. It handles all the 
@@ -297,9 +311,26 @@ function Part(parent, x, y, heading, name)
     this.parent = parent;
     Positionable.call(this, x, y, heading);
     this.type = "part";
+
     this.name = name != undefined ? name : ("part" + partCount);
     this.doc = new PartDoc();
-    
+
+    // !!!!!!!! Sam Elfrink Addition !!!!!!!
+    // add the new part name to the drop-down list
+   
+    if (loadRobotTrue == 1) {
+        //do nothing
+        //console.log("loadRobotTrue = 1");
+        //console.log("Don't add list");
+    }
+    else {
+        //console.log("loadRobotTrue = 0");
+        //console.log("Addlist Part function called");
+        //console.log(this.name);
+        addList(this.name);
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //position in world coordinates
     this.worldx = 0;
     this.worldy = 0;
@@ -334,6 +365,28 @@ function Part(parent, x, y, heading, name)
      * @param {*} power - The power level.
      */
     this.setPower = function(power) {
+        
+        //!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!
+        // NOTE: the userbot side of set power will trigger first
+        //console.log("setPower gradbot side");
+        // check to make sure that the setPower() function isn't empty
+        if(power == undefined) {
+            alert("Error: You left your power level blank. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
+            
+            // set power to 0
+            power = 0;
+        }
+        /*
+        console.log(typeof(power));
+        console.log(typeof(this.power));
+        // if the power value isn't a number, set power to 0 and do nothing
+        if(typeof(power) != 'number') {
+            alert("Error: You put a non-number character for your power level. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
+            power = 0;
+        }
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        */
+        
         //limit the power setting's range
         if(power > 100) {
             power = 100;
@@ -405,13 +458,18 @@ function Motor(parent, x, y, heading, name)
     );
 
 
+     //GAVIN added multiplier
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
+
+    //GAVIN'S UPDATED CODE STARTS HERE
     this.update = function() {
+        var multi = getSpeedMult();
         //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
         //This maximum speed is roughly 6.81 radians per second
-        this.speed = 6.81 * this.power / 100;
+        this.speed = (6.81 * this.power / 100) * multi;
     }
+    //GAVIN'S UPDATED CODE ENDS HERE
 
 
     /**
@@ -494,6 +552,16 @@ function Chassis(x, y, heading, name)
     this.left = new Motor(this, -7, -7, 0, "left");
     this.right = new Motor(this, -7, 7, Math.PI, "right");
 
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!
+    // adding a wheel size variable to the chassis
+    console.log("Chassis called");
+    this.chassisWheelSize = document.getElementById("wheelSize").value;
+    
+    // update function to preserve wheel size and update it to the robot
+    this.updateWheel = function() {
+        this.chassisWheelSize = document.getElementById("wheelSize").value;
+    }
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //we start unexploded and healthy!
     this.hp = 3;
@@ -563,6 +631,9 @@ function Chassis(x, y, heading, name)
           return;
         }
 
+        // !!!!! Sam Elfrink Addition !!!!!!!!!
+        this.updateWheel();
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         //update all the sub parts
         for(var i in this.parts) {
@@ -575,7 +646,10 @@ function Chassis(x, y, heading, name)
         this.right.update();
 
         //compute our forward translation and yaw speeds
-        var r = .065; // 65mm diameter wheels
+        // !!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!
+        var r = wheelSize; // adjustable wheel size, 65mm diameter wheels by default
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //var r = .065; // 65mm diameter wheels
         var l = 0.238; // 238mm axel length
         var fwd = r/2 * (this.left.speed + this.right.speed) * 60;
         var yaw = r/l * (this.left.speed - this.right.speed);
@@ -595,21 +669,36 @@ function Chassis(x, y, heading, name)
         this.y += fwd * Math.sin(this.heading) * elapsed;
         this.heading += yaw * elapsed;
 
+        // Update the position of the object based on the current simulation mode
+        switch(simulationMode) {
+            case 'toroidal':
+                var wxmax = simState.width + 40;
+                var wymax = simState.height + 40;
+                if(this.x <= -40) {
+                    this.x = wxmax-1;
+                }
+                if(this.y <= -40) {
+                    this.y = wymax-1;
+                }
+                if(this.x >= wxmax) {
+                    this.x -= wxmax;
+                }
+                if(this.y >= wymax) {
+                    this.y -= wymax;
+                }
+                break;
+            case 'infinite':
+                var wxmax = simState.width;
+                var wymax = simState.height;
+                var removeFlag = false;
 
-        //torroidal world!
-        var wxmax = simState.width + 40;
-        var wymax = simState.height + 40;
-        if(this.x <= -40) {
-            this.x = wxmax-1;
-        }
-        if(this.y <= -40) {
-            this.y = wymax-1;
-        }
-        if(this.x >= wxmax) {
-            this.x -= wxmax;
-        }
-        if(this.y >= wymax) {
-            this.y -= wymax;
+                if(this.x < -40 || this.x > wxmax + 40 || this.y < -40 || this.y > wymax + 40) {
+                    removeFlag = true;
+                }
+                break;
+            default:
+                // Handle unrecognized simulation mode
+            break;
         }
     };
 
@@ -668,7 +757,24 @@ function Chassis(x, y, heading, name)
 
     // deplete the laser battery by a certain amount
     this.depleteLaserBattery = function(amount) {
+        
+        //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
+        // clear the current HUD
+        drawPlayerHUDClear(); 
+        if(opponentClicked == 1) {
+            drawOpponentHUDClear();
+        }
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         this.laserBattery -= amount;
+
+        //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
+        // display the new HUD with the current battery count
+        drawPlayerHUD(); 
+        if(opponentClicked == 1) {
+            drawOpponentHUD(); 
+        }
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 }
 
@@ -683,7 +789,8 @@ function Light(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "Light";
     this.radius = 3;
-
+    this.fill = "yellow"       //GAVIN ADDED FOR PACMAN EASE
+    this.moveable = true;      //Added by Gavin 03/21/2023
     this.doc.functions = Array(
         { name: 'setColor', doc: 'Change light color.', params: Array(
             {name: 'c', doc: 'color'}
@@ -711,10 +818,27 @@ function Light(parent, x, y) {
 function Wall(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "Wall";
-    this.outline="lightblue";
+    this.outline="blue";    //GAVIN EDITED LIGHTBLUE TO BLUE
     this.fill = "blue";
+    this.rotated = false;       //Added by Gavin 03/09/2023
+    this.moveable = true;       //Added by Gavinn 03/21/2023
 }
 
+/**
+ * what's in the fing box!
+ * @param {*} parent 
+ * @param {*} x 
+ * @param {*} y 
+ * @param {*} size 
+ */
+function Box(parent, x, y, size) {
+    Part.call(this, parent, x, y);
+    this.type = "Box";
+    this.outline = "blue";
+    this.fill = "lightblue";
+    this.size = size;
+    this.moveable = true;   //Added by Gavin 03/21/2023
+}
 
 /**
  * A sensor which computes the range to an object.
@@ -810,6 +934,7 @@ function RangeSensor(parent, x, y) {
  * @param {*} y 
  */
 function LightSensor(parent, x, y) {
+
     Part.call(this, parent, x, y);
     this.type = "LightSensor"
     this.worldx = 0;
@@ -1180,6 +1305,8 @@ function constructView(part) {
         return new RangeSensorView(part);
     } else if(part.type == "Wall") {
         return new WallView(part);
+    } else if(part.type == "Box") {
+        return new BoxView(part); 
     } else if(part.type == "LaserBlast") {
         return new LaserBlastView(part);
     } else if(part.type == "Laser") {
@@ -1653,18 +1780,63 @@ function RangeSensorView(part) {
  * Display the wall in all of its rectangular glory!
  * @param {*} part 
  */
+
+//UPDATED AND EDITED BY GAVIN 03/08/2023
 function WallView(part) {
+    if (!part.resizeFactor){
+        part.resizeFactor = 1;
+    }
+    if (!part.resizeFactorHeight){
+        part.resizeFactorHeight = 1;
+    }
+    if (!part.resizeFactorWidth){
+        part.resizeFactorWidth = 1;
+    }
+    PartView.call(this, part);
+
+    //create my vector view
+    if((simState.dragMode == DRAG_ROTATE90 && part.rotated == true) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == true)){
+        var points = [
+            {x: -10 * part.resizeFactor, y: -5 * part.resizeFactor},
+            {x: 10 * part.resizeFactorHeight, y: -5 * part.resizeFactor},
+            {x: 10 * part.resizeFactorHeight, y: 5 * part.resizeFactorWidth},
+            {x: -10 * part.resizeFactor, y: 5 * part.resizeFactorWidth},
+        ];
+        console.log("Rotated Height Resize: ", part.resizeFactorHeight);
+    }
+    if((simState.dragMode == DRAG_ROTATE90 && part.rotated == false) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == false)){
+        var points = [
+            {x: -5 * part.resizeFactor, y: -10 * part.resizeFactorHeight},
+            {x: 5 * part.resizeFactorWidth, y: -10 * part.resizeFactorHeight},
+            {x: 5 * part.resizeFactorWidth, y: 10 * part.resizeFactor},
+            {x: -5 * part.resizeFactor, y: 10 * part.resizeFactor},
+        ];
+        console.log("Upright Height Resize: ", part.resizeFactorHeight);
+    }
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.stroke = "black"
+}
+//END OF UPDATED AND EDITED BY GAVIN 03/08/2023
+
+
+
+/**
+ * Display the box!
+ * @param {*} part 
+ */
+function BoxView(part) {
     if (!part.resizeFactor){
         part.resizeFactor = 1;
     }
     PartView.call(this, part);
 
-    //create my vector view
+     //create my vector view
     var points = [
-        {x: -5 * part.resizeFactor, y: -10 * part.resizeFactor},
-        {x: 5 * part.resizeFactor, y: -10 * part.resizeFactor},
-        {x: 5 * part.resizeFactor, y: 10 * part.resizeFactor},
-        {x: -5 * part.resizeFactor, y: 10 * part.resizeFactor},
+        {x: -8 * part.resizeFactor, y: -8 * part.resizeFactor},
+        {x: 8 * part.resizeFactor, y: -8 * part.resizeFactor},
+        {x: 8 * part.resizeFactor, y: 8 * part.resizeFactor},
+        {x: -8 * part.resizeFactor, y: 8 * part.resizeFactor},
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -1727,7 +1899,10 @@ var flask;
 const DRAG_NONE= 0;
 const DRAG_MOVE=1;
 const DRAG_ROTATE=2;
-const DRAG_RESIZE=3;
+const DRAG_RESIZEHEIGHT=3;      //Updated By Gavin 03/08/2023
+const DRAG_RESIZEWIDTH=4;       //Added By Gavin 03/08/2023
+const DRAG_ROTATE90=5;          //Added By Gavin 03/08/2023
+const DRAG_DRAW=6;
 
 //state of the simulator ui
 var simState = {
@@ -1739,6 +1914,9 @@ var simState = {
     robotStartX: 100,
     robotStartY: 100,
     robotStartHeading: 0,
+    opponentStartX: 700,
+    opponentStartY: 500,
+    opponentStartHeading: Math.PI,
     timer: null,
     prevTab: null,
     robotThread: null,
@@ -1749,6 +1927,13 @@ var simState = {
     running : false,
     width: 0,
     height: 0,
+    rotated: false,         //Added By Gavin 03/08/2023
+    //ADDED BY GAVIN 03/20/2023
+    mazeWorldLoaded: false,
+    combatWorldLoaded: false,
+    pacmanWorldLoaded: false,
+    pacmanPoints: 0,
+    //END OF ADDED BY GAVIN 03/20/2023
 };
 
 
@@ -1822,7 +2007,24 @@ function openTab(evt, tabId) {
     simState.prevTab = tabId;
 }
 
-
+// !!!!!!!!! Sam Elfrink Addition !!!!!!!!!
+/**
+ * 
+ * @param {*} event 
+ */
+function changeWheelSize(state) {
+    event.preventDefault()
+    console.log("changeWheelSize() called");
+    var size = document.getElementById("wheelSize").value;
+    console.log("Size Variable:");
+    console.log(size);
+    //this.chassisWheelSize = size;
+    robot.update();
+    wheelSize = size;
+    console.log("wheelSize Variable:");
+    console.log(wheelSize);
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Add part to the partList element
@@ -1894,6 +2096,129 @@ function drawBuild() {
     buildView.draw(canvas, context);
 }
 
+//!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+/**
+ * Draws the hud on the canvas.
+ */
+function drawPlayerHUD() {
+    
+    var simCanvas = document.getElementById("simbg"); 
+    var context = simCanvas.getContext("2d");
+    //drawSim();
+    //context.clearRect(0,0,40000,40000);
+
+    // SetUp player and opponent titles
+    
+    context.font = "20px Trebuchet MS"; 
+    textAlign = "center";
+    context.fillStyle = "black"; 
+    context.color = "black";
+    context.fillText("Player 1",550,20);
+   
+    
+    // set up lives and power level
+    context.font = "15px Trebuchet MS"; 
+    textAlign = "center";
+    //context.fillStyle = "black"; 
+    //context.color = "black";
+
+    // player 1 info
+    context.fillText("Lives:",550,40); // x,y
+    //context.fillText(playerHealthPoints,595,40);
+    context.fillText(robot.hp,595,40);
+    context.fillText("Laser Power:", 550, 60);
+    context.fillText(robot.laserBattery,645,60);
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+/**
+ * Draws the hud on the canvas.
+ */
+function drawOpponentHUD() {
+    
+    var simCanvas = document.getElementById("simbg"); 
+    var context = simCanvas.getContext("2d");
+    
+    // SetUp player and opponent titles
+    context.font = "20px Trebuchet MS"; 
+    textAlign = "center";
+    context.fillStyle = "black"; 
+    context.color = "black";
+    context.fillText("Player 2",680,20);
+    
+    // set up lives and power level
+    context.font = "15px Trebuchet MS"; 
+    textAlign = "center";
+
+    context.fillStyle = "black"; 
+    context.color = "black";
+    
+    //player 2 info
+    context.fillText("Lives:",680,40); // x,y
+    context.fillText(opponent.hp,725,40);
+    context.fillText("Laser Power:", 680, 60);
+    context.fillText(opponent.laserBattery,775,60);
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+/**
+ *  Draws a white overlay over the player HUD text to clear it
+ */
+function drawPlayerHUDClear() {
+    var simCanvas = document.getElementById("simbg"); 
+    var context = simCanvas.getContext("2d");
+
+    // SetUp player and opponent titles
+    
+    context.font = "20px Trebuchet MS"; 
+    textAlign = "center";
+    context.fillStyle = "white"; 
+    context.color = "white";
+    context.fillText("Player 1",550,20);
+   
+    
+    // set up lives and power level
+    context.font = "15px Trebuchet MS"; 
+    textAlign = "center";
+
+    // player 1 info
+    context.fillText("Lives:",550,40); // x,y
+    //context.fillText(playerHealthPoints,595,40);
+    context.fillText(robot.hp,595,40);
+    context.fillText("Laser Power:", 550, 60);
+    context.fillText(robot.laserBattery,645,60);
+    
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+/**
+ * Draws a white overlay over the opponent HUD text to clear it
+ */
+function drawOpponentHUDClear() {
+        var simCanvas = document.getElementById("simbg"); 
+        var context = simCanvas.getContext("2d");
+        
+        // SetUp player and opponent titles
+        context.font = "20px Trebuchet MS"; 
+        textAlign = "center";
+        context.fillStyle = "white"; 
+        context.color = "white";
+        context.fillText("Player 2",680,20);
+        
+        // set up lives and power level
+        context.font = "15px Trebuchet MS"; 
+        textAlign = "center";
+        
+        //player 2 info
+        context.fillText("Lives:",680,40); // x,y
+        context.fillText(opponent.hp,725,40);
+        context.fillText("Laser Power:", 680, 60);
+        context.fillText(opponent.laserBattery,775,60);
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Fill the canvas with the given ID with a graph paper like pattern.
@@ -1925,6 +2250,8 @@ function graphPaperFill(id) {
  * Simulation Events
  */
 
+
+
 /**
  * Handler for mouse down events on the sim canvas.
  */
@@ -1937,12 +2264,27 @@ function simMouseDown(event) {
     } else {
         for(i in simState.worldObjects) {
             var obj = simState.worldObjects[i];
+            //ADDED BY GAVIN 03/21/2023
+            console.log(obj);
+            if ((obj.part.type == "Light" && obj.part.moveable == false) || (obj.part.type == "Wall" && obj.part.moveable == false) || (obj.part.type == "Box" && obj.part.moveable == false)){
+                console.log("HEY THERE");
+                break;
+            }
+            //END OF ADDED BY GAVIN 03/21/2023
             if(obj.view.encloses(event.offsetX, event.offsetY)) {
                 simState.dragTarget = obj;
                 break;
             }
         }
     }
+
+    //Chase: Move opponent with drag mode
+    if(opponent){
+        if(opponentView.view.encloses(event.offsetX, event.offsetY)){
+            simState.dragTarget = opponentView;
+        }
+    }
+    
     
     if(!simState.dragTarget) {
         return false;
@@ -1958,9 +2300,26 @@ function simMouseDown(event) {
     } else if(document.getElementById('dragMove').checked) {
         simState.dragMode = DRAG_MOVE;
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
-    } else if(document.getElementById('dragResize').checked) {
-        simState.dragMode = DRAG_RESIZE;
-    } else {
+
+    //UPDATED AND ADDED BY GAVIN 03/08/2023
+    } else if(document.getElementById('dragResizeHeight').checked) {
+        simState.dragMode = DRAG_RESIZEHEIGHT;  //Updated by Gavin 03/08/2023
+    }else if(document.getElementById('dragResizeWidth').checked) {
+        simState.dragMode = DRAG_RESIZEWIDTH;  //Updated by Gavin 03/08/2023
+    } else if(document.getElementById('dragRotate90').checked) {
+        simState.dragMode = DRAG_ROTATE90;  //Updated by Gavin 03/08/2023
+    } else if(document.getElementById('draw').checked) {
+        simState.dragMode = DRAG_DRAW;
+        if(simState.dragTarget === simView){
+            fgFabricCanvas.isDrawingMode = true;
+            fgFabricCanvas.selection = false;
+            fgFabricCanvas.freeDrawingBrush.width = 5;
+            fgFabricCanvas.freeDrawingBrush.color = '#ff0000';
+
+        }
+    }
+    //END OF UPDATED AND ADDED BY GAVIN 03/08/2023
+    else {
         simState.dragMode = DRAG_NONE;
     }
 
@@ -1978,11 +2337,13 @@ function simMouseUp(event) {
     // one last move (if that is what we are up to!)
     if(simState.dragMode == DRAG_MOVE) {
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
-    } else if (simState.dragMode == DRAG_RESIZE && simState.dragTarget.part.type == 'Wall'){
-        if (simState.dragTarget.part.resizeFactor < 5){
-            simState.dragTarget.part.resizeFactor = simState.dragTarget.part.resizeFactor + 1;
+    } 
+    //Updated and Added by Gavin 03/08/2023
+    else if (simState.dragMode == DRAG_RESIZEHEIGHT && simState.dragTarget.part.type == 'Wall'){
+        if (simState.dragTarget.part.resizeFactorHeight < 100){
+            simState.dragTarget.part.resizeFactorHeight = simState.dragTarget.part.resizeFactorHeight + 1;
         }else{
-            simState.dragTarget.part.resizeFactor = 1;
+            simState.dragTarget.part.resizeFactorHeight = 1;
         }
         for (var i=0; simState.worldObjects.length; i++){
             if (simState.worldObjects[i].part.name == simState.dragTarget.part.name){
@@ -1992,6 +2353,51 @@ function simMouseUp(event) {
         }
         simState.worldObjects.push(new WallView(simState.dragTarget.part));
     }
+
+    else if (simState.dragMode == DRAG_RESIZEWIDTH && simState.dragTarget.part.type == 'Wall'){
+        if (simState.dragTarget.part.resizeFactorWidth < 100){
+            simState.dragTarget.part.resizeFactorWidth = simState.dragTarget.part.resizeFactorWidth + 1;
+        }else{
+            simState.dragTarget.part.resizeFactorWidth = 1;
+        }
+        for (var i=0; simState.worldObjects.length; i++){
+            if (simState.worldObjects[i].part.name == simState.dragTarget.part.name){
+                simState.worldObjects.splice(i, 1);
+                break;
+            };
+        }
+        simState.worldObjects.push(new WallView(simState.dragTarget.part));
+    }
+
+    else if (simState.dragMode == DRAG_ROTATE90 && simState.dragTarget.part.type == 'Wall'){
+       
+        simState.dragTarget.part.rotated ^= true;
+        console.log(simState.dragTarget.part.rotated);
+        var part = simState.dragTarget.part;
+        deselectPart(simState);
+
+        var partArray = [];
+
+        for(var i=0; i<simState.worldObjects.length; i++) {
+            partArray[i] = simState.worldObjects[i].part;
+        }
+
+        // remove it from the robot parts list
+        simState.worldObjects.splice(partArray.indexOf(part), 1);
+
+        // redraw the sim
+        drawSim();
+        simState.worldObjects.push(new WallView(simState.dragTarget.part));
+
+    }else if(simState.dragMode == DRAG_DRAW){
+        fgFabricCanvas.isDrawingMode = false;
+
+        var path = fgFabricCanvas.getObjects()[0];
+        var points = path.get('points');
+        var drawnObject = new DrawnView(points);
+        simState.worldObjects.push(drawnObject);
+    }
+    //End of Updated and Added by Gavin 03/08/2023
 
     // end the drag mode
     simState.dragMode = DRAG_NONE;
@@ -2005,8 +2411,6 @@ function simMouseUp(event) {
     drawSim();
     return true;
 }
-
-
 /**
  * Handler for mouse move events on the sim canvas.
  */
@@ -2023,7 +2427,24 @@ function simMouseMove(event) {
 
     //process rotation
     if(simState.dragMode == DRAG_ROTATE) {
-        simState.dragTarget.part.rotate((event.offsetY-simState.lastY) * 0.1);
+        simState.dragTarget.part.rotate((event.offsetY-simState.lastY) * .01); //.01 actual
+    }
+
+    // process drawing
+    if (simState.dragMode == DRAG_DRAW) {
+        // if we're in drawing mode, use the free drawing brush to draw on the canvas
+        if (simState.dragTarget === simView) {
+            fgFabricCanvas.freeDrawingBrush.color = '#ff0000';
+            fgFabricCanvas.freeDrawingBrush.width = 5;
+            fgFabricCanvas.add(new fabric.Path(fgFabricCanvas.freeDrawingBrush.getPoints(), {
+                stroke: fgFabricCanvas.freeDrawingBrush.color,
+                strokeWidth: fgFabricCanvas.freeDrawingBrush.width,
+                fill: false,
+                originX: 'center',
+                originY: 'center'
+        }));
+        fgFabricCanvas.renderAll();
+        }
     }
 
     //record this position
@@ -2056,12 +2477,26 @@ function simAddLight(event) {
  */
 function simAddWall(event) {
     var canvas = document.getElementById("simfg");
+    simState.rotated = false;   //Added by Gavin 03/09/2023
     var wall = new Wall(null, canvas.width/2, canvas.height/2);
 
     simState.worldObjects.push(constructView(wall));
+    console.log(wall);
     drawSim();
 }
 
+
+/**
+ * Add a box to the simulator.
+ * @param {*} event 
+ */
+function simAddBox(event) {
+    var canvas = document.getElementById("simfg");
+    var box = new Box(null, canvas.width/2, canvas.height/2, 50);
+
+    simState.worldObjects.push(constructView(box));
+    drawSim();
+}
 
 
 /*
@@ -2084,8 +2519,42 @@ function showPartEditor(view, state) {
 
     //show the editor pane
     document.getElementById(state.prefix + "PartEditor").style.display="block";
+
+    //!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!!!!!!!
+    // If a part is click on the grid, the drop-down menu auto selects it
+    var options = document.getElementById("partDropDown").options;
+    for (var i = 0; i < options.length; i++) {
+        if (options[i].text == view.part.name) {
+            options[i].selected = true;
+            break;
+        }
+    }
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 }
 
+// !!!!!!!!!! Addition Sam Elfrink !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Same as the showPartEditor, but removed the auto select addition
+/**
+ * Show the editor for the part specified by "view".
+ * @param {*} view 
+ */
+function dropDownClick(view, state) {
+    
+    
+    //populate the type and name
+    document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
+    document.getElementById(state.prefix +"PartName").value = view.part.name;
+
+    //get the colors populated
+    document.getElementById(state.prefix + "PartOutlineColor").value = view.part.outline;
+    document.getElementById(state.prefix + "PartFillColor").value = view.part.fill;
+
+
+    //show the editor pane
+    document.getElementById(state.prefix + "PartEditor").style.display="block";
+    
+}
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Hide the part editor.
@@ -2127,6 +2596,56 @@ function selectPart(view, state) {
     }
 }
 
+/**
+ * !!!!! Addition by Sam Elfrink: Drop Down menu for part editor !!!!!!
+ * Very similar to the selectPart function, just triggered on the drop down click
+ * Select the partview in the editor.
+ * @param {*} event 
+ */
+function dropDownPartSelect(event) {
+    // get part name from the drop-down menu
+    var dropDownMenu = document.getElementById("partDropDown");
+    var dropPartName = dropDownMenu.options[dropDownMenu.selectedIndex].text;
+  
+    // check for clicking on a robot subpart
+    for(var i=0; i < buildView.subviews.length; i++) {
+        var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
+       
+        // if the part selected matches the part current partview, select it
+        //NOTE: THERE IS NO CHASSISS IN THE buildView.subviews ARRAY, so chassiss select doesn't work
+        if(partView.part.name == dropPartName) {
+            buildState.dragTarget = partView;
+            break;
+        }
+    }
+
+    // deselect (if needed) 
+    if(buildState.editTarget != null) {
+        deselectPart(buildState);
+    }
+
+    // grab the original color 
+    buildState.editOriginalOutline = buildState.dragTarget.part.outline;
+    
+    // set up the target
+    buildState.editTarget = buildState.dragTarget;
+
+    //show the editor
+    dropDownClick(buildState.dragTarget, buildState);
+    //showPartEditor(buildState.dragTarget, buildState);
+
+    // color it coral
+    buildState.dragTarget.part.outline = "coral";
+
+
+    // redraw the canvas
+    if(buildState.prefix == "build") {
+        drawBuild();
+    } else if(buildState.prefix == "sim") {
+        drawSim();
+    }
+}
+
 
 /**
  * Deselect the selected partview (if there is one)
@@ -2152,6 +2671,27 @@ function deselectPart(state) {
     }
 }
 
+//!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!!!!!!!
+// check to see if a string input is a valid javascript variable name
+function isVariableName(string) {
+    // Check to make sure the input is a string
+    if(typeof string !== 'string') {
+        return false;
+    }
+    // Check for whitepace before or after
+    if(string.trim() !== string) {
+        return false;
+    }
+    // try the value as a variable
+    try {
+        new Function(string, 'var ' + string);
+    } catch (_) {
+        return false;
+    }
+    // return true if it passes the test
+    return true;
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Apply the editor to the given state.
@@ -2160,9 +2700,16 @@ function applyEditor(state) {
     //get the color from the editor
     var fill = document.getElementById(state.prefix + "PartFillColor").value;
     var outline = document.getElementById(state.prefix + "PartOutlineColor").value;
-
+    
     //get the part name
     var name = document.getElementById(state.prefix + "PartName").value;
+
+    // !!!!! Sam Elfrink Addition !!!!!!!!!
+    if(isVariableName(name) == false) {
+        alert("Part name must be a valid JavaScript variable name");
+        return;
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //get the part we are editing
     var part = state.editTarget.part;
@@ -2174,6 +2721,18 @@ function applyEditor(state) {
     part.fill = fill;
     part.outline = outline;
     part.name = name;
+
+    // !!!!!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!!!!!!
+    // When a part is selected, the editor removes the name from the drop-down list
+    var dropDownElement = document.getElementById("partDropDown");
+    dropDownElement.remove(dropDownElement.selectedIndex);
+    // The new name is add to the drop-down list
+    //console.log("apply editor");
+    //console.log("Addlist ApplyEditor function called");
+    addListTrue = 1;
+    addList(part.name);
+    addListTrue = 0;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // redraw the canvas
     if(state.prefix == "build") {
@@ -2265,7 +2824,6 @@ function buildMouseUp(event) {
     buildState.dragMode = DRAG_NONE;
 }
 
-
 /**
  * Handle the apply button for the build part editor.
  * @param {*} event 
@@ -2274,6 +2832,15 @@ function buildApply(event) {
     applyEditor(buildState);
 }
 
+//!!!!!!!! Sam Elfrink Addition !!!!!!!!
+/**
+ * 
+ * @param {*} event 
+ */
+function wheelApply(event){
+    changeWheelSize(buildState);
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Handle the apply button for the sim part editor.
@@ -2324,6 +2891,19 @@ function buildDeletePart(event) {
     // remove it from the robot parts list
     robot.parts.splice(robot.parts.indexOf(part), 1);
 
+    //!!!!!! Addition Sam Elfrink !!!!!!!!
+    // delete the part from the drop-down list
+    var options = document.getElementById("partDropDown").options;
+     for (var i = 0; i < options.length; i++) {
+        if (options[i].text == part.name) {
+            options[i].selected = true;
+            break;
+        }
+    }
+    var dropDownElement = document.getElementById("partDropDown");
+    dropDownElement.remove(dropDownElement.selectedIndex);
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     // rebuild the robot
     buildView = new ChassisBuildView(robot);
     drawBuild();
@@ -2360,16 +2940,33 @@ function simDeletePart(event) {
     drawSim();
 }
 
+/**
+ * !!!!!!! Addition by Sam Elfrink !!!!!!
+ * Added function to add an item to the parts drop down list
+ * @param {*} event 
+ */
+function addList(name) {
+        var partDropDown = document.getElementById("partDropDown");
+        var option = document.createElement("OPTION");
+        //console.log(addListTrue);
+        if(addListTrue == 1) {
+            option.innerHTML = name;
+            //option.value = document.getElementById("txtValue").value;
+            partDropDown.options.add(option);
+        }
+}
 
 /**
  * Handle adding a marker. 
  * @param {*} event 
  */
 function buildAddMarker(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var marker = new Marker(robot);
     robot.addPart(marker);
     buildView.addPart(marker);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 
@@ -2378,11 +2975,13 @@ function buildAddMarker(event) {
  * @param {*} event
  */
 function buildAddLight(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var light = new Light(robot);
     light.radius = 1;
     robot.addPart(light);
     buildView.addPart(light);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 
@@ -2391,10 +2990,12 @@ function buildAddLight(event) {
  * @param {*} event
  */
 function buildAddLightSensor(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var sensor = new LightSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 
@@ -2403,10 +3004,12 @@ function buildAddLightSensor(event) {
  * @param {*} event
  */
 function buildAddRangeSensor(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var sensor = new RangeSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
 
@@ -2415,27 +3018,33 @@ function buildAddRangeSensor(event) {
  * @param {*} event
  */
 function buildAddLaser(event) {
+    addListTrue = 1; //Sam Elfrink zzzz
     var laser = new Laser(robot);
     robot.addPart(laser);
     buildView.addPart(laser);
     drawBuild();
+    addListTrue = 0; //Sam Elfrink zzzz
 }
 
-
+//Chase new go event
 /**
  * Handle the simulation go button.
  * @param {*} event 
  */
 function simulationGo(event) {
+
+    //!!!!! Sam Elfrink Addition !!!!!!!!!
+    drawPlayerHUD();
+    if(opponentClicked == 1){
+        drawOpponentHUD();
+    }
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     var text = event.target.innerHTML;
 
     if(text == "Start") {
         event.target.innerHTML = "Pause";
         
-        //preserve the starting pose of the robot
-        simState.robotStartX = robot.x;
-        simState.robotStartY = robot.y;
-        simState.robotStartHeading = robot.heading;
         simulationStart();
     } else if(text == "Pause") {
         event.target.innerHTML = "Resume";
@@ -2444,15 +3053,132 @@ function simulationGo(event) {
         event.target.innerHTML = "Pause";
         simulationStart();
     }
+
+    if (robot.blowedUp == true && event.target.innerHTML == "Resume"){
+        robot.thread = null;
+        if(simState.robotThread) {
+            simState.robotThread.terminate();
+        }
+        alert("Oops, looks like your robot has been destroyed. Hit reset.");
+        return;
+    }
+
+    //preserve the starting pose of the robot
+    simState.robotStartX = robot.x;
+    simState.robotStartY = robot.y;
+    simState.robotStartHeading = robot.heading;
+
+    
+    if(opponent){
+        //preserve the starting pose of the opponent
+        simState.opponentStartX = opponent.x;
+        simState.opponentStartY = opponent.y;
+        simState.opponentStartHeading = opponent.heading;
+        
+        //allows the player to resume without the bot
+        if (opponent.blowedUp == true && event.target.innerHTML == "Resume"){
+            opponentClicked = 0;
+            opponent = null;
+            if(simView.opponentThread) {
+                simView.opponentThread.terminate();
+            }
+
+            simView.opponentThread = null;
+            opponentView = null;
+            simState.opponentThread = null;
+        }
+    }       
 }
 
-
+//Chase new reset event
 function simulationReset(event) {
     document.getElementById("simGo").innerHTML = "Start";
     var canvas = document.getElementById("simfg");
     //put the robot back in its original position and heading
     robot.moveTo(simState.robotStartX, simState.robotStartY);
     robot.face(simState.robotStartHeading);
+
+    //refuel and powered up
+    robot.left.setPower(0);
+    robot.right.setPower(0);
+    robot.resetLaserBattery();
+    robot.hp = 3;
+
+    //MAYDAY!
+    if (robot.blowedUp == true){
+        console.log('blowedUp')
+        robot.thread = null;
+        if(simState.robotThread) {
+            simState.robotThread.terminate();
+        }
+        
+        //Six Million Dollar Bot
+        robot = new Chassis();
+        robot.x = 100;
+        robot.y = 100;
+        robot.heading = 0;
+        
+        addListTrue = 1; // Sam Elfrink
+
+        loadRobot(robot);
+        
+        addListTrue = 0; // Sam Elfrink
+
+        simView = new ChassisView(robot); 
+        buildView = new ChassisBuildView(robot);
+        simState.robotThread = new Worker("userbot.js");
+        simState.robotThread.onerror = gradbotError;
+        simState.robotThread.onmessage = simulationReceiveMessage;
+        simState.robotThread.postMessage({type: "start", robot: robot.sendable()});
+        robot.thread = simState.robotThread;
+
+        //refreshed stats
+        robot.left.setPower(0);
+        robot.right.setPower(0);
+        robot.resetLaserBattery();
+        robot.hp = 3;
+    }  
+
+    if(opponent){
+        //put the opponent back in its original position and heading
+        opponent.moveTo(simState.opponentStartX, simState.opponentStartY);
+        opponent.face(simState.opponentStartHeading);
+
+        //Tis but a scratch 
+        opponent.left.setPower(0);
+        opponent.right.setPower(0);
+        opponent.resetLaserBattery();
+        opponent.hp = 3;
+    
+        //checks if opponent exploded and removes the mess after reset
+        if (opponent.blowedUp == true){
+            console.log('blowedUp')
+            opponent = null;
+            if(simView.opponentThread) {
+                simView.opponentThread.terminate();
+            }
+            simView.opponentThread = null;
+            opponentView = null;
+            simState.opponentThread.terminate();
+            simState.opponentThread = null;
+    
+            // Respawn the correct opponent
+            switch(opponentType) {
+                case "rover":
+                    loadRoverOpponent();
+                    break;
+                case "circler":
+                    loadCirclerOpponent();
+                    break;
+                case "spinner":
+                    loadSpinnerOpponent();
+                    break;
+                case "custom":
+                    document.getElementById('simUpload').click();          
+                    break;
+            }
+        }
+    }
 
     //clear the background
     graphPaperFill("simbg");
@@ -2463,7 +3189,7 @@ function simulationReset(event) {
     drawSim();
 }
 
-
+//Chase new clear event
 /**
  * Handle simulation clear.
  * @param {*} event
@@ -2477,11 +3203,12 @@ function simulationClear(event) {
     robot.heading = 0;
 
     // reset the opponent
-    if(opponent) {
+    if(opponent){
         opponent.x = 700;
         opponent.y = 500;
         opponent.heading = Math.PI;
     }
+    
 
     //clear lights and walls
     if(simState.worldObjects.length != 0) {
@@ -2506,12 +3233,27 @@ function gradbotError(message) {
 }
 
 
+/**
+ * Gradbot Error Handler
+ * @param {*} event 
+ */
+function gradbotError(message) {
+    document.getElementById("simReset").click();
+    alert(message);
+}
+
+
 
 
 /**
  * Initialize the gradbot interface.
  */
 function gradbotInit() {
+    
+    // Sam Elfrink Addition
+    loadRobotTrue = 1;
+
+    console.log("gradbotInit called");
     //fill the simulation background with graph paper
     graphPaperFill('simbg');
 
@@ -2522,6 +3264,20 @@ function gradbotInit() {
     simState.robotStartY = robot.y;
     simState.robotStartHeading = robot.heading;
 
+    //!!!!!!!!!!!!!!!Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+     // Sam Elfrink Addition
+     loadRobotTrue = 0;
+    // remove motors and chassis from the drop-down list
+    //var dropDownElementInit = document.getElementById("partDropDown");
+    //var firstListName = dropDownElementInit.options[0].text;
+    //var firstListName = dropDownElementInit.options[dropDownElementInit.selectedIndex].value;
+    //console.log(firstListName);
+    //if(firstListName == 'chassis'){
+    //    document.getElementById("partDropDown").options.length = 0;
+    //}
+    //document.getElementById("partDropDown").options.length = 0;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //put the robot on the foreground of the simulator
     simView = new ChassisView(robot);
     drawSim();
@@ -2530,11 +3286,7 @@ function gradbotInit() {
     buildView = new ChassisBuildView(robot);
     drawBuild();
 
-    //set up the sim mouse events
-    var canvas = document.getElementById('simfg');
-    canvas.onmousedown = simMouseDown;
-    canvas.onmouseup = simMouseUp;
-    canvas.onmousemove = simMouseMove;
+   
 
     //set up the sim buttons
     document.getElementById('simGo').onclick = simulationGo;
@@ -2544,12 +3296,30 @@ function gradbotInit() {
     //set up the object buttons
     document.getElementById('simAddLight').onclick = simAddLight;
     document.getElementById('simAddWall').onclick = simAddWall;
+    document.getElementById('simAddBox').onclick = simAddBox;
 
     //set up the build mouse events
-    canvas = document.getElementById("buildCanvas");
+    const canvas = document.getElementById("simfg");
     canvas.onmousedown = buildMouseDown;
     canvas.onmouseup = buildMouseUp;
     canvas.onmousemove = buildMouseMove;
+
+
+
+    // Gavin Added 02/22/2023
+    //set up world handlers
+    document.getElementById("worldOpen").onclick = function() {
+        deselectPart(simState); //Might need to fix 
+        document.getElementById("worldUpload").click();
+    };
+    document.getElementById("worldSave").onclick = saveWorldFile;
+    document.getElementById("worldUpload").onchange = openWorldFile ;
+    //End of Gavin Added
+
+    //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+    document.getElementById("partDropDown").onchange = dropDownPartSelect;
+
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up the build's form buttons
     document.getElementById("buildPartApply").onclick = buildApply;
@@ -2578,6 +3348,10 @@ function gradbotInit() {
         }
     }
 
+    //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+    document.getElementById("changeWheelSize").onclick = wheelApply;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //set up opponent handlers
     document.getElementById("simUpload").onchange = openOpponentFile;
     document.getElementById("simOpenOpponent").onclick = function() {
@@ -2593,6 +3367,7 @@ function gradbotInit() {
         opponentView = null;
         drawSim();
     };
+    
     document.getElementById("simRoverOpponent").onclick = loadRoverOpponent;
     document.getElementById("simCirclerOpponent").onclick = loadCirclerOpponent;
     document.getElementById("simSpinnerOpponent").onclick = loadSpinnerOpponent;
@@ -2610,7 +3385,28 @@ function gradbotInit() {
 
     //activate our error handler
     window.onerror = gradbotError;
-    
+
+    // Change the world state
+    var toroidalButton = document.getElementById("toroidal-mode");
+    var infiniteButton = document.getElementById("infinite-mode");
+
+    // Add click event listeners to the buttons
+    toroidalButton.addEventListener("click", function() {
+    simulationMode = "toroidal";
+    });
+
+    infiniteButton.addEventListener("click", function() {
+    simulationMode = "infinite";
+    });
+
+    //GAVIN'S UPDATED CODE STARTS HERE
+    //Set up Speed Multipliers
+    document.getElementById("x1").onclick = setSpeedMult1;
+    document.getElementById("x5").onclick = setSpeedMult5;
+    document.getElementById("x10").onclick = setSpeedMult10;
+    document.getElementById("x25").onclick = setSpeedMult25;
+    //GAVIN'S UPDATED CODE ENDS HERE
+
     //load world handlers under simulation tabs
     //
     /*
@@ -2653,18 +3449,6 @@ function simulationStart() {
         clearInterval(simState.timer);
     }
 
-    //reset the bots
-    robot.left.setPower(0);
-    robot.right.setPower(0);
-    robot.resetLaserBattery();
-    robot.hp = 3;
-    if(opponent) {
-        opponent.left.setPower(0);
-        opponent.right.setPower(0);
-        opponent.resetLaserBattery();
-        opponent.hp = 3;
-    }
-
     //start the robot thread
     simState.robotThread = new Worker("userbot.js");
     simState.robotThread.onerror = gradbotError;
@@ -2674,7 +3458,10 @@ function simulationStart() {
 
 
     //start the opponent thread (if there is one)
-    if(opponent) {
+    if(opponent){
+        if(simState.opponentThread) {
+            simState.opponentThread.terminate();
+        }
         simState.opponentThread = new Worker("userbot.js");
         simState.opponentThread.onerror = gradbotError;
         simState.opponentThread.onmessage = opponentReceiveMessage;
@@ -2682,9 +3469,8 @@ function simulationStart() {
         opponent.thread = simState.opponentThread;
     }
 
-
     //set the timer going!
-    simState.timer = setInterval(simulationUpdate, 1000/30);
+    simState.timer = setInterval(simulationUpdate, 1000/60); //Gavin changed 1000/30 to 1000/60
 }
 
 
@@ -2741,6 +3527,7 @@ function simulationStop() {
 }
 
 
+
 /**
  * Update one simulation frame.
  */
@@ -2766,7 +3553,23 @@ function simulationUpdate() {
         if(obj.part.type == "LaserBlast") {
             for(var j=0; j < botViews.length; j++) {
                 if(bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
+                    
+                    //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
+                    drawPlayerHUDClear();
+                    if(opponentClicked == 1) {
+                        drawOpponentHUDClear();
+                    }
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                     bots[j].hp--;
+
+                    //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
+                    drawPlayerHUD();
+                    if(opponentClicked == 1) {
+                        drawOpponentHUD(); // Elfrink
+                    }
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                     toVanish.push(obj.part);
                 }
             }
@@ -2782,6 +3585,56 @@ function simulationUpdate() {
                 }
             }
         }
+
+        // keep track of boxes in contact with bot
+        var boxesInContact = [];
+
+        // check for box collisions
+        if (obj.part.type === "Box") {
+            for (var j = 0; j < botViews.length; j++) {
+                if (collision(botViews[j].view, obj.view)) {
+                // check if box is already in contact with bot
+                    if (!boxesInContact.includes(obj.part)) {
+                        // change box color to red
+                        obj.part.fill = "red";
+                        // add box to list of boxes in contact with bot
+                        boxesInContact.push(obj.part);
+                    }
+                } else {
+                    // box is not in contact with bot, so revert back to original color
+                    obj.part.fill = "lightblue";
+                    // remove box from list of boxes in contact with bot
+                    const index = boxesInContact.indexOf(obj.part);
+                    if (index !== -1) {
+                        boxesInContact.splice(index, 1);
+                    }
+                }
+            }
+        }
+
+        //UPDATED BY GAVIN 03/20/2023
+        if(simState.pacmanWorldLoaded == true){
+            if(obj.part.type == "Light") {
+                for(var j=0; j < botViews.length; j++) {
+                    if(collision(botViews[j].view, obj.view)) {
+                        console.log(obj.part);
+                        var part = obj.part;
+                        deselectPart(simState);
+                        var partArray = [];
+                        for(var i=0; i<simState.worldObjects.length; i++) {
+                            partArray[i] = simState.worldObjects[i].part;
+                        }
+                        
+                        simState.worldObjects.splice(partArray.indexOf(part), 1)
+                        pacmanEatingSound.play();
+                        simState.pacmanPoints += 10;
+                        console.log(simState.pacmanPoints);
+                        drawSim();
+                    }
+                }
+            }
+        }
+        //END OF UPDATED BY GAVIN 03/20/2023
 
         // check for robot collisions
         //if(obj.part.type == "Wall") {
@@ -2807,47 +3660,6 @@ function simulationUpdate() {
  ******************************************/
 
 //World Save Funtions
-function saveWorld(world){
-	localStorage.setItem("world", JSON.stringify(world));
-}
-
-function saveWorldFile() {
-    var file = new Blob([JSON.stringify(world)]);
-    var a = document.getElementById('worldDownload');
-    a.href = URL.createObjectURL(file, {type: "text/plain"});
-    a.download = "world";
-    a.click();
-    
-    URL.revokeObjectURL(a.href);
-}
-
-function openWorldFile() {
-    var reader = new FileReader();
-    reader.onload = function() {
-        loadWorld(world, reader.result);
-
-        //rebuild the world for simulation
-        simView = new ChassisView(world);
-        buildView = new ChassisBuildView(world);
-
-        //redraw
-        graphPaperFill("simbg");
-        drawSim();
-        drawBuild();
-    };
-
-    reader.readAsText(this.files[0]);
-
-}
-
-function loadWorld(world, worldString) {
-
-    if(!worldString) worldString = localStorage.getItem("world");
-    if(!worldString) return;
-
-
-    var obj = JSON.parse(worldString);
-}
 
 function newWorld() {
    robot = new Chassis(100, 100, 0);
@@ -2869,19 +3681,28 @@ function saveRobot(robot) {
 
 
 function saveRobotFile() {
-    var file = new Blob([JSON.stringify(robot)]);
-    var a = document.getElementById('buildDownload');
-    a.href = URL.createObjectURL(file, {type: "text/plain"});
-    a.download = "robot";
-    a.click();
-    
-    URL.revokeObjectURL(a.href);
+    /* !!!!! Addition By Sam Elfrink: Allows users to name their robot file !!!!!!*/
+    let text;
+    let robotname = prompt("Please enter your robot file name:", "Robot");
+    if (robotname == null || robotname == "") {
+        /* do nothing */
+        return;
+    } else {
+        var file = new Blob([JSON.stringify(robot)]);
+        var a = document.getElementById('buildDownload');
+        a.href = URL.createObjectURL(file, {type: "text/plain"});
+        a.download = robotname;
+        a.click();
+        
+        URL.revokeObjectURL(a.href);
+    }
 }
 
 
 function openRobotFile() {
     var reader = new FileReader();
     reader.onload = function() {
+        addListTrue = 1; //zzz Sam Elfrink 
         loadRobot(robot, reader.result);
 
         //rebuild the robot views
@@ -2892,18 +3713,23 @@ function openRobotFile() {
         graphPaperFill("simbg");
         drawSim();
         drawBuild();
+        addListTrue = 0; //zzz Sam Elfrink 
     };
 
     reader.readAsText(this.files[0]);
 
 }
 
-
+//Chase new openOpponentFile()
 function openOpponentFile() {
+    
+    loadRobotTrue = 1; // Sam Elfrink Addition
+    
+    opponentType = "custom";
     var reader = new FileReader();
     reader.onload = function() {
         opponent = new Chassis();
-        loadRobot(opponent, reader.result);
+        loadRobotOpp(opponent, reader.result);
         opponent.x = 700;
         opponent.y = 500;
         opponent.heading = Math.PI;
@@ -2915,14 +3741,15 @@ function openOpponentFile() {
         graphPaperFill("simbg");
         drawSim();
     };
-
+    console.log(this.files[0]);
     reader.readAsText(this.files[0]);
 
 }
 
-
+//Chase new opponents
 function loadRoverOpponent() {
     var rover = '{"x":95.31671683510646,"y":504.2753606734182,"heading":11.038709558823625,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":false,"lastUpdate":1655407045989,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":90.49773755656109,"speed":6.16289592760181},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":90.49773755656109,"speed":6.16289592760181},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nwhile(true) {\\n  await forward(10);\\n  laser.fire();\\n  await turnRight(90);\\n  laser.fire();\\n  await forward(7);\\n  laser.fire();\\n  await turnRight(90);\\n  laser.fire();\\n}","laserBattery":36}';
+    opponentType = "rover";
     loadSampleOpponent(rover);
 
 }
@@ -2930,18 +3757,21 @@ function loadRoverOpponent() {
 
 function loadCirclerOpponent() {
     var circler='{"x":327.5469402567586,"y":167.76097113134486,"heading":13.770062022058815,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":59.55253896430367,"speed":4.05552790346908},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":53.56963298139768,"speed":3.6480920060331816},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\nvar count = 0;\\nvar r = 3;\\nvar vx = 0.25;\\nvar dr = -0.25;\\nvar delays;\\n\\nsetSpeed(0.4, 0);\\nfor(var i=0; i<5; i++) {\\n  laser.fire();\\n  await delay(1000);\\n}\\n\\n\\nwhile(true) {\\n  delays = Math.floor(0.628 * r / vx);\\n  vyaw = vx/r;\\n  setSpeed(vx, vyaw);\\n  count = count + 1;\\n  \\n  if(count % 20 ==  0) {\\n    laser.fire();\\n  }\\n  \\n  if(count % delays == 0) {\\n    r += dr;\\n    if(r >= 3 || r <= 0.5) {\\n      dr *= -1;\\n    }\\n  }\\n  await delay(100);\\n}","laserBattery":0}';
+    opponentType = "circler";
     loadSampleOpponent(circler);
 }
 
 
 function loadSpinnerOpponent() {
     var spinner='{"x":100,"y":100,"heading":0,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":100,"speed":6.81},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":-80,"speed":-5.4479999999999995},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nleft.setPower(100);\\nright.setPower(-80);\\n\\nwhile(true) {\\n  await delay(1000);\\n  laser.fire();\\n}","laserBattery":38}';
+    opponentType = "spinner";
     loadSampleOpponent(spinner);
 }
+//end of Chase new opponents
 
 function loadSampleOpponent(robotString) {
     opponent = new Chassis();
-    loadRobot(opponent, robotString);
+    loadRobotOpp(opponent, robotString);
     opponent.x = 700;
     opponent.y = 500;
     opponent.heading = Math.PI;
@@ -2954,9 +3784,14 @@ function loadSampleOpponent(robotString) {
     drawSim();
 }
 
+//Created a new function so that opponent parts do not show up in Drop Down
+function loadRobotOpp(robot, robotString) {
+    loadRobotTrue = 1;
 
-function loadRobot(robot, robotString) {
-
+    // !!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+    opponentClicked = 1;
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
     if(!robotString) robotString = localStorage.getItem("robot");
     if(!robotString) return;
 
@@ -2975,12 +3810,73 @@ function loadRobot(robot, robotString) {
     robot.left.parent = robot;
     robot.right.parent = robot;
 
-    /* handle the parts */
+
     robot.parts = [];
     for(var i=0; i<obj.parts.length; i++) {
         robot.addPart(finishPart(obj.parts[i]));
         robot.parts[i].parent = robot;
     }
+
+    //console.log("loadRobotTrue set to 0");
+    loadRobotTrue = 0;
+}
+
+
+function loadRobot(robot, robotString) {
+    
+    if(!robotString) robotString = localStorage.getItem("robot");
+    if(!robotString) return;
+
+
+    var obj = JSON.parse(robotString);
+
+    /* grab the attributes */
+    for(var attr in obj) {
+        if(attr == "parts") { continue; }
+        robot[attr] = obj[attr];
+    }
+
+    /* handle the motors */
+
+    // !!!!!!! Sam Elfrink Addition !!!!!!!!
+    loadRobotTrue = 1; // prevent unwanted parts from the drop down
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    robot.left = finishPart(obj.left);
+    robot.right = finishPart(obj.right);
+
+
+    robot.left.parent = robot;
+    robot.right.parent = robot;
+
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    //handle the wheel size
+    wheelSize = robot.chassisWheelSize;
+    // set wheelsize of the text file to the wheelsize value on the webpage
+    document.getElementById("wheelSize").value = wheelSize;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /* handle the parts */
+    
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    // Remove all elements of the drop-down list except for the first 3
+    document.getElementById("partDropDown").options.length = 0;
+    //console.log("loadRobotTrue set to 1");
+    //loadRobotTrue = 1;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    robot.parts = [];
+    for(var i=0; i<obj.parts.length; i++) {
+        robot.addPart(finishPart(obj.parts[i]));
+        robot.parts[i].parent = robot;
+        
+        // !!!!!!!!!!!!!! Addition by Sam Elfrink !!!!!!!!!!!
+        // When a robot is opened, add the part names to the list
+        addList(robot.parts[i].name)
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    }
+    //console.log("loadRobotTrue set to 0");
+    loadRobotTrue = 0;
 }
 
 
@@ -3000,6 +3896,8 @@ function finishPart(part) {
         result = new RangeSensor();
     } else if(part.type == "Wall") {
         result = new Wall();
+    } else if(part.type == "Box") {
+        result = new Box();
     } else if(part.type == "Laser") {
         result = new Laser();
     } else {
@@ -3018,6 +3916,11 @@ function finishPart(part) {
 function newRobot() {
     robot = new Chassis(100, 100, 0);
 
+    // !!!!!! Sam Elfrink Addition !!!!!!!!!
+    // Remove all elements of the drop-down list except for the first 3
+    document.getElementById("partDropDown").options.length = 0;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //rebuild the robot views
     simView = new ChassisView(robot);
     buildView = new ChassisBuildView(robot);
@@ -3027,6 +3930,179 @@ function newRobot() {
     drawSim();
     drawBuild();
 }
+
+//GAVIN'S UPDATED CODE STARTS HERE
+var multiplyer = 1;
+
+function setSpeedMult1(){
+    multiplyer = 1;
+}
+
+function setSpeedMult5(){
+    multiplyer = 5;
+}
+
+function setSpeedMult10(){
+    multiplyer = 10;
+}
+
+function setSpeedMult25(){
+    multiplyer = 25;
+}
+function getSpeedMult(){
+    return multiplyer;
+}
+//GAVIN'S UPDATED CODE ENDS HERE
+
+//Edited by GAVIN 02/22/2023
+function openWorldFile() {
+    var reader = new FileReader();
+    reader.onload = function() {
+        loadWorld(reader.result);
+        //redraw
+        graphPaperFill("simbg");
+        drawSim();
+        drawBuild();
+    };
+    reader.readAsText(this.files[0]);
+}
+
+
+function saveWorldFile() {
+    let text;
+    let worldname = prompt("Please enter your world file name:", "World");
+    if (worldname == null || worldname == "") {
+        //do nothing 
+        return;
+    } else {
+        var file = new Blob([JSON.stringify(simState)]);
+        var a = document.getElementById('worldDownload');
+        a.href = URL.createObjectURL(file, {type: "text/plain"});
+        a.download = worldname;
+        a.click();
+        
+        URL.revokeObjectURL(a.href);
+    }
+}
+
+
+//set up handlers for premade maps
+document.getElementById("combatWorld").onclick = loadCombatWorld;
+document.getElementById("mazeWorld").onclick = loadMazeWorld;
+document.getElementById("pacmanWorld").onclick = loadPacmanWorld;
+
+//Edited by Gavin 03/20/2023
+function loadCombatWorld() {
+    simState.combatWorldLoaded = true;
+    simState.mazeWorldLoaded = false;
+    simState.pacmanWorldLoaded = false;
+    robot.moveTo(60, 300);     //Resets Robot to coordinates 60,300
+    simState.worldObjects= []; //Clears world objects
+    var combatWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":289,"y":421,"heading":0,"view":{"x":289,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":401},{"x":299,"y":401},{"x":299,"y":441},{"x":279,"y":441}],"minx":279,"miny":401,"maxx":299,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":289,"y":421,"heading":0,"type":"Wall","name":"part31","worldx":289,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},"lastX":289,"lastY":421,"robotStartX":100,"robotStartY":100,"robotStartHeading":0,"opponentStartX":700,"opponentStartY":500,"opponentStartHeading":3.141592653589793,"timer":null,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":21,"y":590,"heading":0,"view":{"x":21,"y":590,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":1,"y":580},{"x":801,"y":580},{"x":801,"y":600},{"x":1,"y":600}],"minx":1,"miny":580,"maxx":801,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":21,"y":590,"heading":0,"type":"Wall","name":"part6","worldx":401,"worldy":590,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":791,"y":582,"heading":0,"view":{"x":791,"y":582,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":781,"y":2},{"x":801,"y":2},{"x":801,"y":602},{"x":781,"y":602}],"minx":781,"miny":2,"maxx":801,"maxy":602,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":791,"y":582,"heading":0,"type":"Wall","name":"part5","worldx":791,"worldy":302,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":10,"y":582,"heading":0,"view":{"x":10,"y":582,"heading":0,"scale":2,"points":[{"x":-5,"y":-300},{"x":5,"y":-300},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":-18},{"x":20,"y":-18},{"x":20,"y":602},{"x":0,"y":602}],"minx":0,"miny":-18,"maxx":20,"maxy":602,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":582,"heading":0,"type":"Wall","name":"part4","worldx":10,"worldy":292,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":30,"resizeFactorWidth":1}},{"x":19,"y":9,"heading":0,"view":{"x":19,"y":9,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-1,"y":-1},{"x":799,"y":-1},{"x":799,"y":19},{"x":-1,"y":19}],"minx":-1,"miny":-1,"maxx":799,"maxy":19,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":19,"y":9,"heading":0,"type":"Wall","name":"part7","worldx":399,"worldy":9,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":390,"y":40,"heading":0,"view":{"x":390,"y":40,"heading":0,"scale":2,"points":[{"x":-5,"y":-20},{"x":15,"y":-20},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":380,"y":0},{"x":420,"y":0},{"x":420,"y":60},{"x":380,"y":60}],"minx":380,"miny":0,"maxx":420,"maxy":60,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":390,"y":40,"heading":0,"type":"Wall","name":"part8","worldx":400,"worldy":30,"outline":"blue","fill":"blue","power":0,"rotated":0,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":3}},{"x":390,"y":581,"heading":0,"view":{"x":390,"y":581,"heading":0,"scale":2,"points":[{"x":-5,"y":-20},{"x":15,"y":-20},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":380,"y":541},{"x":420,"y":541},{"x":420,"y":601},{"x":380,"y":601}],"minx":380,"miny":541,"maxx":420,"maxy":601,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":390,"y":581,"heading":0,"type":"Wall","name":"part10","worldx":400,"worldy":571,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":3}},{"x":141,"y":112,"heading":0,"view":{"x":141,"y":112,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":102},{"x":181,"y":102},{"x":181,"y":122},{"x":121,"y":122}],"minx":121,"miny":102,"maxx":181,"maxy":122,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":141,"y":112,"heading":0,"type":"Wall","name":"part12","worldx":151,"worldy":112,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":141,"y":491,"heading":0,"view":{"x":141,"y":491,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":481},{"x":181,"y":481},{"x":181,"y":501},{"x":121,"y":501}],"minx":121,"miny":481,"maxx":181,"maxy":501,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":141,"y":491,"heading":0,"type":"Wall","name":"part15","worldx":151,"worldy":491,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":639,"y":491,"heading":0,"view":{"x":639,"y":491,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":619,"y":481},{"x":679,"y":481},{"x":679,"y":501},{"x":619,"y":501}],"minx":619,"miny":481,"maxx":679,"maxy":501,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":639,"y":491,"heading":0,"type":"Wall","name":"part14","worldx":649,"worldy":491,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":640,"y":110,"heading":0,"view":{"x":640,"y":110,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":620,"y":100},{"x":680,"y":100},{"x":680,"y":120},{"x":620,"y":120}],"minx":620,"miny":100,"maxx":680,"maxy":120,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":640,"y":110,"heading":0,"type":"Wall","name":"part16","worldx":650,"worldy":110,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":671,"y":381,"heading":0,"view":{"x":671,"y":381,"heading":0,"scale":2,"points":[{"x":-5,"y":-90},{"x":5,"y":-90},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":661,"y":201},{"x":681,"y":201},{"x":681,"y":401},{"x":661,"y":401}],"minx":661,"miny":201,"maxx":681,"maxy":401,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":671,"y":381,"heading":0,"type":"Wall","name":"part18","worldx":671,"worldy":301,"outline":"lightblue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":682,"y":211,"heading":0,"view":{"x":682,"y":211,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":662,"y":201},{"x":702,"y":201},{"x":702,"y":221},{"x":662,"y":221}],"minx":662,"miny":201,"maxx":702,"maxy":221,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":682,"y":211,"heading":0,"type":"Wall","name":"part20","worldx":682,"worldy":211,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":682,"y":391,"heading":0,"view":{"x":682,"y":391,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":662,"y":381},{"x":702,"y":381},{"x":702,"y":401},{"x":662,"y":401}],"minx":662,"miny":381,"maxx":702,"maxy":401,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":682,"y":391,"heading":0,"type":"Wall","name":"part21","worldx":682,"worldy":391,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":121,"y":392,"heading":0,"view":{"x":121,"y":392,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":101,"y":382},{"x":141,"y":382},{"x":141,"y":402},{"x":101,"y":402}],"minx":101,"miny":382,"maxx":141,"maxy":402,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":121,"y":392,"heading":0,"type":"Wall","name":"part25","worldx":121,"worldy":392,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":131,"y":380,"heading":0,"view":{"x":131,"y":380,"heading":0,"scale":2,"points":[{"x":-5,"y":-90},{"x":5,"y":-90},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":200},{"x":141,"y":200},{"x":141,"y":400},{"x":121,"y":400}],"minx":121,"miny":200,"maxx":141,"maxy":400,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":131,"y":380,"heading":0,"type":"Wall","name":"part27","worldx":131,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":510,"y":179,"heading":0,"view":{"x":510,"y":179,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":500,"y":159},{"x":520,"y":159},{"x":520,"y":199},{"x":500,"y":199}],"minx":500,"miny":159,"maxx":520,"maxy":199,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":510,"y":179,"heading":0,"type":"Wall","name":"part22","worldx":510,"worldy":179,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":511,"y":421,"heading":0,"view":{"x":511,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":501,"y":401},{"x":521,"y":401},{"x":521,"y":441},{"x":501,"y":441}],"minx":501,"miny":401,"maxx":521,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":511,"y":421,"heading":0,"type":"Wall","name":"part25","worldx":511,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":479,"y":169,"heading":0,"view":{"x":479,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":459,"y":159},{"x":499,"y":159},{"x":499,"y":179},{"x":459,"y":179}],"minx":459,"miny":159,"maxx":499,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":479,"y":169,"heading":0,"type":"Wall","name":"part23","worldx":489,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":479,"y":169,"heading":0,"view":{"x":479,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":459,"y":159},{"x":519,"y":159},{"x":519,"y":179},{"x":459,"y":179}],"minx":459,"miny":159,"maxx":519,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":479,"y":169,"heading":0,"type":"Wall","name":"part23","worldx":489,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":550,"y":300,"heading":0,"view":{"x":550,"y":300,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":15,"y":-10},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":540,"y":280},{"x":580,"y":280},{"x":580,"y":320},{"x":540,"y":320}],"minx":540,"miny":280,"maxx":580,"maxy":320,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":550,"y":300,"heading":0,"type":"Wall","name":"part24","worldx":560,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":480,"y":431,"heading":0,"view":{"x":480,"y":431,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":460,"y":421},{"x":500,"y":421},{"x":500,"y":441},{"x":460,"y":441}],"minx":460,"miny":421,"maxx":500,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":480,"y":431,"heading":0,"type":"Wall","name":"part26","worldx":490,"worldy":431,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":480,"y":431,"heading":0,"view":{"x":480,"y":431,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":460,"y":421},{"x":520,"y":421},{"x":520,"y":441},{"x":460,"y":441}],"minx":460,"miny":421,"maxx":520,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":480,"y":431,"heading":0,"type":"Wall","name":"part26","worldx":490,"worldy":431,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":230,"y":301,"heading":0,"view":{"x":230,"y":301,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":10,"y":-10},{"x":10,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":220,"y":281},{"x":250,"y":281},{"x":250,"y":321},{"x":220,"y":321}],"minx":220,"miny":281,"maxx":250,"maxy":321,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":230,"y":301,"heading":0,"type":"Wall","name":"part28","worldx":240,"worldy":301,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":230,"y":301,"heading":0,"view":{"x":230,"y":301,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":15,"y":-10},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":220,"y":281},{"x":260,"y":281},{"x":260,"y":321},{"x":220,"y":321}],"minx":220,"miny":281,"maxx":260,"maxy":321,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":230,"y":301,"heading":0,"type":"Wall","name":"part28","worldx":240,"worldy":301,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":291,"y":180,"heading":0,"view":{"x":291,"y":180,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":281,"y":160},{"x":301,"y":160},{"x":301,"y":200},{"x":281,"y":200}],"minx":281,"miny":160,"maxx":301,"maxy":200,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":291,"y":180,"heading":0,"type":"Wall","name":"part29","worldx":291,"worldy":180,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":289,"y":421,"heading":0,"view":{"x":289,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":401},{"x":299,"y":401},{"x":299,"y":441},{"x":279,"y":441}],"minx":279,"miny":401,"maxx":299,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":289,"y":421,"heading":0,"type":"Wall","name":"part31","worldx":289,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":121,"y":209,"heading":0,"view":{"x":121,"y":209,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":101,"y":199},{"x":141,"y":199},{"x":141,"y":219},{"x":101,"y":219}],"minx":101,"miny":199,"maxx":141,"maxy":219,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":121,"y":209,"heading":0,"type":"Wall","name":"part27","worldx":121,"worldy":209,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":301,"y":169,"heading":0,"view":{"x":301,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":281,"y":159},{"x":341,"y":159},{"x":341,"y":179},{"x":281,"y":179}],"minx":281,"miny":159,"maxx":341,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":301,"y":169,"heading":0,"type":"Wall","name":"part30","worldx":311,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":299,"y":432,"heading":0,"view":{"x":299,"y":432,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":422},{"x":339,"y":422},{"x":339,"y":442},{"x":279,"y":442}],"minx":279,"miny":422,"maxx":339,"maxy":442,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":299,"y":432,"heading":0,"type":"Wall","name":"part32","worldx":309,"worldy":432,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}}],"editTarget":null,"editOriginalOutline":"blue","running":false,"width":0,"height":0,"rotated":false}'
+    loadWorld(combatWorld);
+}
+
+function loadMazeWorld() {
+    simState.combatWorldLoaded = false;
+    simState.mazeWorldLoaded = true;
+    simState.pacmanWorldLoaded = false;
+    robot.moveTo(60, 60);      //Resets Robot to coordinates 60,60
+    simState.worldObjects= []; //Clears world objects
+    var mazeWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":520,"y":110,"heading":0,"view":{"x":520,"y":110,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":70,"y":-5},{"x":70,"y":15},{"x":-10,"y":15}],"outline":"coral","fill":"blue","polygon":[{"x":500,"y":100},{"x":660,"y":100},{"x":660,"y":140},{"x":500,"y":140}],"minx":500,"miny":100,"maxx":660,"maxy":140,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":520,"y":110,"heading":0,"type":"Wall","name":"part44","worldx":590,"worldy":120,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":8,"resizeFactorWidth":3}},"lastX":521,"lastY":125,"robotStartX":100,"robotStartY":100,"robotStartHeading":0,"opponentStartX":700,"opponentStartY":500,"opponentStartHeading":3.141592653589793,"timer":67,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":10,"y":580,"heading":0,"view":{"x":10,"y":580,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":0},{"x":20,"y":0},{"x":20,"y":600},{"x":0,"y":600}],"minx":0,"miny":0,"maxx":20,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":580,"heading":0,"type":"Wall","name":"LeftSide","worldx":10,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":791,"y":575,"heading":0,"view":{"x":791,"y":575,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":781,"y":-5},{"x":801,"y":-5},{"x":801,"y":595},{"x":781,"y":595}],"minx":781,"miny":-5,"maxx":801,"maxy":595,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":791,"y":575,"heading":0,"type":"Wall","name":"part7","worldx":791,"worldy":295,"outline":"lightblue","fill":"blue","power":0,"rotated":false,"moveable":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":4,"y":591,"heading":0,"view":{"x":4,"y":591,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":400,"y":-5},{"x":400,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-16,"y":581},{"x":804,"y":581},{"x":804,"y":601},{"x":-16,"y":601}],"minx":-16,"miny":581,"maxx":804,"maxy":601,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":4,"y":591,"heading":0,"type":"Wall","name":"BottomWall","worldx":394,"worldy":591,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":40,"resizeFactorWidth":1}},{"x":20,"y":10,"heading":0,"view":{"x":20,"y":10,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":0},{"x":800,"y":0},{"x":800,"y":20},{"x":0,"y":20}],"minx":0,"miny":0,"maxx":800,"maxy":20,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":20,"y":10,"heading":0,"type":"Wall","name":"TopWall","worldx":400,"worldy":10,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":744,"y":535,"heading":0,"view":{"x":744,"y":535,"heading":0,"scale":2,"points":[{"x":-8,"y":-8},{"x":8,"y":-8},{"x":8,"y":8},{"x":-8,"y":8}],"outline":"blue","fill":"lightblue","polygon":[{"x":728,"y":519},{"x":760,"y":519},{"x":760,"y":551},{"x":728,"y":551}],"minx":728,"miny":519,"maxx":760,"maxy":551,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":744,"y":535,"heading":0,"type":"Box","name":"FinalBox","worldx":744,"worldy":535,"outline":"blue","fill":"lightblue","power":0,"resizeFactor":1}},{"x":110,"y":480,"heading":0,"view":{"x":110,"y":480,"heading":0,"scale":2,"points":[{"x":-5,"y":-110},{"x":15,"y":-110},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":100,"y":260},{"x":140,"y":260},{"x":140,"y":500},{"x":100,"y":500}],"minx":100,"miny":260,"maxx":140,"maxy":500,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":110,"y":480,"heading":0,"type":"Wall","name":"part11","worldx":120,"worldy":380,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":11,"resizeFactorWidth":3}},{"x":110,"y":160,"heading":0,"view":{"x":110,"y":160,"heading":0,"scale":2,"points":[{"x":-5,"y":-30},{"x":35,"y":-30},{"x":35,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":100,"y":100},{"x":180,"y":100},{"x":180,"y":180},{"x":100,"y":180}],"minx":100,"miny":100,"maxx":180,"maxy":180,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":110,"y":160,"heading":0,"type":"Wall","name":"part10","worldx":140,"worldy":140,"outline":"lightblue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":3,"resizeFactorWidth":7}},{"x":120,"y":269,"heading":0,"view":{"x":120,"y":269,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":70,"y":-5},{"x":70,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":100,"y":259},{"x":260,"y":259},{"x":260,"y":299},{"x":100,"y":299}],"minx":100,"miny":259,"maxx":260,"maxy":299,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":120,"y":269,"heading":0,"type":"Wall","name":"part13","worldx":180,"worldy":279,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":269,"y":160,"heading":0,"view":{"x":269,"y":160,"heading":0,"scale":2,"points":[{"x":-5,"y":-70},{"x":15,"y":-70},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":259,"y":20},{"x":299,"y":20},{"x":299,"y":180},{"x":259,"y":180}],"minx":259,"miny":20,"maxx":299,"maxy":180,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":269,"y":160,"heading":0,"type":"Wall","name":"part14","worldx":279,"worldy":100,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":232,"y":479,"heading":0,"view":{"x":232,"y":479,"heading":0,"scale":2,"points":[{"x":-5,"y":-30},{"x":15,"y":-30},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":222,"y":419},{"x":262,"y":419},{"x":262,"y":499},{"x":222,"y":499}],"minx":222,"miny":419,"maxx":262,"maxy":499,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":232,"y":479,"heading":0,"type":"Wall","name":"part16","worldx":242,"worldy":459,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":3,"resizeFactorWidth":3}},{"x":140,"y":390,"heading":0,"view":{"x":140,"y":390,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":100,"y":-5},{"x":100,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":120,"y":380},{"x":340,"y":380},{"x":340,"y":420},{"x":120,"y":420}],"minx":120,"miny":380,"maxx":340,"maxy":420,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":140,"y":390,"heading":0,"type":"Wall","name":"part15","worldx":230,"worldy":400,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":10,"resizeFactorWidth":3}},{"x":350,"y":400,"heading":0,"view":{"x":350,"y":400,"heading":0,"scale":2,"points":[{"x":-5,"y":-70},{"x":15,"y":-70},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":340,"y":260},{"x":380,"y":260},{"x":380,"y":420},{"x":340,"y":420}],"minx":340,"miny":260,"maxx":380,"maxy":420,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":350,"y":400,"heading":0,"type":"Wall","name":"part17","worldx":360,"worldy":340,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":369,"y":280,"heading":0,"view":{"x":369,"y":280,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":25,"y":-10},{"x":25,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":359,"y":260},{"x":419,"y":260},{"x":419,"y":300},{"x":359,"y":300}],"minx":359,"miny":260,"maxx":419,"maxy":300,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":369,"y":280,"heading":0,"type":"Wall","name":"part18","worldx":389,"worldy":280,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":5}},{"x":389,"y":240,"heading":0,"view":{"x":389,"y":240,"heading":0,"scale":2,"points":[{"x":-5,"y":-70},{"x":15,"y":-70},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":379,"y":100},{"x":419,"y":100},{"x":419,"y":260},{"x":379,"y":260}],"minx":379,"miny":100,"maxx":419,"maxy":260,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":389,"y":240,"heading":0,"type":"Wall","name":"part19","worldx":399,"worldy":180,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":349,"y":561,"heading":0,"view":{"x":349,"y":561,"heading":0,"scale":2,"points":[{"x":-5,"y":-30},{"x":15,"y":-30},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":339,"y":501},{"x":379,"y":501},{"x":379,"y":581},{"x":339,"y":581}],"minx":339,"miny":501,"maxx":379,"maxy":581,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":349,"y":561,"heading":0,"type":"Wall","name":"part41","worldx":359,"worldy":541,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":3,"resizeFactorWidth":3}},{"x":480,"y":471,"heading":0,"view":{"x":480,"y":471,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":110,"y":-5},{"x":110,"y":15},{"x":-10,"y":15}],"outline":"lightblue","fill":"blue","polygon":[{"x":460,"y":461},{"x":700,"y":461},{"x":700,"y":501},{"x":460,"y":501}],"minx":460,"miny":461,"maxx":700,"maxy":501,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":480,"y":471,"heading":0,"type":"Wall","name":"part35","worldx":580,"worldy":481,"outline":"lightblue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":11,"resizeFactorWidth":3}},{"x":669,"y":570,"heading":0,"view":{"x":669,"y":570,"heading":0,"scale":2,"points":[{"x":-5,"y":-40},{"x":15,"y":-40},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":659,"y":490},{"x":699,"y":490},{"x":699,"y":590},{"x":659,"y":590}],"minx":659,"miny":490,"maxx":699,"maxy":590,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":669,"y":570,"heading":0,"type":"Wall","name":"part36","worldx":679,"worldy":540,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":3}},{"x":469,"y":480,"heading":0,"view":{"x":469,"y":480,"heading":0,"scale":2,"points":[{"x":-5,"y":-50},{"x":15,"y":-50},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":459,"y":380},{"x":499,"y":380},{"x":499,"y":500},{"x":459,"y":500}],"minx":459,"miny":380,"maxx":499,"maxy":500,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":469,"y":480,"heading":0,"type":"Wall","name":"part37","worldx":479,"worldy":440,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":5,"resizeFactorWidth":3}},{"x":519,"y":230,"heading":0,"view":{"x":519,"y":230,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":90,"y":-5},{"x":90,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":499,"y":220},{"x":699,"y":220},{"x":699,"y":260},{"x":499,"y":260}],"minx":499,"miny":220,"maxx":699,"maxy":260,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":519,"y":230,"heading":0,"type":"Wall","name":"part38","worldx":599,"worldy":240,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":3}},{"x":720,"y":350,"heading":0,"view":{"x":720,"y":350,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":40,"y":-5},{"x":40,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":700,"y":340},{"x":800,"y":340},{"x":800,"y":380},{"x":700,"y":380}],"minx":700,"miny":340,"maxx":800,"maxy":380,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":720,"y":350,"heading":0,"type":"Wall","name":"part39","worldx":750,"worldy":360,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":3}},{"x":589,"y":442,"heading":0,"view":{"x":589,"y":442,"heading":0,"scale":2,"points":[{"x":-5,"y":-100},{"x":15,"y":-100},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":579,"y":242},{"x":619,"y":242},{"x":619,"y":462},{"x":579,"y":462}],"minx":579,"miny":242,"maxx":619,"maxy":462,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":589,"y":442,"heading":0,"type":"Wall","name":"part43","worldx":599,"worldy":352,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":10,"resizeFactorWidth":3}},{"x":670,"y":240,"heading":0,"view":{"x":670,"y":240,"heading":0,"scale":2,"points":[{"x":-5,"y":-70},{"x":15,"y":-70},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":660,"y":100},{"x":700,"y":100},{"x":700,"y":260},{"x":660,"y":260}],"minx":660,"miny":100,"maxx":700,"maxy":260,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":670,"y":240,"heading":0,"type":"Wall","name":"part42","worldx":680,"worldy":180,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":520,"y":110,"heading":0,"view":{"x":520,"y":110,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":80,"y":-5},{"x":80,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":500,"y":100},{"x":680,"y":100},{"x":680,"y":140},{"x":500,"y":140}],"minx":500,"miny":100,"maxx":680,"maxy":140,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":520,"y":110,"heading":0,"type":"Wall","name":"part44","worldx":590,"worldy":120,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":8,"resizeFactorWidth":3}}],"editTarget":null,"editOriginalOutline":"lightblue","running":false,"width":800,"height":600,"rotated":false}'
+    loadWorld(mazeWorld);
+
+}
+
+function loadPacmanWorld() {
+    simState.combatWorldLoaded = false;
+    simState.mazeWorldLoaded = false;
+    simState.pacmanWorldLoaded = true;
+    robot.moveTo(400, 350);
+    simState.worldObjects= []; //Clears world objects
+    var pacmanWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":20,"y":10,"heading":0,"view":{"x":20,"y":10,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":380,"y":-5},{"x":380,"y":5},{"x":-10,"y":5}],"outline":"coral","fill":"blue","polygon":[{"x":0,"y":0},{"x":780,"y":0},{"x":780,"y":20},{"x":0,"y":20}],"minx":0,"miny":0,"maxx":780,"maxy":20,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":20,"y":10,"heading":0,"type":"Wall","name":"TopWall","worldx":400,"worldy":10,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},"lastX":115,"lastY":11,"robotStartX":100,"robotStartY":100,"robotStartHeading":0,"opponentStartX":700,"opponentStartY":500,"opponentStartHeading":3.141592653589793,"timer":null,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":10,"y":580,"heading":0,"view":{"x":10,"y":580,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":0},{"x":20,"y":0},{"x":20,"y":600},{"x":0,"y":600}],"minx":0,"miny":0,"maxx":20,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":580,"heading":0,"type":"Wall","name":"LeftSide","worldx":10,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":791,"y":575,"heading":0,"view":{"x":791,"y":575,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":781,"y":-5},{"x":801,"y":-5},{"x":801,"y":595},{"x":781,"y":595}],"minx":781,"miny":-5,"maxx":801,"maxy":595,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":791,"y":575,"heading":0,"type":"Wall","name":"part7","worldx":791,"worldy":295,"outline":"lightblue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":4,"y":591,"heading":0,"view":{"x":4,"y":591,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":400,"y":-5},{"x":400,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-16,"y":581},{"x":804,"y":581},{"x":804,"y":601},{"x":-16,"y":601}],"minx":-16,"miny":581,"maxx":804,"maxy":601,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":4,"y":591,"heading":0,"type":"Wall","name":"BottomWall","worldx":394,"worldy":591,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":40,"resizeFactorWidth":1}},{"x":20,"y":10,"heading":0,"view":{"x":20,"y":10,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":0},{"x":800,"y":0},{"x":800,"y":20},{"x":0,"y":20}],"minx":0,"miny":0,"maxx":800,"maxy":20,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":20,"y":10,"heading":0,"type":"Wall","name":"TopWall","worldx":400,"worldy":10,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}}],"editTarget":null,"editOriginalOutline":"blue","running":false,"width":0,"height":0,"rotated":false}';
+    loadWorld(pacmanWorld);
+    startPacmanSound.play();
+
+}
+//End of edited by Gavin 03/20/2023
+
+
+function loadWorld(worldString) {
+
+    if(!worldString) worldString = localStorage.getItem("world");
+    if(!worldString) return;
+
+    var obj = JSON.parse(worldString);
+
+    /* grab the attributes */
+    for(var attr in obj) {
+        if(attr == "part") { continue; }
+        robot[attr] = obj[attr];
+    }
+
+    /* handle the parts */
+
+    //simState.worldObjects = [];
+    for(var i=0; i<obj.worldObjects.length; i++) {
+        //Check for Wall
+        if(obj.worldObjects[i].part.type == "Wall"){
+        var wall = new Wall(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+        wall.rotated = obj.worldObjects[i].part.rotated;
+        wall.resizeFactor = obj.worldObjects[i].part.resizeFactor;
+        wall.resizeFactorHeight = obj.worldObjects[i].part.resizeFactorHeight;
+        wall.resizeFactorWidth = obj.worldObjects[i].part.resizeFactorWidth;
+        wall.name = obj.worldObjects[i].part.name;
+        wall.outline = obj.worldObjects[i].part.outline;
+        wall.fill = obj.worldObjects[i].part.fill;
+        wall.moveable = obj.worldObjects[i].part.moveable;      //Added by Gavin 03/21/2023
+        simState.worldObjects.push(constructView(wall));
+        }
+
+        //Check for Light
+        if(obj.worldObjects[i].part.type == "Light"){
+        var light = new Light(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+        light.name = obj.worldObjects[i].part.name;
+        light.outline = obj.worldObjects[i].part.outline;
+        light.fill = obj.worldObjects[i].part.fill;
+        light.moveable = obj.worldObjects[i].part.moveable;     //Added by Gavin 03/21/2023
+        simState.worldObjects.push(constructView(light));
+        }
+
+        //Check for Box
+        if(obj.worldObjects[i].part.type == "Box"){
+        var box = new Box(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+        box.name = obj.worldObjects[i].part.name;
+        box.outline = obj.worldObjects[i].part.outline;
+        box.fill = obj.worldObjects[i].part.fill;
+        box.moveable = obj.worldObjects[i].part.moveable;   //Added by Gavin 03/21/2023
+        simState.worldObjects.push(constructView(box));
+        }
+
+        drawSim();
+    }
+}
+
+//START OF EDITED BY GAVIN 03/20/2023
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        this.sound.play();
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }    
+}
+
+var startPacmanSound = new sound("sounds_startMusic.mp3");
+var pacmanEatingSound = new sound("sounds_eatingDot.mp3");
+//END OF EDITED BY GAVIN 03/20/2023
+
+//End of Edited by GAVIN 02/22/2023
 
 //Dark mode
 
