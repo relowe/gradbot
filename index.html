@@ -5,41 +5,41 @@
     <meta charset = "utf-8">
     <!-- <link rel="stylesheet" href="light-theme.css" id="theme-link"/> -->
     <link rel="stylesheet" href="index.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 
-    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js"></script>
-   <script>
-         window.onload = function () {
-            // Get the canvas elements
-            var fgCanvas = document.getElementById('simfg');
 
-            // Create Fabric.js canvas objects
-            var fgFabricCanvas = new fabric.Canvas(fgCanvas);
-
-            // Set up the foreground canvas for drawing mode without selection
-            fgFabricCanvas.isDrawingMode = false; // Set default to false
-            fgFabricCanvas.selection = false;
-            fgFabricCanvas.freeDrawingBrush.width = 5;
-            fgFabricCanvas.freeDrawingBrush.color = '#ff0000';
-
-            // Get the radio button element
-            var drawRadio = document.querySelector('#draw');
-
-            // Listen for changes to the radio button
-            drawRadio.addEventListener('change', function() {
-            if (drawRadio.checked) {
-                fgFabricCanvas.isDrawingMode = true;
-            } else {
-                fgFabricCanvas.isDrawingMode = false;
-            }
-        });
-        gradbotInit();
-    }
-
-    </script>
     <!-- <style>
         /* Style the tab */
     </style> -->
+    <script>
+        window.onload = function () {
+            var drawCanvas = document.getElementById('simdg');
+            var drawFabricCanvas = new fabric.Canvas(drawCanvas);
+    
+            // Set up the foreground canvas for drawing mode without selection
+            drawFabricCanvas.isDrawingMode = false; // Set default to false
+            drawFabricCanvas.selection = false;
+            drawFabricCanvas.freeDrawingBrush.width = 5;
+            drawFabricCanvas.freeDrawingBrush.color = '#ff0000';
+    
+            // Get the radio button element
+            var drawRadio = document.querySelector('#draw');
+    
+            // Listen for changes to the radio button
+            drawRadio.addEventListener('change', function() {
+                if (drawRadio.checked) {
+                    drawFabricCanvas.isDrawingMode = true;
+                } else {
+                    drawFabricCanvas.isDrawingMode = false;
+                    simState.dragMode = DRAG_MOVE;
+                }
+            });
+            
+            gradbotInit();
+        }
+    </script>
 </head>
+<!-- <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js'></script>Sam Elfrink -->
 <body>
     <div class="pagecontent">
     <button class="btn-toggle" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark Mode</button>
@@ -54,6 +54,7 @@
         <div class="container">
             <canvas id="simbg" width="800" height="600"></canvas>
             <canvas id="simfg" width="800" height="600"></canvas>
+            <canvas id="simdg" width="800" height="600"></canvas>
             <div class="toolbox">
                 <div class="toolboxContent">
                     <div class="inner">
@@ -82,9 +83,10 @@
                         <label for="dragResizeWidth">Resize Wall Width</label>
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="draw" name="dragMode"/>
-                        <label for="draw">Draw</label>
+                        <input type="radio" id="draw" name="dragMode" value="draw">
+                        <label for="draw">Draw Mode</label>
                         </div>
+
                        <!-- END OF UPDATED AND ADDED BY GAVIN 03/08/2023-->
 
 
