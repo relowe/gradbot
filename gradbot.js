@@ -1901,8 +1901,8 @@ const DRAG_MOVE=1;
 const DRAG_ROTATE=2;
 const DRAG_RESIZEHEIGHT=3;      //Updated By Gavin 03/08/2023
 const DRAG_RESIZEWIDTH=4;       //Added By Gavin 03/08/2023
-const DRAG_ROTATE90=5;          //Added By Gavin 03/08/2023
-const DRAG_DRAW=6;
+const DRAG_ROTATE90=5;   
+const DRAG_DRAW=6;       //Added By Gavin 03/08/2023
 
 //state of the simulator ui
 var simState = {
@@ -2250,8 +2250,6 @@ function graphPaperFill(id) {
  * Simulation Events
  */
 
-
-
 /**
  * Handler for mouse down events on the sim canvas.
  */
@@ -2308,7 +2306,7 @@ function simMouseDown(event) {
         simState.dragMode = DRAG_RESIZEWIDTH;  //Updated by Gavin 03/08/2023
     } else if(document.getElementById('dragRotate90').checked) {
         simState.dragMode = DRAG_ROTATE90;  //Updated by Gavin 03/08/2023
-    } else if(document.getElementById('draw').checked) {
+    }  else if(document.getElementById('draw').checked) {
         simState.dragMode = DRAG_DRAW;
         if(simState.dragTarget === simView){
             fgFabricCanvas.isDrawingMode = true;
@@ -2389,13 +2387,6 @@ function simMouseUp(event) {
         drawSim();
         simState.worldObjects.push(new WallView(simState.dragTarget.part));
 
-    }else if(simState.dragMode == DRAG_DRAW){
-        fgFabricCanvas.isDrawingMode = false;
-
-        var path = fgFabricCanvas.getObjects()[0];
-        var points = path.get('points');
-        var drawnObject = new DrawnView(points);
-        simState.worldObjects.push(drawnObject);
     }
     //End of Updated and Added by Gavin 03/08/2023
 
@@ -2411,6 +2402,8 @@ function simMouseUp(event) {
     drawSim();
     return true;
 }
+
+
 /**
  * Handler for mouse move events on the sim canvas.
  */
@@ -2428,23 +2421,6 @@ function simMouseMove(event) {
     //process rotation
     if(simState.dragMode == DRAG_ROTATE) {
         simState.dragTarget.part.rotate((event.offsetY-simState.lastY) * .01); //.01 actual
-    }
-
-    // process drawing
-    if (simState.dragMode == DRAG_DRAW) {
-        // if we're in drawing mode, use the free drawing brush to draw on the canvas
-        if (simState.dragTarget === simView) {
-            fgFabricCanvas.freeDrawingBrush.color = '#ff0000';
-            fgFabricCanvas.freeDrawingBrush.width = 5;
-            fgFabricCanvas.add(new fabric.Path(fgFabricCanvas.freeDrawingBrush.getPoints(), {
-                stroke: fgFabricCanvas.freeDrawingBrush.color,
-                strokeWidth: fgFabricCanvas.freeDrawingBrush.width,
-                fill: false,
-                originX: 'center',
-                originY: 'center'
-        }));
-        fgFabricCanvas.renderAll();
-        }
     }
 
     //record this position
@@ -3286,7 +3262,11 @@ function gradbotInit() {
     buildView = new ChassisBuildView(robot);
     drawBuild();
 
-   
+    //set up the sim mouse events
+    var canvas = document.getElementById('simfg');
+    canvas.onmousedown = simMouseDown;
+    canvas.onmouseup = simMouseUp;
+    canvas.onmousemove = simMouseMove;
 
     //set up the sim buttons
     document.getElementById('simGo').onclick = simulationGo;
@@ -3299,12 +3279,10 @@ function gradbotInit() {
     document.getElementById('simAddBox').onclick = simAddBox;
 
     //set up the build mouse events
-    const canvas = document.getElementById("simfg");
+    canvas = document.getElementById("buildCanvas");
     canvas.onmousedown = buildMouseDown;
     canvas.onmouseup = buildMouseUp;
     canvas.onmousemove = buildMouseMove;
-
-
 
     // Gavin Added 02/22/2023
     //set up world handlers
