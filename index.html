@@ -11,11 +11,9 @@
          window.onload = function () {
             // Get the canvas elements
             var fgCanvas = document.getElementById('simfg');
-            var bgCanvas = document.getElementById('simbg');
 
             // Create Fabric.js canvas objects
             var fgFabricCanvas = new fabric.Canvas(fgCanvas);
-            var bgFabricCanvas = new fabric.Canvas(bgCanvas);
 
             // Set up the foreground canvas for drawing mode without selection
             fgFabricCanvas.isDrawingMode = false; // Set default to false
