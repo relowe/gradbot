@@ -2306,16 +2306,7 @@ function simMouseDown(event) {
         simState.dragMode = DRAG_RESIZEWIDTH;  //Updated by Gavin 03/08/2023
     } else if(document.getElementById('dragRotate90').checked) {
         simState.dragMode = DRAG_ROTATE90;  //Updated by Gavin 03/08/2023
-    }  else if(document.getElementById('draw').checked) {
-        simState.dragMode = DRAG_DRAW;
-        if(simState.dragTarget === simView){
-            fgFabricCanvas.isDrawingMode = true;
-            fgFabricCanvas.selection = false;
-            fgFabricCanvas.freeDrawingBrush.width = 5;
-            fgFabricCanvas.freeDrawingBrush.color = '#ff0000';
-
-        }
-    }
+    } 
     //END OF UPDATED AND ADDED BY GAVIN 03/08/2023
     else {
         simState.dragMode = DRAG_NONE;
