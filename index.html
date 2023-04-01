@@ -16,6 +16,7 @@
         }
     </script>
 </head>
+<!-- <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.4.0/fabric.min.js'></script>Sam Elfrink -->
 <body>
     <div class="pagecontent">
     <button class="btn-toggle" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark Mode</button>
@@ -30,6 +31,21 @@
         <div class="container">
             <canvas id="simbg" width="800" height="600"></canvas>
             <canvas id="simfg" width="800" height="600"></canvas>
+            <!-- Sam Elfrink Addition
+            <div class="container">
+                <div id="toolbar">
+                    <h1>Draw.</h1>
+                    <label for="stroke">Stroke</label>
+                    <input id="stroke" name='stroke' type="color">
+                    <label for="lineWidth">Line Width</label>
+                    <input id="lineWidth" name='lineWidth' type="number" value="5">
+                    <button id="clear">Clear</button>
+                </div>
+                <div class="drawing-board">
+                    <canvas id="drawing-board"></canvas>
+                </div>
+            </div> -->
+            <!-- end Sam Elfrink Addition-->
             <div class="toolbox">
                 <div class="toolboxContent">
                     <div class="inner">
@@ -44,11 +60,30 @@
                         <input type="radio" id="dragRotate" name="dragMode"/>
                         <label for="dragRotate">Rotate</label>
                         </div>
+
+                        <!-- Sam Elfrink Addition-->
                         <div class="wrapper">
-                        <input type="radio" id="dragResize" name="dragMode"/>
-                        <label for="dragResize">Resize</label>
+                            <input type="radio" id="dragDraw" name="dragMode"/>
+                            <label for="dragDraw">Draw</label>
                         </div>
-                       
+                        <!-- end Sam Elfrink Addition-->
+                         <!-- UPDATED AND ADDED BY GAVIN 03/08/2023-->
+                        <div class="wrapper">
+                        <input type="radio" id="dragRotate90" name="dragMode"/>
+                        <label for="dragRotate90">Rotate Wall 90 Degrees</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="dragResizeHeight" name="dragMode"/>
+                        <label for="dragResizeHeight">Resize Wall Height</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="dragResizeWidth" name="dragMode"/>
+                        <label for="dragResizeWidth">Resize Wall Width</label>
+                        </div>
+
+                       <!-- END OF UPDATED AND ADDED BY GAVIN 03/08/2023-->
+
+
                         <div class="toolboxHead">
                             Simulation Controls
                         </div>
@@ -117,15 +152,26 @@
                         <div class="toolboxHead">
                             Manage World
                         </div>
-                        <input type="file" id="simUpload" style="display: none">
+                        <!-- GAVIN'S UPDATED CODE STARTS HERE 03/08/2023-->
+                        <input type="file" id="worldUpload" style="display: none">
+                        <a href="" id="worldDownload" style="display: none"></a>
                         <button id="worldOpen">Open</button>
                         <button id="worldSave">Save</button>
-                        <button id="worldNew">New</button>
+                        <!-- GAVIN'S UPDATED CODE STARTS HERE 03/08/2023-->
                         <hr>
+                        <!-- GAVIN'S UPDATED CODE STARTS HERE 02/23/2023-->
+                        <div class="toolboxSubHead">
+                            Worlds
+                        </div>
+                            <button id="combatWorld">Combat Arena</button>
+                            <button id="mazeWorld">Maze</button>
+                            <button id="pacmanWorld">Pacman</button>
+                        </div>
+                        <!-- GAVIN'S UPDATED CODE ENDS HERE 02/23/2023-->
+                        <!--CHASE'S UPDATED CODE STARTS HERE-->
                         <div class="toolboxSubHead">
                             World Properties
                         </div>
-                        <!--CHASE'S UPDATED CODE STARTS HERE-->
                         <div class="wrapper">
                         <input type="radio" id="toroidal-mode" name="toroidal-mode" checked="checked">
                         <label for="torodial">Toroidal</label>
@@ -135,6 +181,14 @@
                         <label for="infinite">Infinite</label>
                         </div>
                         <!--CHASE'S UPDATED CODE ENDS HERE-->
+
+                        <!-- Sam Elfrink Addition      -->
+                        <hr>
+                        <button id="backgroundChange">Change Background</button>
+                        <input type="file" accept="image/png" id="pictureUpload" name="backgroundphoto" style="display: none">
+                        <!-- <label for="backgroundphoto">Choose a background photo:</label>
+                        <input type="file" accept="image/png" id="simUpload" name="backgroundphoto"> -->
+                        <!-- Sam Elfrink Code ends here---------------------------->                        
                     </div>
                 </div>
             </div>
@@ -174,32 +228,28 @@
                             <button id="buildPartDelete">Delete Part</button> <hr>
                         </div>
 
+                        <!-- Addition by Aayush Byanjankar: Dragable parts.-->
                         <div class="toolboxSubHead">
                             Add Part
                         </div>
-
-
-                        <!-- Addition by Aayush Byanjankar: Dragable parts.-->
-                        
-
+                         
                         <button id="buildAddMarker" draggable="true" >Marker</button><br>
 
                             <script>
-                              var buildAddMarkerButton = document.getElementById("buildAddMarker");
+                                var buildAddMarkerButton = document.getElementById("buildAddMarker");
 
                                 // Add event listener for dragend event
-                             buildAddMarkerButton.addEventListener("dragend", function(event) {
-                                 buildAddMarker(event);
+                                buildAddMarkerButton.addEventListener("dragend", function(event) {
+                                    buildAddMarker(event);
                                 });
 
                                 // Function to add marker to robot and buildView
                                 function buildAddMarker(event) {
-                                var marker = new Marker(robot);
-                                robot.addPart(marker);
-                                buildView.addPart(marker);
-                                drawBuild();
+                                    var marker = new Marker(robot);
+                                    robot.addPart(marker);
+                                    buildView.addPart(marker);
+                                    drawBuild();
                                 } 
-  
                             </script>           
     
 
@@ -208,80 +258,80 @@
                         <script>
                             var buildAddLightButton = document.getElementById("buildAddLight");
 
-                              // Add event listener for dragend event
-                              buildAddLightButton.addEventListener("dragend", function(event) {
+                            // Add event listener for dragend event
+                            buildAddLightButton.addEventListener("dragend", function(event) {
                                 buildAddLight(event);
-                              });
+                            });
 
-                              // Function to add marker to robot and buildView
-                              function buildAddLight(event) {
+                            // Function to add marker to robot and buildView
+                            function buildAddLight(event) {
                                 var light = new Light(robot);
                                 light.radius = 1;
                                 robot.addPart(light);
                                 buildView.addPart(light);
                                 drawBuild();
-                              }
-                          </script>
+                            }
+                        </script>
 
                         <button id="buildAddLightSensor" draggable="true">Light Sensor</button><br>
 
                         <script>
                             var buildAddLightSensorButton = document.getElementById("buildAddLightSensor");
 
-                              // Add event listener for dragend event
-                              buildAddLightSensorButton.addEventListener("dragend", function(event) {
+                            // Add event listener for dragend event
+                            buildAddLightSensorButton.addEventListener("dragend", function(event) {
                                 buildAddLightSensor(event);
-                              });
+                            });
 
-                              // Function to add marker to robot and buildView
-                              function buildAddLightSensor(event) {
-                                    var sensor = new LightSensor(robot);
-                                    robot.addPart(sensor);
-                                    buildView.addPart(sensor);
-                                    drawBuild();
-                                }
+                            // Function to add marker to robot and buildView
+                            function buildAddLightSensor(event) {
+                                var sensor = new LightSensor(robot);
+                                robot.addPart(sensor);
+                                buildView.addPart(sensor);
+                                drawBuild();
+                            }
 
-                          </script>
+                        </script>
+                        
                         <button id="buildAddRangeSensor" draggable="true">Range Finder</button><br>
 
                         <script>
                             var buildAddRangeSensorButton = document.getElementById("buildAddRangeSensor");
 
-                              // Add event listener for dragend event
-                              buildAddRangeSensorButton.addEventListener("dragend", function(event) {
+                            // Add event listener for dragend event
+                            buildAddRangeSensorButton.addEventListener("dragend", function(event) {
                                 buildAddRangeSensor(event);
-                              });
+                            });
 
-                              // Function to add marker to robot and buildView
-                              function buildAddRangeSensor(event) {
-                                    var sensor = new RangeSensor(robot);
-                                    robot.addPart(sensor);
-                                    buildView.addPart(sensor);
-                                    drawBuild();
-                                }
+                            // Function to add marker to robot and buildView
+                            function buildAddRangeSensor(event) {
+                                var sensor = new RangeSensor(robot);
+                                robot.addPart(sensor);
+                                buildView.addPart(sensor);
+                                drawBuild();
+                            }
 
-                          </script>
+                        </script>
+                        
                         <button id="buildAddLaser" draggable="true">Laser</button><br>
+                        
                         <script>
                             var buildAddLaserButton = document.getElementById("buildAddLaser");
 
-                              // Add event listener for dragend event
-                              buildAddLaserButton.addEventListener("dragend", function(event) {
+                            // Add event listener for dragend event
+                            buildAddLaserButton.addEventListener("dragend", function(event) {
                                 buildAddLaser(event);
-                              });
+                            });
 
-                              // Function to add marker to robot and buildView
-                              function buildAddLaser(event) {
-                                    var laser = new Laser(robot);
-                                    robot.addPart(laser);
-                                    buildView.addPart(laser);
-                                    drawBuild();
-                                }
+                            // Function to add marker to robot and buildView
+                            function buildAddLaser(event) {
+                                var laser = new Laser(robot);
+                                robot.addPart(laser);
+                                buildView.addPart(laser);
+                                drawBuild();
+                            }
 
-                          </script>
-
-
-                        <hr>
+                        </script>
 
                         <div class="toolboxHead">
                             Robot Management
@@ -294,8 +344,8 @@
                             <button id="buildSave">Save</button>
                             <button id="buildNew">New</button>
                         </div>
-                        <!-- !!!!! Addition by Sam Elfrink: Wheelsize Change -->
-                        <div class="toolboxSubHead">
+                          <!-- !!!!! Addition by Sam Elfrink: Wheelsize Change -->
+                          <div class="toolboxSubHead">
                             Change Wheel Size
                         </div>
                         <form>
@@ -318,6 +368,7 @@
                         <div class="toolboxHead">
                             Part List
                         </div>
+                        <p>Click on the list for more details:</p>
                         
                             <div class="inner">
                                 <ul id="codePartList">
@@ -331,11 +382,17 @@
                             <span class="bolded">Robot Commands</span>
                         </div>-->
             </div>
+         
         </div>
     </div>
+
     <div class="pagecontent">
         Source Code On <a href="https://github.com/relowe/gradbot">
             GitHub</a>
+    </div>
+    <div class="pagecontent">
+        Need help coding? Check out our GradBot<a href="https://github.com/relowe/gradbot">
+            Wiki</a>
     </div>
 
 
