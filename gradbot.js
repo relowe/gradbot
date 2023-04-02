@@ -3500,10 +3500,13 @@ function gradbotInit() {
     canvas.onmousemove = simMouseMove;
 
     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!
-    document.getElementById('backgroundChange').onclick = function() {
-        document.getElementById("pictureUpload").click();
+    const backgroundPhotoInput = document.getElementById("pictureUpload");
+    document.getElementById("backgroundChange").onclick = function() {
+        backgroundPhotoInput.value = "";
+        backgroundPhotoInput.click();
+        
     };
-    document.getElementById('pictureUpload').onchange = backgroundPhotoDraw;
+    backgroundPhotoInput.onchange = backgroundPhotoDraw;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up the sim buttons
@@ -3525,7 +3528,8 @@ function gradbotInit() {
     // Gavin Added 02/22/2023
     //set up world handlers
     document.getElementById("worldOpen").onclick = function() {
-        deselectPart(simState); //Might need to fix 
+        deselectPart(simState); //Might need to fix
+        document.getElementById("worldUpload").value = ""; 
         document.getElementById("worldUpload").click();
     };
     document.getElementById("worldSave").onclick = saveWorldFile;
@@ -3553,6 +3557,7 @@ function gradbotInit() {
     //set up file handlers
     document.getElementById("buildOpen").onclick = function() {
         deselectPart(buildState);
+        document.getElementById("buildUpload").value = "";
         document.getElementById("buildUpload").click();
     };
     document.getElementById("buildSave").onclick = saveRobotFile;
@@ -3572,6 +3577,7 @@ function gradbotInit() {
     document.getElementById("simUpload").onchange = openOpponentFile;
     document.getElementById("simOpenOpponent").onclick = function() {
         document.getElementById("simClear").click();
+        document.getElementById("simUpload").value = "";
         document.getElementById("simUpload").click();
     };
     document.getElementById("simRemoveOpponent").onclick = function() {
