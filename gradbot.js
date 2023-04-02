@@ -3375,6 +3375,7 @@ function simulationReset(event) {
                     loadSpinnerOpponent();
                     break;
                 case "custom":
+                    document.getElementById("simUpload").value = "";
                     document.getElementById('simUpload').click();          
                     break;
             }
