@@ -3551,10 +3551,94 @@ function gradbotInit() {
 
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    // !!!!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+    // Apply the text fields for the part editor in the build tab when the enter key is pressed
+    // Get the input field for buildPartName
+    var partNameBuild = document.getElementById("buildPartName");
+
+    // If the user presses the "Enter" key on the keyboard, apply the input field
+    partNameBuild.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        // Cancel the default action
+        event.preventDefault();
+        // Trigger the buildpartApply button
+        document.getElementById("buildPartApply").click();
+    }
+    });    
+
+    // Get the input field buildPartOutlineColor
+    var partOutlineColorBuild = document.getElementById("buildPartOutlineColor");
+    // If the user presses the "Enter" key on the keyboard, apply the input field
+    partOutlineColorBuild.addEventListener("keypress", function(event) {
+    // If the user presses the "Enter" key on the keyboard
+    if (event.key === "Enter") {
+         // Cancel the default action
+        event.preventDefault();
+        // Trigger the buildpartApply button
+        document.getElementById("buildPartApply").click();
+    }
+    });    
+
+    // Get the input field buildPartFillColor
+    var partFillColorBuild = document.getElementById("buildPartFillColor");
+    // If the user presses the "Enter" key on the keyboard, apply the input field
+    partFillColorBuild.addEventListener("keypress", function(event) {
+    // If the user presses the "Enter" key on the keyboard
+    if (event.key === "Enter") {
+         // Cancel the default action
+        event.preventDefault();
+        // Trigger the buildpartApply button
+        document.getElementById("buildPartApply").click();
+    }
+    });    
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     //set up the build's form buttons
     document.getElementById("buildPartApply").onclick = buildApply;
     document.getElementById("buildPartCancel").onclick = buildCancel;
     document.getElementById("buildPartDelete").onclick = buildDeletePart;
+
+    // !!!!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+    // Apply the text fields for the part editor in the simulation when the enter key is pressed
+    // Get the input field for simPartName
+    var partNameSim = document.getElementById("simPartName");
+
+    // If the user presses the "Enter" key on the keyboard, apply the input field
+    partNameSim.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        // Cancel the default action
+        event.preventDefault();
+        // Trigger the simPartApply button
+        document.getElementById("simPartApply").click();
+    }
+    });    
+
+    // Get the input field simPartOutlineColor
+    var partOutlineColorSim = document.getElementById("simPartOutlineColor");
+    // If the user presses the "Enter" key on the keyboard, apply the input field
+    partOutlineColorSim.addEventListener("keypress", function(event) {
+    // If the user presses the "Enter" key on the keyboard
+    if (event.key === "Enter") {
+         // Cancel the default action
+        event.preventDefault();
+        // Trigger the simPartApply button
+        document.getElementById("simPartApply").click();
+    }
+    });    
+
+    // Get the input field simPartOutlineColor
+    var partFillColorSim = document.getElementById("simPartFillColor");
+    // If the user presses the "Enter" key on the keyboard, apply the input field
+    partFillColorSim.addEventListener("keypress", function(event) {
+    // If the user presses the "Enter" key on the keyboard
+    if (event.key === "Enter") {
+         // Cancel the default action
+        event.preventDefault();
+        // Trigger the simPartApply button
+        document.getElementById("simPartApply").click();
+    }
+    });    
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up the sim's form buttons
     document.getElementById("simPartApply").onclick = simApply;
