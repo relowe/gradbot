@@ -2252,7 +2252,7 @@ function drawPlayerHUD() {
     textAlign = "center";
     context.fillStyle = "black"; 
     context.color = "black";
-    context.fillText("Player 1",550,20);
+    context.fillText("Player 1",535,38);
    
     
     // set up lives and power level
@@ -2262,11 +2262,11 @@ function drawPlayerHUD() {
     //context.color = "black";
 
     // player 1 info
-    context.fillText("Lives:",550,40); // x,y
+    context.fillText("Lives:",535,58); // x,y
     //context.fillText(playerHealthPoints,595,40);
-    context.fillText(robot.hp,595,40);
-    context.fillText("Laser Power:", 550, 60);
-    context.fillText(robot.laserBattery,645,60);
+    context.fillText(robot.hp,580,58);
+    context.fillText("Laser Power:", 535, 78);
+    context.fillText(robot.laserBattery,630,78);
 }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2284,7 +2284,7 @@ function drawOpponentHUD() {
     textAlign = "center";
     context.fillStyle = "black"; 
     context.color = "black";
-    context.fillText("Player 2",680,20);
+    context.fillText("Player 2",665,38);
     
     // set up lives and power level
     context.font = "15px Trebuchet MS"; 
@@ -2294,10 +2294,10 @@ function drawOpponentHUD() {
     context.color = "black";
     
     //player 2 info
-    context.fillText("Lives:",680,40); // x,y
-    context.fillText(opponent.hp,725,40);
-    context.fillText("Laser Power:", 680, 60);
-    context.fillText(opponent.laserBattery,775,60);
+    context.fillText("Lives:",665,58); // x,y
+    context.fillText(opponent.hp,710,58);
+    context.fillText("Laser Power:", 665,78);
+    context.fillText(opponent.laserBattery,760,78);
 }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2315,7 +2315,7 @@ function drawPlayerHUDClear() {
     textAlign = "center";
     context.fillStyle = "white"; 
     context.color = "white";
-    context.fillText("Player 1",550,20);
+    context.fillText("Player 1",535,38);
    
     
     // set up lives and power level
@@ -2323,11 +2323,11 @@ function drawPlayerHUDClear() {
     textAlign = "center";
 
     // player 1 info
-    context.fillText("Lives:",550,40); // x,y
+    context.fillText("Lives:",535,58); // x,y
     //context.fillText(playerHealthPoints,595,40);
-    context.fillText(robot.hp,595,40);
-    context.fillText("Laser Power:", 550, 60);
-    context.fillText(robot.laserBattery,645,60);
+    context.fillText(robot.hp,580,58);
+    context.fillText("Laser Power:", 535,78);
+    context.fillText(robot.laserBattery,630,78);
     
 }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2345,17 +2345,17 @@ function drawOpponentHUDClear() {
         textAlign = "center";
         context.fillStyle = "white"; 
         context.color = "white";
-        context.fillText("Player 2",680,20);
+        context.fillText("Player 2",665,38);
         
         // set up lives and power level
         context.font = "15px Trebuchet MS"; 
         textAlign = "center";
         
         //player 2 info
-        context.fillText("Lives:",680,40); // x,y
-        context.fillText(opponent.hp,725,40);
-        context.fillText("Laser Power:", 680, 60);
-        context.fillText(opponent.laserBattery,775,60);
+        context.fillText("Lives:",665,58); // x,y
+        context.fillText(opponent.hp,710,58);
+        context.fillText("Laser Power:", 665,78);
+        context.fillText(opponent.laserBattery,760,78);
 }
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
