@@ -3663,6 +3663,20 @@ function gradbotInit() {
         }
     }
 
+    // !!!!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+    // Apply the text fields for the wheelsize when the enter key is pressed
+    // Get the input field for wheelSize
+    var wheelSizeVar = document.getElementById("wheelSize");
+
+    // If the user presses the "Enter" key on the keyboard, apply the input field
+    wheelSizeVar.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        // Cancel the default action
+        event.preventDefault();
+        // Trigger the buildpartApply button
+        document.getElementById("changeWheelSize").click();
+    }
+    });  
     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
     document.getElementById("changeWheelSize").onclick = wheelApply;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
