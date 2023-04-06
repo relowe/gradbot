@@ -209,3 +209,12 @@ body {
     filter: invert(1) hue-rotate(180deg)
 }
 
+/*ADDED BY GAVIN 04/06/2023*/
+#pacmanScore{
+	font-size: 24px;
+	position: absolute;
+	top: 700px;
+	left: 875px;
+}
+
+
