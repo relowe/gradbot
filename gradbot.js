@@ -2019,6 +2019,7 @@ const DRAG_ROTATE=2;
 const DRAG_RESIZEHEIGHT=3;      //Updated By Gavin 03/08/2023
 const DRAG_RESIZEWIDTH=4;       //Added By Gavin 03/08/2023
 const DRAG_ROTATE90=5;          //Added By Gavin 03/08/2023
+var dragDraw = false // Samuel Elfrink
 
 //state of the simulator ui
 var simState = {
@@ -2229,12 +2230,26 @@ function drawBuild() {
 
 
 // !!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- /**
+function isChecked(){
+    if(document.getElementById('dragDraw').checked) {
+        dragDraw = true;
+        DrawFunction();
+    }
+}
+
+function cancelDraw() {
+    dragDraw = false;
+    DrawFunction();
+}
+
+/**
      * Draw the part along with all of its subparts.
      * @param {*} canvas - The canvas to draw on.
      * @param {*} context - The context to draw on.
 */
 function DrawFunction() {
+    console.log(dragDraw);
+    if(dragDraw == true) {
         /*
         if(part.penDrawing) {
             part.fill = part.color;
@@ -2269,8 +2284,8 @@ function DrawFunction() {
 
     let isPainting = false;
     let lineWidth = 5;
-    let startX;
-    let startY;
+    let startXX;
+    let startYY;
     /*
     toolbar.addEventListener('click', e => {
         if (e.target.id === 'clear') {
@@ -2296,15 +2311,20 @@ function DrawFunction() {
 
         ctx.lineWidth = lineWidth;
         ctx.lineCap = 'round';
-
+        //console.log("e.clientX:");
+        //console.log(e.clientX);
+        //console.log("e.clientX - canvasOffsetX");
+        //console.log(e.clientX - canvasOffsetX);
+        //console.log("e.clientY:");
+        //console.log(e.clientY);
         ctx.lineTo(e.clientX - canvasOffsetX, e.clientY);
         ctx.stroke();
     }
 
     canvas.addEventListener('mousedown', (e) => {
         isPainting = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        startXX = e.clientX;
+        startYY = e.clientY;
     });
 
     canvas.addEventListener('mouseup', e => {
@@ -2314,6 +2334,9 @@ function DrawFunction() {
     });
 
     canvas.addEventListener('mousemove', draw);
+    ctx.lineWidth = 2;
+    }
+    
 }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2506,6 +2529,7 @@ function simMouseDown(event) {
     
     
     if(!simState.dragTarget) {
+        console.log("!"); // ZZZZZZ
         return false;
     }
 
@@ -2515,6 +2539,7 @@ function simMouseDown(event) {
 
     //get the mode
     if(document.getElementById('dragRotate').checked) {
+        console.log("drag rotate");
         simState.dragMode = DRAG_ROTATE;
     } else if(document.getElementById('dragMove').checked) {
         simState.dragMode = DRAG_MOVE;
@@ -2530,9 +2555,11 @@ function simMouseDown(event) {
         simState.dragMode = DRAG_ROTATE90;  //Updated by Gavin 03/08/2023
     } 
     // !!!!!!!!!!!!! Sam Elfrink addition !!!!!!!!!!!!!
-    else if(document.getElementById('dragDraw').checked) {
-        console.log("test");
-    }
+    //else if(document.getElementById('dragDraw').checked) {
+    //    console.log("checked");
+    //    dragDraw = true;
+    //    DrawFunction();
+    //}
     // !!!!!!!!!!!!!
     //END OF UPDATED AND ADDED BY GAVIN 03/08/2023
 
@@ -3592,7 +3619,10 @@ function gradbotInit() {
     buildView = new ChassisBuildView(robot);
     drawBuild();
 
-    DrawFunction();
+    // !!!!!!!!!!!!! Sam Elfrink addition !!!!!!!!!!!!!
+    //if(document.getElementById('dragDraw').checked) {
+       //DrawFunction();
+    //}
 
     //set up the sim mouse events
     var canvas = document.getElementById('simfg');
@@ -3611,6 +3641,12 @@ function gradbotInit() {
     document.getElementById('simGo').onclick = simulationGo;
     document.getElementById('simReset').onclick = simulationReset;
     document.getElementById('simClear').onclick = simulationClear;
+
+    // !!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!
+    //document.getElementById('simDraw').onclick = DrawFunction;
+    document.getElementById('simDraw').onclick = isChecked;
+    document.getElementById('simDrawCancel').onclick = cancelDraw;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //set up the object buttons
     document.getElementById('simAddLight').onclick = simAddLight;
