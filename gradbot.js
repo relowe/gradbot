@@ -757,6 +757,7 @@ function Chassis(x, y, heading, name)
         this.y += fwd * Math.sin(this.heading) * elapsed;
         this.heading += yaw * elapsed;
 
+        //Chase's fix to pen draw on toroidal
         // Update the position of the object based on the current simulation mode
         switch(simulationMode) {
             case 'toroidal':
@@ -774,6 +775,17 @@ function Chassis(x, y, heading, name)
                 if(this.y >= wymax) {
                     this.y -= wymax;
                 }
+                // check if the marker is out of the simstate
+                if(this.x <= -30 || this.x >= simState.width + 30 || this.y <= -30 || this.y >= simState.height + 30) {
+                    // if so, stop drawing
+                    penDrawing = false;
+                    console.log(penDrawing)
+                } else {
+                    // if not, resume drawing
+                    penDrawing = true;
+                    console.log(penDrawing)
+
+                }
                 break;
             case 'infinite':
                 var wxmax = simState.width;
@@ -784,9 +796,6 @@ function Chassis(x, y, heading, name)
                     removeFlag = true;
                 }
                 break;
-            default:
-                // Handle unrecognized simulation mode
-            break;
         }
     };
 
@@ -2416,7 +2425,6 @@ function simMouseDown(event) {
         }
     }
 
-    //Chase: Move opponent with drag mode
     if(opponent){
         if(opponentView.view.encloses(event.offsetX, event.offsetY)){
             simState.dragTarget = opponentView;
@@ -3237,7 +3245,6 @@ function backgroundPhotoDraw(event) {
 }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-//Chase new go event
 /**
  * Handle the simulation go button.
  * @param {*} event 
@@ -3302,7 +3309,6 @@ function simulationGo(event) {
     }       
 }
 
-//Chase new reset event
 function simulationReset(event) {
     document.getElementById("simGo").innerHTML = "Start";
     var canvas = document.getElementById("simfg");
@@ -3418,7 +3424,6 @@ function simulationReset(event) {
     drawSim();
 }
 
-//Chase new clear event
 /**
  * Handle simulation clear.
  * @param {*} event
@@ -3959,6 +3964,7 @@ function simulationUpdate() {
             }
         }
 
+        //Chase new box collision
         // keep track of boxes in contact with bot
         var boxesInContact = [];
 
@@ -3966,12 +3972,13 @@ function simulationUpdate() {
         if (obj.part.type === "Box") {
             for (var j = 0; j < botViews.length; j++) {
                 if (collision(botViews[j].view, obj.view)) {
-                // check if box is already in contact with bot
+                    // check if box is already in contact with bot
                     if (!boxesInContact.includes(obj.part)) {
-                        // change box color to red
-                        obj.part.fill = "red";
                         // add box to list of boxes in contact with bot
                         boxesInContact.push(obj.part);
+                        // set box's data property to store the bot view
+                        obj.part.botView = botViews[j].view;
+                        
                         //ADDED BY GAVIN 04/06/2023
                         if(simState.mazeWorldLoaded){
                             var endTime = stopStopwatch();
@@ -3982,14 +3989,26 @@ function simulationUpdate() {
                         }
                         //END OF ADDED BY GAVIN 04/06/2023
                     }
+                    // move the box based on the relative position of the bot view and object view
+                    if (obj.part.botView.y < obj.part.y) {
+                        obj.part.y = obj.part.botView.y + 36; // move box down
+                    } else if (obj.part.botView.y > obj.part.y) {
+                        obj.part.y = obj.part.botView.y -36; // move box up
+
+                    } else if (obj.part.botView.x < obj.part.x) {
+                        obj.part.x = obj.part.botView.x + 36; // move box to the right
+                    } else if (obj.part.botView.x > obj.part.x) {
+                        obj.part.x = obj.part.botView.x - 36; // move box to the left
+                    }
+
                 } else {
-                    // box is not in contact with bot, so revert back to original color
-                    obj.part.fill = "lightblue";
                     // remove box from list of boxes in contact with bot
                     const index = boxesInContact.indexOf(obj.part);
                     if (index !== -1) {
                         boxesInContact.splice(index, 1);
                     }
+                    // remove box's data property
+                    delete obj.part.botView;
                 }
             }
         }
@@ -4016,16 +4035,34 @@ function simulationUpdate() {
         }
         //END OF UPDATED BY GAVIN 04/06/2023
 
-        // check for robot collisions
-        //if(obj.part.type == "Wall") {
-            //for(var j=0; j < botViews.length; j++) {
-                //if(collision(botViews[j].view, obj.view)) {
-                    //bots[j].hp--;
-                    //bots[j].left.setPower(0);
-                    //bots[j].right.setPower(0);
-                //}
-            //}
+        //Chase new opponent collision
+        // check for bot and opponent collisions
+        if (obj.part.type === opponentView) {
+            for (var j = 0; j < botViews.length; j++) {
+                if (collision(botViews[j].view, obj.view)) {
+                    var botPower = bots[j].left.power + bots[j].right.power;
+                    var oppPower = obj.part.power;
+                    if (botPower > oppPower) {
+                        // bot pushes opponent
+                        obj.part.x = botViews[j].view.x + 36;
+                        obj.part.y = botViews[j].view.y;
+                    } else if (botPower < oppPower) {
+                        // opponent pushes bot
+                        botViews[j].view.x = obj.part.x - 36;
+                        botViews[j].view.y = obj.part.y;
+                        bots[j].left.setPower(0);
+                        bots[j].right.setPower(0);
+                    } else {
+                        // equal power, stop both
+                        bots[j].left.setPower(0);
+                        bots[j].right.setPower(0);
+                        obj.part.speed = 0;
+                    }
+                }
+            }
         }
+    }
+
     for(var i=0; i < toVanish.length; i++) {
         toVanish[i].vanish();
     }
@@ -4100,7 +4137,6 @@ function openRobotFile() {
 
 }
 
-//Chase new openOpponentFile()
 function openOpponentFile() {
     
     //ADDED BY GAVIN 04/05/2023
@@ -4142,7 +4178,6 @@ function openOpponentFile() {
 
 }
 
-//Chase new opponents
 function loadRoverOpponent() {
     var rover = '{"x":95.31671683510646,"y":504.2753606734182,"heading":11.038709558823625,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":false,"lastUpdate":1655407045989,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":90.49773755656109,"speed":6.16289592760181},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":90.49773755656109,"speed":6.16289592760181},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nwhile(true) {\\n  await forward(10);\\n  laser.fire();\\n  await turnRight(90);\\n  laser.fire();\\n  await forward(7);\\n  laser.fire();\\n  await turnRight(90);\\n  laser.fire();\\n}","laserBattery":36}';
     opponentType = "rover";
@@ -4163,7 +4198,6 @@ function loadSpinnerOpponent() {
     opponentType = "spinner";
     loadSampleOpponent(spinner);
 }
-//end of Chase new opponents
 
 //GAVIN ADDED 04/04/2023
 function loadRobotOne() {
