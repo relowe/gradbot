@@ -5,7 +5,6 @@
     <meta charset = "utf-8">
     <!-- <link rel="stylesheet" href="light-theme.css" id="theme-link"/> -->
     <link rel="stylesheet" href="index.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 
 
     <!-- <style>
@@ -13,28 +12,6 @@
     </style> -->
     <script>
         window.onload = function () {
-            var drawCanvas = document.getElementById('simdg');
-            var drawFabricCanvas = new fabric.Canvas(drawCanvas);
-    
-            // Set up the foreground canvas for drawing mode without selection
-            drawFabricCanvas.isDrawingMode = false; // Set default to false
-            drawFabricCanvas.selection = false;
-            drawFabricCanvas.freeDrawingBrush.width = 5;
-            drawFabricCanvas.freeDrawingBrush.color = '#ff0000';
-    
-            // Get the radio button element
-            var drawRadio = document.querySelector('#draw');
-    
-            // Listen for changes to the radio button
-            drawRadio.addEventListener('change', function() {
-                if (drawRadio.checked) {
-                    drawFabricCanvas.isDrawingMode = true;
-                } else {
-                    drawFabricCanvas.isDrawingMode = false;
-                    simState.dragMode = DRAG_MOVE;
-                }
-            });
-            
             gradbotInit();
         }
     </script>
@@ -53,8 +30,9 @@
     <div class="tabcontent" id='Simulate'>
         <div class="container">
             <canvas id="simbg" width="800" height="600"></canvas>
+            <canvas id="simdg" width="800" height="600" display="block"></canvas>
             <canvas id="simfg" width="800" height="600"></canvas>
-            <canvas id="simdg" width="800" height="600"></canvas>
+            
             <div class="toolbox">
                 <div class="toolboxContent">
                     <div class="inner">
@@ -82,10 +60,14 @@
                         <input type="radio" id="dragResizeWidth" name="dragMode"/>
                         <label for="dragResizeWidth">Resize Wall Width</label>
                         </div>
+                        <!-- Sam Elfrink Addition -->
                         <div class="wrapper">
-                        <input type="radio" id="draw" name="dragMode" value="draw">
-                        <label for="draw">Draw Mode</label>
+                        <input type="radio" id="dragDraw" name="dragMode"/>
+                        <label for="dragDraw">Draw</label>
                         </div>
+                        <!-- <button id="simDraw">Draw</button>
+                        <button id="simDrawCancel">Cancel Draw</button> -->
+                        <!-- end Sam Elfrink Addition-->
 
                        <!-- END OF UPDATED AND ADDED BY GAVIN 03/08/2023-->
 
@@ -144,6 +126,15 @@
                             <button id="simRoverOpponent">Rover</button>
                             <button id="simCirclerOpponent">Circler</button>
                             <button id="simSpinnerOpponent">Spinner</button>
+                        </div>
+
+                        <div class="toolboxSubHead">
+                            Sample User Bot
+                        </div>
+                        <div class="toolboxSubHead">
+                            <button id="Robot1">Robot1</button>
+                            <button id="Robot2">Robot2</button>
+                            <button id="Robot3">Robot3</button>
                         </div>
                         <!-- GAVIN'S UPDATED CODE STARTS HERE -->
                         <div class="toolboxHead">
@@ -374,6 +365,7 @@
                         <div class="toolboxHead">
                             Part List
                         </div>
+                        <p>Click on the list for more details:</p>
                         
                             <div class="inner">
                                 <ul id="codePartList">
@@ -387,11 +379,17 @@
                             <span class="bolded">Robot Commands</span>
                         </div>-->
             </div>
+         
         </div>
     </div>
+
     <div class="pagecontent">
         Source Code On <a href="https://github.com/relowe/gradbot">
             GitHub</a>
+    </div>
+    <div class="pagecontent">
+        Need help coding? Check out our GradBot <a href="https://github.com/relowe/gradbot/wiki">
+            Wiki</a>
     </div>
 
 
