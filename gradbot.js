@@ -2921,6 +2921,109 @@ function applyEditor(state) {
 }
 
 
+//Aayush 
+function DropMarker(event) {
+    var marker = new Marker(robot);
+    robot.addPart(marker);
+    buildView.addPart(marker);
+    drawBuild();
+}
+
+        //For Dragging part editor for build : Aayush
+
+        var dragMarkerButton = document.getElementById("DragMarker");
+        var dragLightButton = document.getElementById("DragLight");
+        var dragLightSensorButton = document.getElementById("DragLightSensor");
+        var dragRangeFinderButton = document.getElementById("DragRangeFinder");
+        var dragLaserButton = document.getElementById("DragLaser");
+
+        // Add event listeners for dragstart, dragmove, and dragend events to all buttons
+        [dragMarkerButton, dragLightButton, dragLightSensorButton, dragRangeFinderButton, dragLaserButton].forEach(function(button) {
+            // Add event listener for dragstart event
+            button.addEventListener("dragstart", function(event) {
+                console.log("dragstart");
+                event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
+            });
+
+            // Add event listener for dragmove event
+            button.addEventListener("dragmove", function(event) {
+                console.log("dragmove");
+            });
+
+            // Add event listener for dragend event
+            button.addEventListener("dragend", function(event) {
+                console.log("dragend");
+                var data = event.dataTransfer.getData("text/plain");
+                if (button == dragMarkerButton) {
+                    DropMarker(event);
+                } else if (button == dragLightButton) {
+                    buildAddLight();
+                } else if (button == dragLightSensorButton) {
+                    buildAddLightSensor();
+                } else if (button == dragRangeFinderButton) {
+                    buildAddRangeSensor();
+                } else if (button == dragLaserButton) {
+                    buildAddLaser();
+                }
+            });
+        });
+
+
+        //Drag for Buttons : Aayush
+        var buildAddMarkerButton = document.getElementById("buildAddMarker");
+            // Add event listener for dragstart event
+		buildAddMarkerButton.addEventListener("dragstart", function(event) {
+			console.log("dragstart");
+			event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
+		});
+
+		// Add event listener for dragmove event
+		buildAddMarkerButton.addEventListener("dragmove", function(event) {
+			console.log("dragmove");
+		});
+
+		// Add event listener for dragend event
+		buildAddMarkerButton.addEventListener("dragend", function(event) {
+			console.log("dragend");
+            DropMarker(event);
+		});
+
+		// Add event listener for drop event
+		document.body.addEventListener("drop", function(event) {
+			console.log("drop");
+			event.preventDefault();
+			var data = event.dataTransfer.getData("text/plain");
+			console.log("Dropped data: " + data);
+		});
+
+		// Add event listener for dragover event
+		document.body.addEventListener("dragover", function(event) {
+			console.log("dragover");
+			event.preventDefault();
+		});
+
+         var buildAddLightButton = document.getElementById("buildAddLight");
+            // Add event listener for dragend event
+            buildAddLightButton.addEventListener("dragend", function(event) {
+                buildAddLight(event);
+            });           
+        var buildAddLightSensorButton = document.getElementById("buildAddLightSensor");
+            // Add event listener for dragend event
+            buildAddLightSensorButton.addEventListener("dragend", function(event) {
+                buildAddLightSensor(event);
+            });              
+        var buildAddRangeSensorButton = document.getElementById("buildAddRangeSensor");
+            // Add event listener for dragend event
+            buildAddRangeSensorButton.addEventListener("dragend", function(event) {
+                buildAddRangeSensor(event);
+            });         
+        var buildAddLaserButton = document.getElementById("buildAddLaser");
+            // Add event listener for dragend event
+            buildAddLaserButton.addEventListener("dragend", function(event) {
+                buildAddLaser(event);
+            });
+
+
 /**
  * Handle build canvas mouse down 
  * @param {*} event 
