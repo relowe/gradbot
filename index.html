@@ -117,6 +117,15 @@
                             <button id="simCirclerOpponent">Circler</button>
                             <button id="simSpinnerOpponent">Spinner</button>
                         </div>
+
+                        <div class="toolboxSubHead">
+                            Sample User Bot
+                        </div>
+                        <div class="toolboxSubHead">
+                            <button id="Robot1">Robot1</button>
+                            <button id="Robot2">Robot2</button>
+                            <button id="Robot3">Robot3</button>
+                        </div>
                         <!-- GAVIN'S UPDATED CODE STARTS HERE -->
                         <div class="toolboxHead">
                             Simulation Speed
@@ -144,7 +153,6 @@
                             <button id="combatWorld">Combat Arena</button>
                             <button id="mazeWorld">Maze</button>
                             <button id="pacmanWorld">Pacman</button>
-                        </div>
                         <!-- GAVIN'S UPDATED CODE ENDS HERE 02/23/2023-->
                         <!--CHASE'S UPDATED CODE STARTS HERE-->
                         <div class="toolboxSubHead">
@@ -222,18 +230,111 @@
 
 
 
+
                         <!-- Addition by Aayush Byanjankar: Dragable parts.-->
                         <div class="toolboxSubHead">
                             Add Part
                         </div>
                          
                         <button id="buildAddMarker" draggable="true" >Marker</button><br>
+
+                            <script>
+                                var buildAddMarkerButton = document.getElementById("buildAddMarker");
+
+                                // Add event listener for dragend event
+                                buildAddMarkerButton.addEventListener("dragend", function(event) {
+                                    buildAddMarker(event);
+                                });
+
+                                // Function to add marker to robot and buildView
+                                function buildAddMarker(event) {
+                                    var marker = new Marker(robot);
+                                    robot.addPart(marker);
+                                    buildView.addPart(marker);
+                                    drawBuild();
+                                } 
+                            </script>           
+    
+
                         <button id="buildAddLight" draggable="true">Light</button><br>
+
+                        <script>
+                            var buildAddLightButton = document.getElementById("buildAddLight");
+
+                            // Add event listener for dragend event
+                            buildAddLightButton.addEventListener("dragend", function(event) {
+                                buildAddLight(event);
+                            });
+
+                            // Function to add marker to robot and buildView
+                            function buildAddLight(event) {
+                                var light = new Light(robot);
+                                light.radius = 1;
+                                robot.addPart(light);
+                                buildView.addPart(light);
+                                drawBuild();
+                            }
+                        </script>
+
                         <button id="buildAddLightSensor" draggable="true">Light Sensor</button><br>
+
+                        <script>
+                            var buildAddLightSensorButton = document.getElementById("buildAddLightSensor");
+
+                            // Add event listener for dragend event
+                            buildAddLightSensorButton.addEventListener("dragend", function(event) {
+                                buildAddLightSensor(event);
+                            });
+
+                            // Function to add marker to robot and buildView
+                            function buildAddLightSensor(event) {
+                                var sensor = new LightSensor(robot);
+                                robot.addPart(sensor);
+                                buildView.addPart(sensor);
+                                drawBuild();
+                            }
+
+                        </script>
+                        
                         <button id="buildAddRangeSensor" draggable="true">Range Finder</button><br>
+
+                        <script>
+                            var buildAddRangeSensorButton = document.getElementById("buildAddRangeSensor");
+
+                            // Add event listener for dragend event
+                            buildAddRangeSensorButton.addEventListener("dragend", function(event) {
+                                buildAddRangeSensor(event);
+                            });
+
+                            // Function to add marker to robot and buildView
+                            function buildAddRangeSensor(event) {
+                                var sensor = new RangeSensor(robot);
+                                robot.addPart(sensor);
+                                buildView.addPart(sensor);
+                                drawBuild();
+                            }
+
+                        </script>
+                        
                         <button id="buildAddLaser" draggable="true">Laser</button><br>
                         
-                       
+                        <script>
+                            var buildAddLaserButton = document.getElementById("buildAddLaser");
+
+                            // Add event listener for dragend event
+                            buildAddLaserButton.addEventListener("dragend", function(event) {
+                                buildAddLaser(event);
+                            });
+
+                            // Function to add marker to robot and buildView
+                            function buildAddLaser(event) {
+                                var laser = new Laser(robot);
+                                robot.addPart(laser);
+                                buildView.addPart(laser);
+                                drawBuild();
+                            }
+
+                        </script>
 
                         <div class="toolboxHead">
                             Robot Management
@@ -293,9 +394,11 @@
             GitHub</a>
     </div>
     <div class="pagecontent">
-        Need help coding? Check out our GradBot<a href="https://github.com/relowe/gradbot">
+        Need help coding? Check out our GradBot <a href="https://github.com/relowe/gradbot/wiki">
             Wiki</a>
     </div>
+    
+    <div id="pacmanScore"></div> <!--ADDED BY GAVIN 0/06/2023-->
 
 
     <script src="codeflask.min.js"></script>
