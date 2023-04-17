@@ -2244,6 +2244,61 @@ function drawBuild() {
     buildView.draw(canvas, context);
 }
 
+/**
+     * Draw the part along with all of its subparts.
+     * @param {*} canvas - The canvas to draw on.
+     * @param {*} context - The context to draw on.
+*/
+function DrawFunction() {
+    console.log("Drawfunction called");
+    
+    const canvas = document.getElementById('simfg');
+    const canvasDraw = document.getElementById('simdg');
+    const contextDraw = canvasDraw.getContext('2d');
+    
+
+    let isPainting = false;
+    let lineWidth = 1;
+    let startX;
+    let startY;
+
+    const draw = (e) => {
+        console.log("drawing in draw function");
+        if(!isPainting) {
+            return;
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        contextDraw.lineWidth + lineWidth;
+        contextDraw.lineCap = 'round';
+        contextDraw.lineTo(x, y);
+        contextDraw.stroke();
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        console.log("mouse down");
+        if(document.getElementById('dragDraw').checked) {
+            console.log("zzzzzzzz");
+            isPainting = true;
+            startX = e.clientX;
+            startY = e.clientY;
+
+        }
+    });
+
+    canvas.addEventListener('mouseup', e => {
+        isPainting = false;
+        contextDraw.stroke();
+        contextDraw.beginPath();
+    });
+
+    canvas.addEventListener('mousemove', draw);
+    
+}
+
+
 //!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
 /**
  * Draws the hud on the canvas.
@@ -2413,18 +2468,19 @@ function simMouseDown(event) {
             //ADDED BY GAVIN 03/21/2023
             //EDITED BY GAVIN 04/05/2023
             if ((obj.part.type == "Light" && obj.part.moveable == false) || (obj.part.type == "Wall" && obj.part.moveable == false) || (obj.part.type == "Box" && obj.part.moveable == false)){
-                //console.log("HEY THERE");
+                console.log("HEY THERE");
                 break;
             }
             //END OF ADDED BY GAVIN 03/21/2023
             if(obj.view.encloses(event.offsetX, event.offsetY)) {
                 simState.dragTarget = obj;
-                //console.log(simState.dragTarget);
+                console.log(simState.dragTarget);
                 break;
             }
         }
     }
 
+    //Chase: Move opponent with drag mode
     if(opponent){
         if(opponentView.view.encloses(event.offsetX, event.offsetY)){
             simState.dragTarget = opponentView;
@@ -2433,6 +2489,12 @@ function simMouseDown(event) {
     
     
     if(!simState.dragTarget) {
+        // !!!!!!!!!!!!! Sam Elfrink addition !!!!!!!!!!!!!
+        if(document.getElementById('dragDraw').checked) {
+            console.log("checked");
+            //dragDraw = true;
+            DrawFunction();
+        }
         return false;
     }
 
@@ -2455,6 +2517,13 @@ function simMouseDown(event) {
     } else if(document.getElementById('dragRotate90').checked) {
         simState.dragMode = DRAG_ROTATE90;  //Updated by Gavin 03/08/2023
     } 
+    // !!!!!!!!!!!!! Sam Elfrink addition !!!!!!!!!!!!!
+    //else if(document.getElementById('dragDraw').checked) {
+    //    console.log("checked");
+    //    dragDraw = true;
+    //    DrawFunction();
+    //}
+    // !!!!!!!!!!!!!
     //END OF UPDATED AND ADDED BY GAVIN 03/08/2023
     else {
         simState.dragMode = DRAG_NONE;
@@ -2471,6 +2540,7 @@ function simMouseDown(event) {
  * Handler for mouse up events on the sim canvas.
  */
 function simMouseUp(event) {
+    console.log("mouse up");
     // one last move (if that is what we are up to!)
     if(simState.dragMode == DRAG_MOVE) {
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
@@ -2509,7 +2579,7 @@ function simMouseUp(event) {
     else if (simState.dragMode == DRAG_ROTATE90 && simState.dragTarget.part.type == 'Wall'){
        
         simState.dragTarget.part.rotated ^= true;
-        //console.log(simState.dragTarget.part.rotated);
+        console.log(simState.dragTarget.part.rotated);
         var part = simState.dragTarget.part;
         deselectPart(simState);
 
@@ -2538,7 +2608,19 @@ function simMouseUp(event) {
     }
 
     //refresh the canvas
-    drawSim();
+    //!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!
+    if(document.getElementById('dragDraw').checked) {
+        // don't draw sim, drawing won't stay otherwise
+        console.log("drawDraw checked");
+        return true;
+    }
+    else {
+        console.log("drawDraw not checked");
+        drawSim(); 
+    }
+
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //drawSim(); // zzz Sam Elfrink Addition: drawing won't stay otherwise
     return true;
 }
 
@@ -3459,6 +3541,9 @@ function simulationClear(event) {
     }
 
     //redraw 
+    var canvas = document.getElementById('simdg');
+    var context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
     graphPaperFill("simbg");
     drawSim();
 }
