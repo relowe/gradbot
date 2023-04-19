@@ -757,7 +757,6 @@ function Chassis(x, y, heading, name)
         this.y += fwd * Math.sin(this.heading) * elapsed;
         this.heading += yaw * elapsed;
 
-        //Chase's fix to pen draw on toroidal
         // Update the position of the object based on the current simulation mode
         switch(simulationMode) {
             case 'toroidal':
@@ -779,11 +778,9 @@ function Chassis(x, y, heading, name)
                 if(this.x <= -30 || this.x >= simState.width + 30 || this.y <= -30 || this.y >= simState.height + 30) {
                     // if so, stop drawing
                     penDrawing = false;
-                    console.log(penDrawing)
                 } else {
                     // if not, resume drawing
                     penDrawing = true;
-                    console.log(penDrawing)
 
                 }
                 break;
@@ -2480,7 +2477,6 @@ function simMouseDown(event) {
         }
     }
 
-    //Chase: Move opponent with drag mode
     if(opponent){
         if(opponentView.view.encloses(event.offsetX, event.offsetY)){
             simState.dragTarget = opponentView;
@@ -3002,6 +2998,112 @@ function applyEditor(state) {
     }
 }
 
+//Aayush 
+function DropMarker(event) {
+    var marker = new Marker(robot);
+    robot.addPart(marker);
+    buildView.addPart(marker);
+    drawBuild();
+}
+
+    //For Dragging part editor for build : Aayush
+
+    var dragMarkerButton = document.getElementById("DragMarker");
+    var dragLightButton = document.getElementById("DragLight");
+    var dragLightSensorButton = document.getElementById("DragLightSensor");
+    var dragRangeFinderButton = document.getElementById("DragRangeFinder");
+    var dragLaserButton = document.getElementById("DragLaser");
+
+    // Add event listeners for dragstart, dragmove, and dragend events to all buttons
+    [dragMarkerButton, dragLightButton, dragLightSensorButton, dragRangeFinderButton, dragLaserButton].forEach(function(button) {
+        // Add event listener for dragstart event
+        button.addEventListener("dragstart", function(event) {
+            console.log("dragstart");
+            event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
+        });
+
+        // Add event listener for dragmove event
+        button.addEventListener("dragmove", function(event) {
+            console.log("dragmove");
+        });
+
+        // Add event listener for dragend event
+        button.addEventListener("dragend", function(event) {
+            console.log("dragend");
+            var data = event.dataTransfer.getData("text/plain");
+            if (button == dragMarkerButton) {
+                DropMarker(event);
+            } else if (button == dragLightButton) {
+                buildAddLight();
+            } else if (button == dragLightSensorButton) {
+                buildAddLightSensor();
+            } else if (button == dragRangeFinderButton) {
+                buildAddRangeSensor();
+            } else if (button == dragLaserButton) {
+                buildAddLaser();
+            }
+        });
+    });
+
+
+    //Drag for Buttons : Aayush
+    var buildAddMarkerButton = document.getElementById("buildAddMarker");
+        // Add event listener for dragstart event
+	buildAddMarkerButton.addEventListener("dragstart", function(event) {
+		console.log("dragstart");
+		event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
+	});
+
+	// Add event listener for dragmove event
+	buildAddMarkerButton.addEventListener("dragmove", function(event) {
+		console.log("dragmove");
+	});
+
+	// Add event listener for dragend event
+	buildAddMarkerButton.addEventListener("dragend", function(event) {
+		console.log("dragend");
+        DropMarker(event);
+	});
+
+	// Add event listener for drop event
+	document.body.addEventListener("drop", function(event) {
+		console.log("drop");
+		event.preventDefault();
+		var data = event.dataTransfer.getData("text/plain");
+		console.log("Dropped data: " + data);
+	});
+
+	// Add event listener for dragover event
+	document.body.addEventListener("dragover", function(event) {
+		console.log("dragover");
+		event.preventDefault();
+	});
+
+    var buildAddLightButton = document.getElementById("buildAddLight");
+    // Add event listener for dragend event
+    buildAddLightButton.addEventListener("dragend", function(event) {
+        buildAddLight(event);
+    });           
+        
+    var buildAddLightSensorButton = document.getElementById("buildAddLightSensor");
+    // Add event listener for dragend event
+    buildAddLightSensorButton.addEventListener("dragend", function(event) {
+        buildAddLightSensor(event);
+    });
+
+    var buildAddRangeSensorButton = document.getElementById("buildAddRangeSensor");
+    // Add event listener for dragend event
+    buildAddRangeSensorButton.addEventListener("dragend", function(event) {
+        buildAddRangeSensor(event);
+    });         
+        
+    var buildAddLaserButton = document.getElementById("buildAddLaser");
+    // Add event listener for dragend event
+    buildAddLaserButton.addEventListener("dragend", function(event) {
+        buildAddLaser(event);
+    });
+
+
 
 /**
  * Handle build canvas mouse down 
@@ -3400,6 +3502,18 @@ function simulationReset(event) {
 
     robotStartingLocation();  //ADDED BY GAVIN 04/05/2023
 
+    // move the robot to the normal start position.
+    robot.x = 100;
+    robot.y = 100;
+    robot.heading = 0;
+
+    // reset the opponent
+    if(opponent){
+        opponent.x = 700;
+        opponent.y = 500;
+        opponent.heading = Math.PI;
+    }
+
     //refuel and powered up
     robot.left.setPower(0);
     robot.right.setPower(0);
@@ -3513,13 +3627,6 @@ function simulationReset(event) {
 function simulationClear(event) {
     document.getElementById("simReset").click();
 
-    removePacmanPoints();   //Added By GAVIN 04/06/2023
-    //ADDED BY GAVIN 03/25/2023
-    simState.combatWorldLoaded = false;
-    simState.mazeWorldLoaded = false;
-    simState.pacmanWorldLoaded = false;
-    //END OF ADDED BY GAVIN 03/25/2023
-
     // move the robot to the normal start position.
     robot.x = 100;
     robot.y = 100;
@@ -3532,6 +3639,12 @@ function simulationClear(event) {
         opponent.heading = Math.PI;
     }
     
+    removePacmanPoints();   //Added By GAVIN 04/06/2023
+    //ADDED BY GAVIN 03/25/2023
+    simState.combatWorldLoaded = false;
+    simState.mazeWorldLoaded = false;
+    simState.pacmanWorldLoaded = false;
+    //END OF ADDED BY GAVIN 03/25/2023
 
     //clear lights and walls
     if(simState.worldObjects.length != 0) {
@@ -3995,6 +4108,19 @@ function simulationUpdate() {
         bots[i].update();
     }
 
+    //Chase new opponent collision
+    // BotView collision check
+    for (var i = 0; i < botViews.length; i++) {
+        for (var j = i + 1; j < botViews.length; j++) {
+            if (collision(botViews[i].view, botViews[j].view)) {
+                    bots[i].left.setPower(0);
+                    bots[i].right.setPower(0);
+                    bots[j].left.setPower(0);
+                    bots[j].right.setPower(0);
+            }
+        }
+    }
+
     //update all the world objects
     var toVanish = [];
     for(var i=0; i < simState.worldObjects.length; i++) {
@@ -4049,7 +4175,7 @@ function simulationUpdate() {
             }
         }
 
-        //Chase new box collision
+       //Chase new box collision
         // keep track of boxes in contact with bot
         var boxesInContact = [];
 
@@ -4120,34 +4246,7 @@ function simulationUpdate() {
         }
         //END OF UPDATED BY GAVIN 04/06/2023
 
-        //Chase new opponent collision
-        // check for bot and opponent collisions
-        if (obj.part.type === opponentView) {
-            for (var j = 0; j < botViews.length; j++) {
-                if (collision(botViews[j].view, obj.view)) {
-                    var botPower = bots[j].left.power + bots[j].right.power;
-                    var oppPower = obj.part.power;
-                    if (botPower > oppPower) {
-                        // bot pushes opponent
-                        obj.part.x = botViews[j].view.x + 36;
-                        obj.part.y = botViews[j].view.y;
-                    } else if (botPower < oppPower) {
-                        // opponent pushes bot
-                        botViews[j].view.x = obj.part.x - 36;
-                        botViews[j].view.y = obj.part.y;
-                        bots[j].left.setPower(0);
-                        bots[j].right.setPower(0);
-                    } else {
-                        // equal power, stop both
-                        bots[j].left.setPower(0);
-                        bots[j].right.setPower(0);
-                        obj.part.speed = 0;
-                    }
-                }
-            }
-        }
     }
-
     for(var i=0; i < toVanish.length; i++) {
         toVanish[i].vanish();
     }
