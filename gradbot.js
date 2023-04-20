@@ -2262,6 +2262,7 @@ function DrawFunction() {
     const draw = (e) => {
         console.log("drawing in draw function");
         if(!isPainting) {
+            console.log("first click");
             return;
         }
 
@@ -2277,7 +2278,7 @@ function DrawFunction() {
     canvas.addEventListener('mousedown', (e) => {
         console.log("mouse down");
         if(document.getElementById('dragDraw').checked) {
-            console.log("zzzzzzzz");
+            console.log("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
             isPainting = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -2455,6 +2456,8 @@ function graphPaperFill(id) {
  */
 function simMouseDown(event) {
 
+    console.log("Sim Mouse Down");
+
     // get the target of the click
     simState.dragTarget = null;
     if(simView.view.encloses(event.offsetX, event.offsetY)) {
@@ -2482,15 +2485,8 @@ function simMouseDown(event) {
             simState.dragTarget = opponentView;
         }
     }
-    
-    
+
     if(!simState.dragTarget) {
-        // !!!!!!!!!!!!! Sam Elfrink addition !!!!!!!!!!!!!
-        if(document.getElementById('dragDraw').checked) {
-            console.log("checked");
-            //dragDraw = true;
-            DrawFunction();
-        }
         return false;
     }
 
@@ -2513,13 +2509,6 @@ function simMouseDown(event) {
     } else if(document.getElementById('dragRotate90').checked) {
         simState.dragMode = DRAG_ROTATE90;  //Updated by Gavin 03/08/2023
     } 
-    // !!!!!!!!!!!!! Sam Elfrink addition !!!!!!!!!!!!!
-    //else if(document.getElementById('dragDraw').checked) {
-    //    console.log("checked");
-    //    dragDraw = true;
-    //    DrawFunction();
-    //}
-    // !!!!!!!!!!!!!
     //END OF UPDATED AND ADDED BY GAVIN 03/08/2023
     else {
         simState.dragMode = DRAG_NONE;
@@ -2616,7 +2605,7 @@ function simMouseUp(event) {
     }
 
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //drawSim(); // zzz Sam Elfrink Addition: drawing won't stay otherwise
+    drawSim(); // zzz Sam Elfrink Addition: drawing won't stay otherwise
     return true;
 }
 
@@ -3703,6 +3692,11 @@ function gradbotInit() {
     //}
     //document.getElementById("partDropDown").options.length = 0;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    // !!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!
+    // enable the sim to look for the drawing toggle button
+    DrawFunction();
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     //put the robot on the foreground of the simulator
     simView = new ChassisView(robot);
