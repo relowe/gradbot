@@ -3032,7 +3032,8 @@ function DropMarker(event) {
             console.log("dragend");
             var data = event.dataTransfer.getData("text/plain");
             if (button == dragMarkerButton) {
-                DropMarker(event);
+                //DropMarker(event);
+                buildAddMarker();
             } else if (button == dragLightButton) {
                 buildAddLight();
             } else if (button == dragLightSensorButton) {
