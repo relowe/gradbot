@@ -298,7 +298,7 @@ function PartDoc() {
         }
     };
 }
-// !!!!!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 /**
  * A document for a part.
  * Functions are an array of dictionaries:
@@ -408,13 +408,8 @@ function Part(parent, x, y, heading, name)
    
     if (loadRobotTrue == 1) {
         //do nothing
-        //console.log("loadRobotTrue = 1");
-        //console.log("Don't add list");
     }
     else {
-        //console.log("loadRobotTrue = 0");
-        //console.log("Addlist Part function called");
-        //console.log(this.name);
         addList(this.name);
     }
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -456,7 +451,6 @@ function Part(parent, x, y, heading, name)
         
         //!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!
         // NOTE: the userbot side of set power will trigger first
-        //console.log("setPower gradbot side");
         // check to make sure that the setPower() function isn't empty
         if(power == undefined) {
             alert("Error: You left your power level blank. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
@@ -464,16 +458,6 @@ function Part(parent, x, y, heading, name)
             // set power to 0
             power = 0;
         }
-        /*
-        console.log(typeof(power));
-        console.log(typeof(this.power));
-        // if the power value isn't a number, set power to 0 and do nothing
-        if(typeof(power) != 'number') {
-            alert("Error: You put a non-number character for your power level. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
-            power = 0;
-        }
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        */
         
         //limit the power setting's range
         if(power > 100) {
@@ -642,7 +626,6 @@ function Chassis(x, y, heading, name)
 
     // !!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!
     // adding a wheel size variable to the chassis
-    console.log("Chassis called");
     this.chassisWheelSize = document.getElementById("wheelSize").value;
     
     // update function to preserve wheel size and update it to the robot
@@ -1925,7 +1908,6 @@ function WallView(part) {
             {x: 10 * part.resizeFactorHeight, y: 5 * part.resizeFactorWidth},
             {x: -10 * part.resizeFactor, y: 5 * part.resizeFactorWidth},
         ];
-        //console.log("Rotated Height Resize: ", part.resizeFactorHeight);
     }
     if((simState.dragMode == DRAG_ROTATE90 && part.rotated == false) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == false)){
         var points = [
@@ -1934,7 +1916,6 @@ function WallView(part) {
             {x: 5 * part.resizeFactorWidth, y: 10 * part.resizeFactor},
             {x: -5 * part.resizeFactor, y: 10 * part.resizeFactor},
         ];
-        //console.log("Upright Height Resize: ", part.resizeFactorHeight);
     }
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -2159,15 +2140,10 @@ function openTab(evt, tabId) {
  */
 function changeWheelSize(state) {
     event.preventDefault()
-    console.log("changeWheelSize() called");
     var size = document.getElementById("wheelSize").value;
-    console.log("Size Variable:");
-    console.log(size);
     //this.chassisWheelSize = size;
     robot.update();
     wheelSize = size;
-    console.log("wheelSize Variable:");
-    console.log(wheelSize);
 }
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2247,7 +2223,6 @@ function drawBuild() {
      * @param {*} context - The context to draw on.
 */
 function DrawFunction() {
-    console.log("Drawfunction called");
     
     const canvas = document.getElementById('simfg');
     const canvasDraw = document.getElementById('simdg');
@@ -2260,9 +2235,7 @@ function DrawFunction() {
     let startY;
 
     const draw = (e) => {
-        console.log("drawing in draw function");
         if(!isPainting) {
-            console.log("first click");
             return;
         }
 
@@ -2276,9 +2249,7 @@ function DrawFunction() {
     }
 
     canvas.addEventListener('mousedown', (e) => {
-        console.log("mouse down");
         if(document.getElementById('dragDraw').checked) {
-            console.log("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
             isPainting = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -2305,8 +2276,6 @@ function drawPlayerHUD() {
     
     var simCanvas = document.getElementById("simbg"); 
     var context = simCanvas.getContext("2d");
-    //drawSim();
-    //context.clearRect(0,0,40000,40000);
 
     // SetUp player and opponent titles
     
@@ -2386,7 +2355,6 @@ function drawPlayerHUDClear() {
 
     // player 1 info
     context.fillText("Lives:",535,58); // x,y
-    //context.fillText(playerHealthPoints,595,40);
     context.fillText(robot.hp,580,58);
     context.fillText("Laser Power:", 535,78);
     context.fillText(robot.laserBattery,630,78);
@@ -2456,8 +2424,6 @@ function graphPaperFill(id) {
  */
 function simMouseDown(event) {
 
-    console.log("Sim Mouse Down");
-
     // get the target of the click
     simState.dragTarget = null;
     if(simView.view.encloses(event.offsetX, event.offsetY)) {
@@ -2468,13 +2434,11 @@ function simMouseDown(event) {
             //ADDED BY GAVIN 03/21/2023
             //EDITED BY GAVIN 04/05/2023
             if ((obj.part.type == "Light" && obj.part.moveable == false) || (obj.part.type == "Wall" && obj.part.moveable == false) || (obj.part.type == "Box" && obj.part.moveable == false)){
-                console.log("HEY THERE");
                 break;
             }
             //END OF ADDED BY GAVIN 03/21/2023
             if(obj.view.encloses(event.offsetX, event.offsetY)) {
                 simState.dragTarget = obj;
-                console.log(simState.dragTarget);
                 break;
             }
         }
@@ -2525,7 +2489,6 @@ function simMouseDown(event) {
  * Handler for mouse up events on the sim canvas.
  */
 function simMouseUp(event) {
-    console.log("mouse up");
     // one last move (if that is what we are up to!)
     if(simState.dragMode == DRAG_MOVE) {
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
@@ -2564,7 +2527,6 @@ function simMouseUp(event) {
     else if (simState.dragMode == DRAG_ROTATE90 && simState.dragTarget.part.type == 'Wall'){
        
         simState.dragTarget.part.rotated ^= true;
-        console.log(simState.dragTarget.part.rotated);
         var part = simState.dragTarget.part;
         deselectPart(simState);
 
@@ -2596,16 +2558,14 @@ function simMouseUp(event) {
     //!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!
     if(document.getElementById('dragDraw').checked) {
         // don't draw sim, drawing won't stay otherwise
-        console.log("drawDraw checked");
         return true;
     }
     else {
-        console.log("drawDraw not checked");
         drawSim(); 
     }
-
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    drawSim(); // zzz Sam Elfrink Addition: drawing won't stay otherwise
+
+    drawSim();
     return true;
 }
 
@@ -2677,7 +2637,7 @@ function simAddWall(event) {
     var wall = new Wall(null, canvas.width/2, canvas.height/2);
 
     simState.worldObjects.push(constructView(wall));
-    //console.log(wall);
+    
     drawSim();
 }
 
@@ -2744,7 +2704,7 @@ function showPartEditor(view, state) {
 function dropDownClick(view, state) {
     
     selectPartName = view.part.name;
-    console.log(selectPartName);
+    
     //populate the type and name
     document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
     document.getElementById(state.prefix +"PartName").value = view.part.name;
@@ -2775,9 +2735,8 @@ function hidePartEditor(state) {
  */
 function selectPart(view, state) {
 
-    // Sam Elfrink Addition zzzz
+    // Sam Elfrink Addition
     selectPartName = view.part.name;
-    console.log(selectPartName);
     // end of addition
     
     // deselect (if needed) 
@@ -2971,9 +2930,8 @@ function applyEditor(state) {
     // When a part is selected, the editor removes the name from the drop-down list
     var dropDownElement = document.getElementById("partDropDown");
     dropDownElement.remove(dropDownElement.selectedIndex);
+
     // The new name is add to the drop-down list
-    //console.log("apply editor");
-    //console.log("Addlist ApplyEditor function called");
     addListTrue = 1;
     addList(part.name);
     addListTrue = 0;
@@ -3007,18 +2965,18 @@ function DropMarker(event) {
     [dragMarkerButton, dragLightButton, dragLightSensorButton, dragRangeFinderButton, dragLaserButton].forEach(function(button) {
         // Add event listener for dragstart event
         button.addEventListener("dragstart", function(event) {
-            console.log("dragstart");
+            
             event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
         });
 
         // Add event listener for dragmove event
         button.addEventListener("dragmove", function(event) {
-            console.log("dragmove");
+            
         });
 
         // Add event listener for dragend event
         button.addEventListener("dragend", function(event) {
-            console.log("dragend");
+            
             var data = event.dataTransfer.getData("text/plain");
             if (button == dragMarkerButton) {
                 //DropMarker(event);
@@ -3230,10 +3188,7 @@ function buildDeletePart(event) {
     var part = buildState.editTarget.part;
 
     // Sam Elfrink Addition 
-    console.log(newPartList);
     var index = newPartList.indexOf(part.name);
-    console.log(part.name);
-    console.log(index);
     newPartList.splice(index, 1);
     // end Sam Elfrink Addition
 
@@ -3311,14 +3266,13 @@ function addList(name) {
     // add the part name to the list, unless it didn't change
     if(cancelAdd != 1) {
         newPartList.push(name);
-        //console.log(newPartList);
     }
     cancelAdd = 0;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     var partDropDown = document.getElementById("partDropDown");
     var option = document.createElement("OPTION");
-    //console.log(addListTrue);
+    
     if(addListTrue == 1) {
           option.innerHTML = name;
           //option.value = document.getElementById("txtValue").value;
@@ -3331,12 +3285,12 @@ function addList(name) {
  * @param {*} event 
  */
 function buildAddMarker(event) {
-    addListTrue = 1; //Sam Elfrink zzzz
+    addListTrue = 1; //Sam Elfrink
     var marker = new Marker(robot);
     robot.addPart(marker);
     buildView.addPart(marker);
     drawBuild();
-    addListTrue = 0; //Sam Elfrink zzzz
+    addListTrue = 0; //Sam Elfrink
 }
 
 
@@ -3345,13 +3299,13 @@ function buildAddMarker(event) {
  * @param {*} event
  */
 function buildAddLight(event) {
-    addListTrue = 1; //Sam Elfrink zzzz
+    addListTrue = 1; //Sam Elfrink
     var light = new Light(robot);
     light.radius = 1;
     robot.addPart(light);
     buildView.addPart(light);
     drawBuild();
-    addListTrue = 0; //Sam Elfrink zzzz
+    addListTrue = 0; //Sam Elfrink
 }
 
 
@@ -3360,12 +3314,12 @@ function buildAddLight(event) {
  * @param {*} event
  */
 function buildAddLightSensor(event) {
-    addListTrue = 1; //Sam Elfrink zzzz
+    addListTrue = 1; //Sam Elfrink
     var sensor = new LightSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
-    addListTrue = 0; //Sam Elfrink zzzz
+    addListTrue = 0; //Sam Elfrink
 }
 
 
@@ -3374,12 +3328,12 @@ function buildAddLightSensor(event) {
  * @param {*} event
  */
 function buildAddRangeSensor(event) {
-    addListTrue = 1; //Sam Elfrink zzzz
+    addListTrue = 1; //Sam Elfrink
     var sensor = new RangeSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
-    addListTrue = 0; //Sam Elfrink zzzz
+    addListTrue = 0; //Sam Elfrink
 }
 
 
@@ -3388,12 +3342,12 @@ function buildAddRangeSensor(event) {
  * @param {*} event
  */
 function buildAddLaser(event) {
-    addListTrue = 1; //Sam Elfrink zzzz
+    addListTrue = 1; //Sam Elfrink
     var laser = new Laser(robot);
     robot.addPart(laser);
     buildView.addPart(laser);
     drawBuild();
-    addListTrue = 0; //Sam Elfrink zzzz
+    addListTrue = 0; //Sam Elfrink
 }
 
 // !!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!
@@ -3407,10 +3361,9 @@ function backgroundPhotoDraw(event) {
     reader.onload = function(event) {
         var canvas = document.getElementById("simbg");
         var context = canvas.getContext("2d");
-        console.log("yo");
+        
         const img = new Image();
         img.onload = () => {
-            console.log("loop");
             context.drawImage(img, 0, 0, 800, 600);
         };
         img.src = event.target.result;
@@ -3486,9 +3439,6 @@ function simulationGo(event) {
 function simulationReset(event) {
     document.getElementById("simGo").innerHTML = "Start";
     var canvas = document.getElementById("simfg");
-    // Sam Elfrink Addition
-    // prompts the user to reupload their picture
-    //document.getElementById("pictureUpload").click();
 
     robotStartingLocation();  //ADDED BY GAVIN 04/05/2023
 
@@ -3535,12 +3485,10 @@ function simulationReset(event) {
 
         //ADDED BY GAVIN 04/03/2023
         if(simState.combatWorldLoaded == true){
-            console.log("COMBAT WORLD LOADED")
             opponent.moveTo(simState.opponentCombatStartX,simState.opponentCombatStartY);
             opponent.face(simState.opponentStartHeading);   //ADDED BY GAVIN 04/06/2023
         }
         else{
-            console.log("COMBAT WORLD NOT LOADED")
             opponent.moveTo(simState.opponentStartX, simState.opponentStartY);
             opponent.face(simState.opponentStartHeading);
         }
@@ -3668,7 +3616,7 @@ function gradbotInit() {
     // Sam Elfrink Addition
     loadRobotTrue = 1;
 
-    console.log("gradbotInit called");
+    
     //fill the simulation background with graph paper
     graphPaperFill('simbg');
 
@@ -3682,15 +3630,6 @@ function gradbotInit() {
     //!!!!!!!!!!!!!!!Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
      // Sam Elfrink Addition
      loadRobotTrue = 0;
-    // remove motors and chassis from the drop-down list
-    //var dropDownElementInit = document.getElementById("partDropDown");
-    //var firstListName = dropDownElementInit.options[0].text;
-    //var firstListName = dropDownElementInit.options[dropDownElementInit.selectedIndex].value;
-    //console.log(firstListName);
-    //if(firstListName == 'chassis'){
-    //    document.getElementById("partDropDown").options.length = 0;
-    //}
-    //document.getElementById("partDropDown").options.length = 0;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // !!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!
@@ -3751,7 +3690,6 @@ function gradbotInit() {
 
     //!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
     document.getElementById("partDropDown").onchange = dropDownPartSelect;
-
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // !!!!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
@@ -4284,7 +4222,7 @@ function saveRobotFile() {
 function openRobotFile() {
     var reader = new FileReader();
     reader.onload = function() {
-        addListTrue = 1; //zzz Sam Elfrink 
+        addListTrue = 1; // Sam Elfrink 
         loadRobot(robot, reader.result);
 
         //rebuild the robot views
@@ -4296,7 +4234,7 @@ function openRobotFile() {
         graphPaperFill("simbg");
         drawSim();
         drawBuild();
-        addListTrue = 0; //zzz Sam Elfrink 
+        addListTrue = 0; // Sam Elfrink 
     };
 
     reader.readAsText(this.files[0]);
@@ -4339,7 +4277,6 @@ function openOpponentFile() {
         graphPaperFill("simbg");
         drawSim();
     };
-    console.log(this.files[0]);
     reader.readAsText(this.files[0]);
 
 }
@@ -4405,7 +4342,7 @@ function robotStartingLocation(){
 
 function loadPrebuiltUser(test){
     deselectPart(buildState);
-    addListTrue = 1; //zzz Sam Elfrink 
+    addListTrue = 1; // Sam Elfrink 
     loadRobot(robot,test);
     addListTrue = 0;
     //rebuild the robot view
@@ -4481,7 +4418,6 @@ function loadRobotOpp(robot, robotString) {
         robot.parts[i].parent = robot;
     }
 
-    //console.log("loadRobotTrue set to 0");
     loadRobotTrue = 0;
 }
 
@@ -4525,7 +4461,6 @@ function loadRobot(robot, robotString) {
     // !!!!!! Sam Elfrink Addition !!!!!!!!!
     // Remove all elements of the drop-down list except for the first 3
     document.getElementById("partDropDown").options.length = 0;
-    //console.log("loadRobotTrue set to 1");
     //loadRobotTrue = 1;
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -4539,7 +4474,6 @@ function loadRobot(robot, robotString) {
         addList(robot.parts[i].name)
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
-    //console.log("loadRobotTrue set to 0");
     loadRobotTrue = 0;
 }
 
