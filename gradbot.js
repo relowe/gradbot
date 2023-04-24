@@ -2017,8 +2017,8 @@ var simState = {
     robotStartX: 100,
     robotStartY: 100,
     //Beginning of Gavin Added 04/23/2023
-    robotResetStartX: 0,
-    robotResetStartY: 0,
+    robotResetStartX: 100,
+    robotResetStartY: 100,
     robotRestartStartHeading: 0,
     //End of Gavin Added 04/23/2023
     //ADDED BY GAVIN 03/24/2023
@@ -3448,8 +3448,8 @@ function simulationReset(event) {
     document.getElementById("simGo").innerHTML = "Start";
     var canvas = document.getElementById("simfg");
 
+    robotStartingLocation()
     robot.moveTo(simState.robotResetStartX, simState.robotResetStartY);     //Gavin Added 04/23/2023
-    robot.heading = simState.robotRestartStartHeading;                      //Gavin Added 04/23/2023
     
     //refuel and powered up
     robot.left.setPower(0);
@@ -3579,6 +3579,10 @@ function simulationClear(event) {
     if(simState.worldObjects.length != 0) {
         if(confirm("Would you like to remove the world objects?")) {
             simState.worldObjects= [];
+        }
+        else{
+            robotStartingLocation()
+            console.log(robot.x + " " + robot.y)    //RETURN HERE GAVIN
         }
     }
 
@@ -4326,32 +4330,31 @@ function loadRobotThree() {
 
 function robotStartingLocation(){
     if (simState.pacmanWorldLoaded){
-        console.log("MOVED TO PACMAN");
         robot.heading = simState.pacmanStartHeading;
         robot.moveTo(simState.robotPacmanStartX, simState.robotPacmanStartY);
-        console.log(robot.x + " " + robot.y)
+        simState.robotResetStartX = simState.robotPacmanStartX;
+        simState.robotResetStartY = simState.robotPacmanStartY;
     }
 
     else if(simState.mazeWorldLoaded){
-        console.log("MOVED TO MAZE");
         robot.heading = simState.robotStartHeading;
         robot.moveTo(simState.robotMazeStartX, simState.robotMazeStartY);      //Resets Robot to coordinates 60,60
-        console.log(robot.x + " " + robot.y)
+        simState.robotResetStartX = simState.robotMazeStartX
+        simState.robotResetStartY = simState.robotMazeStartY;
     }
 
     else if (simState.combatWorldLoaded){
-        console.log("MOVED TO COMBAT");
         robot.heading = simState.robotStartHeading;
         robot.moveTo(simState.robotCombatStartX, simState.robotCombatStartY);     //Resets Robot to coordinates 60,300
-        console.log(robot.x + " " + robot.y)
+        simState.robotResetStartX = simState.robotCombatStartX;
+        simState.robotResetStartY = simState.robotCombatStartY;
     }
 
     else{
-        console.log("MOVED")
         robot.heading = simState.robotStartHeading
         robot.moveTo(simState.robotStartX, simState.robotStartY)
-        console.log("Simstate x and y = " + simState.robotStartX + " " + simState.robotStartY )
-        console.log(robot.x + " " + robot.y)
+        simState.robotResetStartX = 100;
+        simState.robotResetStartY = 100;
     }
 
     drawSim();
@@ -4760,7 +4763,6 @@ function notAvailablePopup() {
 }
 //END OF ADDED BY GAVIN 04/05/2023
 //END OF EDITED BY GAVIN 03/20/2023
-
 
 //Dark mode
 
