@@ -963,7 +963,7 @@ function RangeSensor(parent, x, y) {
             var dist = minPolyDist({x: this.worldx, y: this.worldy}, objects[i].view.polygon);
             var angle = reduceAngle(dist.angle);
             angle = reduceAngle(this.parent.heading - angle);
-
+            //console.log("Angle = " + angle)
             //skip the lights outside of our field of view
             if(angle > 0.52 && angle < 5.76) { 
                 continue;
@@ -2058,6 +2058,7 @@ var simState = {
     mazeWorldLoaded: false,
     combatWorldLoaded: false,
     pacmanWorldLoaded: false,
+    premadeUserBotLoaded: false,        //GAVIN ADDED 04/26/2023
     pacmanPoints: 0,
     //END OF ADDED BY GAVIN 03/20/2023
 };
@@ -2145,6 +2146,11 @@ function openTab(evt, tabId) {
  */
 function changeWheelSize(state) {
     event.preventDefault()
+    //GAVIN ADDED 04/26/2023
+    if(simState.premadeUserBotLoaded == true){
+        noWheelSizeChange();
+        return;
+    }
     var size = document.getElementById("wheelSize").value;
     //this.chassisWheelSize = size;
     robot.update();
@@ -3894,6 +3900,8 @@ function gradbotInit() {
     document.getElementById("x25").onclick = setSpeedMult25;
     //GAVIN'S UPDATED CODE ENDS HERE
 
+    document.getElementById("wheelSizeReset").onclick = wheelSizeReset;     //GAVIN ADDED 04/26/2023
+
     //load world handlers under simulation tabs
     //
     /*
@@ -4129,17 +4137,19 @@ function simulationUpdate() {
                         //END OF ADDED BY GAVIN 04/06/2023
                     }
                     // move the box based on the relative position of the bot view and object view
-                    if (obj.part.botView.y < obj.part.y) {
-                        obj.part.y = obj.part.botView.y + 36; // move box down
-                    } else if (obj.part.botView.y > obj.part.y) {
-                        obj.part.y = obj.part.botView.y -36; // move box up
+                    //04/26/2023 GAVIN ADDED if statement
+                    if(simState.mazeWorldLoaded != true){
+                        if (obj.part.botView.y < obj.part.y) {
+                            obj.part.y = obj.part.botView.y + 36; // move box down
+                        } else if (obj.part.botView.y > obj.part.y) {
+                            obj.part.y = obj.part.botView.y -36; // move box up
 
-                    } else if (obj.part.botView.x < obj.part.x) {
-                        obj.part.x = obj.part.botView.x + 36; // move box to the right
-                    } else if (obj.part.botView.x > obj.part.x) {
-                        obj.part.x = obj.part.botView.x - 36; // move box to the left
+                        } else if (obj.part.botView.x < obj.part.x) {
+                            obj.part.x = obj.part.botView.x + 36; // move box to the right
+                        } else if (obj.part.botView.x > obj.part.x) {
+                            obj.part.x = obj.part.botView.x - 36; // move box to the left
+                        }
                     }
-
                 } else {
                     // remove box from list of boxes in contact with bot
                     const index = boxesInContact.indexOf(obj.part);
@@ -4232,8 +4242,8 @@ function openRobotFile() {
     var reader = new FileReader();
     reader.onload = function() {
         addListTrue = 1; // Sam Elfrink 
+        simState.premadeUserBotLoaded = false;   //GAVIN ADDED 04/26/2023
         loadRobot(robot, reader.result);
-
         //rebuild the robot views
         simView = new ChassisView(robot);
         buildView = new ChassisBuildView(robot);
@@ -4363,6 +4373,7 @@ function robotStartingLocation(){
 function loadPrebuiltUser(test){
     deselectPart(buildState);
     addListTrue = 1; // Sam Elfrink 
+    simState.premadeUserBotLoaded = true;    //GAVIN ADDED 04/26/2023
     loadRobot(robot,test);
     addListTrue = 0;
     //rebuild the robot view
@@ -4533,7 +4544,7 @@ function finishPart(part) {
 
 function newRobot() {
     robot = new Chassis(100, 100, 0);
-
+    simState.premadeUserBotLoaded = false;          //GAVIN ADDED 04/26/2023
     // !!!!!! Sam Elfrink Addition !!!!!!!!!
     // Remove all elements of the drop-down list except for the first 3
     document.getElementById("partDropDown").options.length = 0;
@@ -4624,6 +4635,7 @@ function loadCombatWorld() {
     robotStartingLocation();    //GAVIN CHANGED 04/05/2023
     removePacmanPoints();       //Added By GAVIN 04/06/2023
     loadWorld(combatWorld);
+    document.getElementById("simReset").click()     //04/26/2023 GAVIN ADDED
 }
 
 function loadMazeWorld() {
@@ -4636,7 +4648,7 @@ function loadMazeWorld() {
     robotStartingLocation();    //GAVIN CHANGED 04/05/2023
     removePacmanPoints();       //Added By GAVIN 04/06/2023
     loadWorld(mazeWorld);
-
+    document.getElementById("simReset").click()//04/26/2023 GAVIN ADDED
 }
 //LOADPACMAN UPDATED 03/22/2023 GAVIN
 function loadPacmanWorld() {
@@ -4648,6 +4660,7 @@ function loadPacmanWorld() {
     robotStartingLocation();    //GAVIN CHANGED 04/05/2023
     document.getElementById("simRemoveOpponent").click(); //GAVIN ADDED 04/03/2023
     loadWorld(pacmanWorld);
+    document.getElementById("simReset").click()             //04/26/2023 GAVIN ADDED
     simState.pacmanPoints = 0;  //GAVIN ADDED 04/06/2023
     displayPacmanPoints();
     startPacmanSound.play();  //GAVIN UNCOMMENT WHEN DONE
@@ -4757,12 +4770,25 @@ function stopStopwatch() {
   return elapsedTime;
 }
 //ADDED BY GAVIN 04/05/2023
+
 //ALERTS
 function notAvailablePopup() {
-    message = window.alert("Sorry, this feature is not available inside of this premade world");
+    message = window.alert("Sorry, this feature is not available inside of this premade world.");
 }
+
+//GAVIN ADDED 04/26/2023
+function noWheelSizeChange() {
+    message = window.alert("Sorry, premade user bot wheels cannot be adjusted.");
+}
+
 //END OF ADDED BY GAVIN 04/05/2023
 //END OF EDITED BY GAVIN 03/20/2023
+
+//GAVIN ADDED FUNCTION 04/26/2023
+function wheelSizeReset(){
+    document.getElementById("wheelSize").value = .065;
+    document.getElementById("changeWheelSize").click();
+}
 
 //Dark mode
 
