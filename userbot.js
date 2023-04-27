@@ -151,6 +151,16 @@ function Laser(source) {
     }
 }
 
+// !!!!!! Sam Elfrink Addition: LineSensor !!!!!!
+// NOTE: The line sensor is unfinished. 
+// Uncommneting this code will cause bugs. 
+// It has been kept for futur work.
+/*
+function LineSensor(source) {
+    Part.call(this, source);
+}
+*/
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Construct a local model object from the source.
@@ -174,6 +184,16 @@ function constructPart(source) {
     } else if(source.type == "Laser") {
         return new Laser(source);
     }
+    // !!!!!! Sam Elfrink Addition: LineSensor !!!!!!
+    // NOTE: The line sensor is unfinished. 
+    // Uncommneting this code will cause bugs. 
+    // It has been kept for futur work.
+    /*
+    else if(source.type == "LineSensor") {
+        return new LineSensor(source);
+    }
+    */
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // this is an unknown part!
     return undefined;

@@ -932,6 +932,29 @@ function Box(parent, x, y, size) {
     this.moveable = true;   //Added by Gavin 03/21/2023
 }
 
+// !!!!!!!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!
+/*
+/**
+ * sensor that follows a line.
+ * @param {*} parent 
+ * @param {*} x 
+ * @param {*} y 
+ */
+/*
+// NOTE: The line sensor is unfinished. 
+// Uncommneting this code will cause bugs. 
+// It has been kept for futur work.
+function LineSensor(parent, x, y) {
+    Part.call(this, parent, x, y);
+    this.type = "LineSensor";
+    //this.outline = "blue";
+    //this.fill = "lightblue";
+    //this.size = size;
+    //this.moveable = true;
+}
+*/
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 /**
  * A sensor which computes the range to an object.
  * @param {*} parent 
@@ -1433,6 +1456,16 @@ function constructView(part) {
     } else if(part.type == "Laser") {
         return new LaserView(part);
     }
+    // !!!!!!!! Sam Elfrink Addition !!!!!!!!!!
+    // NOTE: The line sensor is unfinished. 
+    // Uncommneting this code will cause bugs. 
+    // It has been kept for futur work.
+    /*
+    else if(part.type == "LineSensor") {
+        return new LineSensorView;
+    }
+    */
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // we don't know how to show this part.
     return undefined;
 }
@@ -1896,6 +1929,37 @@ function RangeSensorView(part) {
     }
 }
 
+// !!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!!!!!!
+/*
+/**
+ * constructor for the lineSensor view object..
+ * @param {*} part - The LineSensor Part
+ */
+/*
+// NOTE: The line sensor is unfinished. 
+// Uncommneting this code will cause bugs. 
+// It has been kept for futur work.
+function LineSensorView(part) {
+    console.log("LineSensorView");
+    //initialize the part view
+    console.log("This: " + this);
+    PartView.call(this, part);
+
+
+    //create my vector view
+    var points = [
+        {x: 1, y: 1.5},
+        {x: -1, y: 1.5},
+        {x: -1, y: -1.5},
+        {x: 1, y: -1.5},
+        {x: 0.5, y: 0.0}
+    ]; 
+    this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
+    this.view.fill = "white";
+    this.view.stroke = "black"
+}
+*/
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
  * Display the wall in all of its rectangular glory!
@@ -3441,6 +3505,26 @@ function buildAddLaser(event) {
     addListTrue = 0; //Sam Elfrink
 }
 
+// Sam Elfrink Addition
+/*
+/**
+ * Handle adding a line sensor.
+ * @param {*} event
+ */
+/*
+// NOTE: The line sensor is unfinished. 
+// Uncommneting this code will cause bugs. 
+// It has been kept for futur work.
+function buildAddLineSensor(event) {
+    addListTrue = 1; //Sam Elfrink
+    var lineSensor = new LineSensor(robot);
+    robot.addPart(lineSensor);
+    buildView.addPart(lineSensor);
+    drawBuild();
+    addListTrue = 0; //Sam Elfrink
+}
+*/
+
 // !!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!
 // handle the PNG background upload
 /**
@@ -3951,6 +4035,12 @@ function gradbotInit() {
     document.getElementById("buildAddLightSensor").onclick = buildAddLightSensor;
     document.getElementById("buildAddRangeSensor").onclick = buildAddRangeSensor;
     document.getElementById("buildAddLaser").onclick = buildAddLaser;
+    // !!!!!!!!! Samuel Elfrink Addition: Line Sensor Part !!!!!!!!!!!!!!!!!!!!
+    // NOTE: The line sensor is unfinished. 
+    // Uncommneting this code will cause bugs. 
+    // It has been kept for futur work.
+    //document.getElementById("buildAddLineSensor").onclick = buildAddLineSensor;
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     // set up code editor
     flask = new CodeFlask('#robotCode', {language: 'js'});
@@ -4609,7 +4699,19 @@ function finishPart(part) {
         result = new Box();
     } else if(part.type == "Laser") {
         result = new Laser();
-    } else {
+    } 
+    // !!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!
+    // NOTE: The line sensor is unfinished. 
+    // Uncommneting this code will cause bugs. 
+    // It has been kept for futur work.
+    /*
+    else if(part.type == "LineSensor") {
+        console.log("LineSensor");
+        result = new LineSensor();
+    }
+    */
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    else {
         return undefined;
     }
 
