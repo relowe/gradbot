@@ -36,6 +36,9 @@ let blackList = ["Part","Motor","Marker","Chassis","chassis","Light","LightSenso
 let newPartList = []; // An array for the new parts
 var selectPartName; // The name of the current select part
 var cancelAdd = 0; // determines whether the name should be added to newPartList
+var dragX = 0; // Sam Elfrink
+var dragY = 0; // Sam Elfrink
+var dragTrue = 0; // Sam Elfrink Addition
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
@@ -174,8 +177,20 @@ function collision(view1, view2) {
  * @param {number} heading  - the direction in which the object is facing
  */
 function Positionable(x, y, heading) {
-    this.x = x != undefined ? x : 0;
-    this.y = y != undefined ? y : 0;
+    
+    // Sam Elfrink Addition
+    if(dragTrue == 1) {
+        console.log("drag is true");
+        this.x = dragX;
+        this.y = dragY;
+    } else {
+        this.x = x != undefined ? x : 0;
+        this.y = y != undefined ? y : 0;
+    }
+   
+    // original code starts here
+    //this.x = x != undefined ? x : 0;
+    //this.y = y != undefined ? y : 0;
     this.heading = heading != undefined ? heading : 0;
     this.heading = reduceAngle(this.heading);
 
@@ -2987,7 +3002,7 @@ function DropMarker(event) {
 
         // Add event listener for dragend event
         button.addEventListener("dragend", function(event) {
-            
+            dragTrue = 1; // Sam Elfrink
             var data = event.dataTransfer.getData("text/plain");
             if (button == dragMarkerButton) {
                 //DropMarker(event);
@@ -3001,6 +3016,7 @@ function DropMarker(event) {
             } else if (button == dragLaserButton) {
                 buildAddLaser();
             }
+            dragTrue = 0; // Sam Elfrink
         });
     });
 
@@ -3026,6 +3042,70 @@ function DropMarker(event) {
 
 	// Add event listener for drop event
 	document.body.addEventListener("drop", function(event) {
+        //console.log("event.clientX: " + event.clientX);
+        //console.log("event.clientY: " + event.clientY);
+
+        // taken from globalToPartLoc
+        var scale = 40;
+        var heading = 4.71238898038469;
+        var sin_th = Math.sin(-heading);
+        var cos_th = Math.cos(-heading);
+        var result = {};
+       
+        var x = event.offsetX;
+        var y = event.offsetY;
+        //console.log("sin_th" + sin_th);
+        //console.log("cos_th" + cos_th);
+        //console.log("this.scale: " + scale);
+        //console.log("this.heading" + heading);
+
+        x /= scale;
+        y /= scale;
+        x -= x / scale;
+        y -= y / scale;
+
+        // The object will not be placed precisely on point every time but it is close
+        dragX = x * cos_th - y * sin_th + 8; // through trial and error, + 8 gets close
+        dragY = x * sin_th + y * cos_th - 9; // through trial and error, - 9 gets close
+
+        // make sure that the items stay on the chassis
+        // if the item is off the chassis range, autocenter
+        if(dragX > 10 || dragX < -10){
+            dragX = 0;
+        }
+        if(dragY > 6 || dragY < -6){
+            dragY = 0;
+        }
+
+        //dragX = event.offsetX;
+        //dragY = event.offsetY;
+        //dragX = -10;
+        //dragY = -6;
+        //dragX = (event.clientX / 100);
+        //dragY = (event.clientY / );
+        /*
+        if (event.clientX >= 200) {
+            dragX = (event.clientX / 80)
+        }
+        if (event.clientX < 200) {
+            dragX = (event.clientX / -80)
+        }
+        if ( event.clientY >= 300) {
+            dragY = (event.clientY / -116);
+        }
+        if (event.clientY < 300) {
+            dragY = (event.clientY / 116)
+        }
+        */
+        
+        
+        //dragX = (event.clientX / 410); // Sam Elfrink
+        //if (event.clientY > 388) {
+            //dragX = (-1 * event.clientY / 410)
+        //} 
+        //dragY = (event.clientY / 388); // Sam Elfrink
+        console.log("dragX: " + dragX);
+        console.log("dragY: " + dragY);
 		console.log("drop");
 		event.preventDefault();
 		var data = event.dataTransfer.getData("text/plain");
