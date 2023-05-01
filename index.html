@@ -37,6 +37,7 @@
                         <div class="toolboxHead">
                             Drag Mode
                         </div>
+                        <!--Create Radio Buttons for Object Interaction-->
                         <div class="wrapper">
                         <input type="radio" id="dragMove" name="dragMode" checked="checked" />
                         <label for="dragMove">Move</label>
@@ -45,7 +46,6 @@
                         <input type="radio" id="dragRotate" name="dragMode"/>
                         <label for="dragRotate">Rotate</label>
                         </div>
-                         <!-- UPDATED AND ADDED BY GAVIN 03/08/2023-->
                         <div class="wrapper">
                         <input type="radio" id="dragRotate90" name="dragMode"/>
                         <label for="dragRotate90">Rotate Wall 90 Degrees</label>
@@ -63,9 +63,8 @@
                         <label for="dragDraw">Draw</label>
                         </div>
 
-                       <!-- END OF UPDATED AND ADDED BY GAVIN 03/08/2023-->
 
-
+                        <!--Add Simulation Control Buttons-->
                         <div class="toolboxHead">
                             Simulation Controls
                         </div>
@@ -73,7 +72,7 @@
                         <button id="simReset">Reset</button>
                         <button id="simClear">Clear</button>
                         
-
+                        <!--Text Fields for Object Attributes-->
                         <div class="toolboxHead">
                             Object Editor
                         </div>
@@ -96,6 +95,7 @@
                         </div>
                         <hr>
 
+                        <!--World Objects Buttons-->
                         <div class="toolboxSubHead">
                             Add Object
                         </div>
@@ -105,6 +105,7 @@
                             <button id="simAddBox">Box</button>
                         </div>
 
+                        <!--Opponent Options Buttons-->
                         <div class="toolboxHead">
                             Manage Opponent
                         </div>
@@ -113,6 +114,7 @@
                         <button id="simRemoveOpponent">Remove</button>
                         <hr>
 
+                        <!--Sample Opponents Buttons (Recommend Varying Robot Designs More)-->
                         <div class="toolboxSubHead">
                             Sample Opponents
                         </div>
@@ -122,15 +124,17 @@
                             <button id="simSpinnerOpponent">Spinner</button>
                         </div>
 
+                        <!--Sample User Bots Buttons-->
                         <div class="toolboxSubHead">
                             Sample User Bot
                         </div>
                         <div class="toolboxSubHead">
-                            <button id="Robot1">Pacbot</button>     <!--Updated by gavin 04/15/2023-->
-                            <button id="Robot2">Destroyer</button>  <!--Updated by gavin 04/15/2023-->
-                            <button id="Robot3">Theseus</button>    <!--Updated by gavin 04/15/2023-->
+                            <button id="Pacbot">Pacbot</button>    
+                            <button id="Destroyer">Destroyer</button>  
+                            <button id="Theseus">Theseus</button>    
                         </div>
-                        <!-- GAVIN'S UPDATED CODE STARTS HERE -->
+
+                        <!--Simulation Speed Buttons-->
                         <div class="toolboxHead">
                             Simulation Speed
                         </div>
@@ -139,26 +143,27 @@
                         <button id="x10">x10</button>
                         <button id="x25">x25</button>
                         <hr/>
-                        <!-- GAVIN'S UPDATED CODE ENDS HERE -->
+
+                        <!--Open or Save World Buttons-->
                         <div class="toolboxHead">
                             Manage World
                         </div>
-                        <!-- GAVIN'S UPDATED CODE STARTS HERE 03/08/2023-->
                         <input type="file" id="worldUpload" style="display: none">
                         <a href="" id="worldDownload" style="display: none"></a>
                         <button id="worldOpen">Open</button>
                         <button id="worldSave">Save</button>
-                        <!-- GAVIN'S UPDATED CODE STARTS HERE 03/08/2023-->
                         <hr>
-                        <!-- GAVIN'S UPDATED CODE STARTS HERE 02/23/2023-->
+
+                        <!--Prebuilt Worlds-->
                         <div class="toolboxSubHead">
                             Worlds
                         </div>
                             <button id="combatWorld">Combat Arena</button>
                             <button id="mazeWorld">Maze</button>
                             <button id="pacmanWorld">Pacman</button>
-                        <!-- GAVIN'S UPDATED CODE ENDS HERE 02/23/2023-->
                         <!--CHASE'S UPDATED CODE STARTS HERE-->
+
+                        <!--Torodial or Infinite World Selector-->
                         <div class="toolboxSubHead">
                             World Properties
                         </div>
@@ -173,6 +178,7 @@
                         <!--CHASE'S UPDATED CODE ENDS HERE-->
 
                         <!-- Sam Elfrink Addition      -->
+                        <!--Change Background button-->
                         <hr>
                         <button id="backgroundChange">Change Background</button>
                         <input type="file" accept="image/png" id="pictureUpload" name="backgroundphoto" style="display: none">
@@ -263,7 +269,7 @@
                             <input type="number" id="wheelSize" name="wheelSize" min="-10" max="10" value ="0.065" step="0.01"><br>
                             <button id="changeWheelSize">Submit</button>   
                         </form>
-                        <button id="wheelSizeReset">Reset</button>  <!-- GAVIN ADDED 04/26/2023 -->
+                        <button id="wheelSizeReset">Reset</button>
                         <!-- !!!!! End of Addition by Sam Elfrink: Wheelsize Change -->
                         <hr>
                     </div>
@@ -307,7 +313,7 @@
             Wiki</a>
     </div>
     
-    <div id="pacmanScore"></div> <!--ADDED BY GAVIN 0/06/2023-->
+    <div id="pacmanScore"></div>
 
 
     <script src="codeflask.min.js"></script>
