@@ -58,6 +58,44 @@ function reduceAngle(a) {
     return a;
 }
 
+// !!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+/**
+ * This function saves the drawing on the draw canvas to a png
+ */
+function downloadUserDrawing(){
+
+    let drawName = prompt("Please enter a name for your drawing:", "drawing");
+    if (drawName == null || drawName == "") {
+        /* do nothing */
+        return;
+    } else {
+        var download = document.getElementById("downloadUserDraw");
+        var image = document.getElementById("simdg").toDataURL("image/png")
+                    .replace("image/png", "image/octet-stream");
+        download.setAttribute("href", image);
+        download.download = drawName + ".png";
+    }
+
+}
+
+// !!!!!!!!!!!!!!! Sam Elfrink Addition !!!!!!!!!!!!!!!!!!!!!
+/**
+ * This function saves the drawing on the background canvas to a png
+ */
+function downloadRobotDrawing(){
+    let fileName = prompt("Please enter a name for your drawing:", "drawing");
+    if (fileName == null || fileName == "") {
+        /* do nothing */
+        return;
+    } else {
+        var download = document.getElementById("downloadRobotDraw");
+        var image = document.getElementById("simbg").toDataURL("image/png")
+                    .replace("image/png", "image/octet-stream");
+        download.setAttribute("href", image);
+        download.download = fileName + ".png";
+    }
+
+}
 
 /**
  * Compute the minimum distance from point e to the line segment
@@ -866,8 +904,9 @@ function Chassis(x, y, heading, name)
         
         //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
         // clear the current HUD
-        drawPlayerHUDClear(); 
+        //drawPlayerHUDClear(); 
         if(opponentClicked == 1) {
+            drawPlayerHUDClear(); 
             drawOpponentHUDClear();
         }
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -876,8 +915,9 @@ function Chassis(x, y, heading, name)
 
         //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
         // display the new HUD with the current battery count
-        drawPlayerHUD(); 
+        //drawPlayerHUD(); 
         if(opponentClicked == 1) {
+            drawPlayerHUD();
             drawOpponentHUD(); 
         }
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3574,10 +3614,11 @@ function backgroundPhotoDraw(event) {
 function simulationGo(event) {
 
     //!!!!! Sam Elfrink Addition !!!!!!!!!
-    if(simState.pacmanWorldLoaded != true){     //GAVIN ADDED 04/23/2023
-        drawPlayerHUD();
-    }
+    //if(simState.pacmanWorldLoaded != true){     //GAVIN ADDED 04/23/2023
+    //    drawPlayerHUD();
+    //}
     if(opponentClicked == 1){
+        drawPlayerHUD();
         drawOpponentHUD();
     }
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4270,8 +4311,9 @@ function simulationUpdate() {
                 if(bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
                     
                     //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
-                    drawPlayerHUDClear();
+                    //drawPlayerHUDClear();
                     if(opponentClicked == 1) {
+                        drawPlayerHUDClear();
                         drawOpponentHUDClear();
                     }
                     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4279,8 +4321,9 @@ function simulationUpdate() {
                     bots[j].hp--;
 
                     //!!!!!!! Sam Elfrink Addition!!!!!!!!!!!!!!!!
-                    drawPlayerHUD();
+                    //drawPlayerHUD();
                     if(opponentClicked == 1) {
+                        drawPlayerHUD();
                         drawOpponentHUD(); // Elfrink
                     }
                     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4411,7 +4454,6 @@ function saveRobot(robot) {
 
 function saveRobotFile() {
     /* !!!!! Addition By Sam Elfrink: Allows users to name their robot file !!!!!!*/
-    let text;
     let robotname = prompt("Please enter your robot file name:", "Robot");
     if (robotname == null || robotname == "") {
         /* do nothing */
