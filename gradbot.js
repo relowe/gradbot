@@ -4192,7 +4192,8 @@ function simulationUpdate() {
         bots[i].update();
     }
     */
-    //Chase new opponent collision
+    
+
     // BotView collision check
     for (var i = 0; i < botViews.length; i++) {
         for (var j = i + 1; j < botViews.length; j++) {
@@ -4255,7 +4256,6 @@ function simulationUpdate() {
             }
         }
 
-       //Chase new box collision
         // keep track of boxes in contact with bot
         var boxesInContact = [];
 
