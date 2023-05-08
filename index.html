@@ -29,6 +29,7 @@
     <div class="tabcontent" id='Simulate'>
         <div class="container">
             <canvas id="simbg" width="800" height="600"></canvas>
+            <canvas id="simdg" width="800" height="600" display="block"></canvas>
             <canvas id="simfg" width="800" height="600"></canvas>
             <div class="toolbox">
                 <div class="toolboxContent">
@@ -36,6 +37,7 @@
                         <div class="toolboxHead">
                             Drag Mode
                         </div>
+                        <!--Create Radio Buttons for Object Interaction-->
                         <div class="wrapper">
                         <input type="radio" id="dragMove" name="dragMode" checked="checked" />
                         <label for="dragMove">Move</label>
@@ -45,18 +47,32 @@
                         <label for="dragRotate">Rotate</label>
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="dragResize" name="dragMode"/>
-                        <label for="dragResize">Resize</label>
+                        <input type="radio" id="dragRotate90" name="dragMode"/>
+                        <label for="dragRotate90">Rotate Wall 90 Degrees</label>
                         </div>
-                        <hr/>
+                        <div class="wrapper">
+                        <input type="radio" id="dragResizeHeight" name="dragMode"/>
+                        <label for="dragResizeHeight">Resize Wall Height</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="dragResizeWidth" name="dragMode"/>
+                        <label for="dragResizeWidth">Resize Wall Width</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="dragDraw" name="dragMode"/>
+                        <label for="dragDraw">Draw</label>
+                        </div>
+
+
+                        <!--Add Simulation Control Buttons-->
                         <div class="toolboxHead">
                             Simulation Controls
                         </div>
                         <button id="simGo">Start</button>
                         <button id="simReset">Reset</button>
                         <button id="simClear">Clear</button>
-                        <hr/>
-
+                        
+                        <!--Text Fields for Object Attributes-->
                         <div class="toolboxHead">
                             Object Editor
                         </div>
@@ -79,40 +95,93 @@
                         </div>
                         <hr>
 
+                        <!--World Objects Buttons-->
                         <div class="toolboxSubHead">
                             Add Object
                         </div>
-                        <button id="simAddLight">Light</button>
-                        <button id="simAddWall">Wall</button>
-                        <hr>
+                        <div class="toolboxSubHead">
+                            <button id="simAddLight">Light</button>
+                            <button id="simAddWall">Wall</button>
+                            <button id="simAddBox">Box</button>
+                        </div>
 
+                        <!--Opponent Options Buttons-->
                         <div class="toolboxHead">
-                            Manage Oponent
+                            Manage Opponent
                         </div>
                         <input type="file" id="simUpload" style="display: none">
                         <button id="simOpenOpponent">Add/Change</button>
                         <button id="simRemoveOpponent">Remove</button>
-                        <br>
-                        *Note: refresh page after running simulation with opponent*
                         <hr>
 
-                        <div class="toolboxHead">
+                        <!--Sample Opponents Buttons (Recommend Varying Robot Designs More)-->
+                        <div class="toolboxSubHead">
                             Sample Opponents
                         </div>
-                        <button id="simRoverOpponent">Rover</button>
-                        <button id="simCirclerOpponent">Circler</button>
-                        <button id="simSpinnerOpponent">Spinner</button>
-                        
-                        <!--
+                        <div class="toolboxSubHead">
+                            <button id="simRoverOpponent">Rover</button>
+                            <button id="simCirclerOpponent">Circler</button>
+                            <button id="simSpinnerOpponent">Spinner</button>
+                        </div>
+
+                        <!--Sample User Bots Buttons-->
+                        <div class="toolboxSubHead">
+                            Sample User Bot
+                        </div>
+                        <div class="toolboxSubHead">
+                            <button id="Pacbot">Pacbot</button>    
+                            <button id="Destroyer">Destroyer</button>  
+                            <button id="Theseus">Theseus</button>    
+                        </div>
+
+                        <!--Simulation Speed Buttons-->
+                        <div class="toolboxHead">
+                            Simulation Speed
+                        </div>
+                        <button id="x1">x1</button>
+                        <button id="x5">x5</button>
+                        <button id="x10">x10</button>
+                        <button id="x25">x25</button>
+                        <hr/>
+
+                        <!--Open or Save World Buttons-->
                         <div class="toolboxHead">
                             Manage World
                         </div>
-                        <input type="file" id="simUpload" style="display: none">
+                        <input type="file" id="worldUpload" style="display: none">
+                        <a href="" id="worldDownload" style="display: none"></a>
                         <button id="worldOpen">Open</button>
                         <button id="worldSave">Save</button>
-                        <button id="worldNew">New</button>
+                        <a id="downloadUserDraw" download="image.png"><button type="button" onClick="downloadUserDrawing()">Download Hand Drawing</button></a>
+                        <a id="downloadRobotDraw" download="image.png"><button type="button" onClick="downloadRobotDrawing()">Download Robot Drawing</button></a>
                         <hr>
-                        -->
+
+                        <!--Prebuilt Worlds-->
+                        <div class="toolboxSubHead">
+                            Worlds
+                        </div>
+                            <button id="combatWorld">Combat Arena</button>
+                            <button id="mazeWorld">Maze</button>
+                            <button id="pacmanWorld">Pacman</button>
+
+                        <!--Torodial or Infinite World Selector-->
+                        <div class="toolboxSubHead">
+                            World Properties
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="toroidal-mode" name="toroidal-mode" checked="checked">
+                        <label for="torodial">Toroidal</label>
+                        </div>
+                        <div class="wrapper">
+                        <input type="radio" id="infinite-mode" name="toroidal-mode"/>
+                        <label for="infinite">Infinite</label>
+                        </div>
+
+                        <!--Change Background button-->
+                        <hr>
+                        <button id="backgroundChange">Change Background</button>
+                        <input type="file" accept="image/png" id="pictureUpload" name="backgroundphoto" style="display: none">
+                                            
                     </div>
                 </div>
             </div>
@@ -128,6 +197,12 @@
                         <div class="toolboxHead">
                             Part Editor
                         </div>
+
+                         <!--Drop Down parts editor -->
+                         <label for="partDropDown">Select a Part:</label>
+                         <select name="partDropDown" id="partDropDown">
+                         </select>
+                         
                         <div id="buildPartEditor" class="partEditorPane">
                             Type: <span id="buildPartType"></span><hr>
 
@@ -145,16 +220,34 @@
 
                             <button id="buildPartDelete">Delete Part</button> <hr>
                         </div>
+                        
+                        <div class="toolboxSubHead">
+                            Drag Part
+                        </div>
 
+                        <img id="DragMarker" draggable="true" src="images/Marker.png" alt="Marker image" width="65" height="50">
+
+                        <img id = "DragLight" src="images/Light.png" alt="Marker image" width="65" height="50">
+
+                        <img id ="DragLightSensor" src="images/Light Sensor.png" alt="Marker image" width="65" height="50">
+
+                        <img id="DragRangeFinder" src="images/Range Finder.png" alt="Marker image" width="65" height="50">
+
+                        <img id="DragLaser" src="images/Laser.png" alt="Marker image" width="50" height="65">
+
+
+                        <!--Dragable parts-->
                         <div class="toolboxSubHead">
                             Add Part
                         </div>
-                        <button id="buildAddMarker">Marker</button><br>
-                        <button id="buildAddLight">Light</button><br>
-                        <button id="buildAddLightSensor">Light Sensor</button><br>
-                        <button id="buildAddRangeSensor">Range Finder</button><br>
-                        <button id="buildAddLaser">Laser</button><br>
-                        <hr>
+                         
+                        <button id="buildAddMarker" draggable="true" >Marker</button><br>
+                        <button id="buildAddLight" draggable="true">Light</button><br>
+                        <button id="buildAddLightSensor" draggable="true">Light Sensor</button><br>
+                        <button id="buildAddRangeSensor" draggable="true">Range Finder</button><br>
+                        <button id="buildAddLaser" draggable="true">Laser</button><br>
+                        <!--Line Sensor-->
+                        <!-- <button id="buildAddLineSensor">Line Sensor</button><br> -->
 
                         <div class="toolboxHead">
                             Robot Management
@@ -167,6 +260,15 @@
                             <button id="buildSave">Save</button>
                             <button id="buildNew">New</button>
                         </div>
+                          <!--Wheelsize Change -->
+                          <div class="toolboxSubHead">
+                            Change Wheel Size
+                        </div>
+                        <form>
+                            <input type="number" id="wheelSize" name="wheelSize" min="-10" max="10" value ="0.065" step="0.01"><br>
+                            <button id="changeWheelSize">Submit</button>   
+                        </form>
+                        <button id="wheelSizeReset">Reset</button>
                         <hr>
                     </div>
                 </div>
@@ -176,31 +278,40 @@
 
     <div class="tabcontent" id="Code">
         <div class="container">
-            <div id="robotCode"></div> 
+            <div id="robotCode"></div>
             <div class="toolbox">
-                <div class="toolboxHead">
-                    Part List 
-                </div>
                 <div class="toolboxContent">
-                    <div class="inner">
-                        <ul id="codePartList">
-                        </ul>
-                    </div>
-                    <hr/>
-                    <div class="inner" id="codePartDoc">
-                    </div>
+                        <div class="toolboxHead">
+                            Part List
+                        </div>
+                        <p>Click on the list for more details:</p>
+                        
+                            <div class="inner">
+                                <ul id="codePartList">
+                                </ul>
+                            </div>
+                            <hr/>
+                            <div class="inner" id="codePartDoc">
+                            </div>
                 </div>
-                <!--<div class="CommandListHead">
-                    <span class="bolded">Robot Commands</span>
-                </div>-->
-                
+                        <!--<div class="CommandListHead">
+                            <span class="bolded">Robot Commands</span>
+                        </div>-->
             </div>
+         
         </div>
     </div>
+
     <div class="pagecontent">
         Source Code On <a href="https://github.com/relowe/gradbot">
             GitHub</a>
     </div>
+    <div class="pagecontent">
+        Need help coding? Check out our GradBot <a href="https://github.com/relowe/gradbot/wiki">
+            Wiki</a>
+    </div>
+    
+    <div id="pacmanScore"></div>
 
 
     <script src="codeflask.min.js"></script>
