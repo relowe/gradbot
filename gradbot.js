@@ -982,8 +982,8 @@ function Box(parent, x, y, size) {
  */
 /*
 // NOTE: The line sensor is unfinished. 
-// Uncommneting this code will cause bugs. 
-// It has been kept for futur work.
+// Uncommenting this code will cause bugs. 
+// It has been kept for future work.
 function LineSensor(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "LineSensor";
@@ -1491,7 +1491,7 @@ function constructView(part) {
         return new LaserView(part);
     }
     // NOTE: The line sensor is unfinished. 
-    // Uncommneting this code will cause bugs. 
+    // Uncommenting this code will cause bugs. 
     // It has been kept for future work.
     /*
     else if(part.type == "LineSensor") {
@@ -1968,8 +1968,8 @@ function RangeSensorView(part) {
  */
 /*
 // NOTE: The line sensor is unfinished. 
-// Uncommneting this code will cause bugs. 
-// It has been kept for futur work.
+// Uncommenting this code will cause bugs. 
+// It has been kept for future work.
 function LineSensorView(part) {
     console.log("LineSensorView");
     //initialize the part view
@@ -3473,8 +3473,8 @@ function buildAddLaser(event) {
  */
 /*
 // NOTE: The line sensor is unfinished. 
-// Uncommneting this code will cause bugs. 
-// It has been kept for futur work.
+// Uncommentingthis code will cause bugs. 
+// It has been kept for future work.
 function buildAddLineSensor(event) {
     addListTrue = 1; 
     var lineSensor = new LineSensor(robot);
@@ -3956,8 +3956,8 @@ function gradbotInit() {
     document.getElementById("buildAddLaser").onclick = buildAddLaser;
 
     // NOTE: The line sensor is unfinished. 
-    // Uncommneting this code will cause bugs. 
-    // It has been kept for futur work.
+    // Uncommenting this code will cause bugs. 
+    // It has been kept for future work.
     //document.getElementById("buildAddLineSensor").onclick = buildAddLineSensor;
 
 
@@ -4173,7 +4173,7 @@ function simulationUpdate() {
                     //drawPlayerHUD();
                     if(opponentClicked == 1) {
                         drawPlayerHUD();
-                        drawOpponentHUD(); // Elfrink
+                        drawOpponentHUD();
                     }
 
                     toVanish.push(obj.part);
@@ -4590,8 +4590,8 @@ function finishPart(part) {
         result = new Laser();
     } 
     // NOTE: The line sensor is unfinished. 
-    // Uncommneting this code will cause bugs. 
-    // It has been kept for futur work.
+    // Uncommenting this code will cause bugs. 
+    // It has been kept for future work.
     /*
     else if(part.type == "LineSensor") {
         console.log("LineSensor");

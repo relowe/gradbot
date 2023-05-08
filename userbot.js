@@ -153,8 +153,8 @@ function Laser(source) {
 
 //LineSensor
 // NOTE: The line sensor is unfinished. 
-// Uncommneting this code will cause bugs. 
-// It has been kept for futur work.
+// uncommenting this code will cause bugs. 
+// It has been kept for future work.
 /*
 function LineSensor(source) {
     Part.call(this, source);
@@ -185,8 +185,8 @@ function constructPart(source) {
     }
     //LineSensor
     // NOTE: The line sensor is unfinished. 
-    // Uncommneting this code will cause bugs. 
-    // It has been kept for futur work.
+    // uncommenting this code will cause bugs. 
+    // It has been kept for future work.
     /*
     else if(source.type == "LineSensor") {
         return new LineSensor(source);
