@@ -31,7 +31,7 @@ var addListTrue = 0;
 var loadRobotTrue = 0;
 var wheelSize = .065 // original default wheel size
 var opponentClicked = 0; // check to see if the opponent as been clicked
-let blackList = ["Part","Motor","Marker","Chassis","chassis","Light","LightSensor","RangeSensor","Laser","constructPart","delay","left","right","runRobot","onmessage","getRobotFunction","updateRobot"]; // blacklist of part names
+let blackList = ["Part","Motor","Marker","Chassis","Light","LightSensor","RangeSensor","Laser","constructPart","delay","runRobot","onmessage","getRobotFunction","updateRobot"]; // blacklist of part names
 let newPartList = []; // An array for the new parts
 var selectPartName; // The name of the current select part
 var cancelAdd = 0; // determines whether the name should be added to newPartList
