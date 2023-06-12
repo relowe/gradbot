@@ -244,7 +244,7 @@ function getRobotFunction(robot) {
     preamble += "r = undefined;\n";
     preamble += "async function userFunction() {\n";
 
-    return new Function("r", preamble + robot.code + "}\n  userFunction();");
+    return new Function("r", preamble + robot.code + "\n}\n  userFunction();");
 }
 
 
