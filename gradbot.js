@@ -629,6 +629,10 @@ function Marker(parent, x, y, name) {
     //by default the pen is up
     this.penDrawing = false;
 
+    // This is used when the robot goes off the map. If it's drawing when it goes off the map, this is set to true so
+    // that when the robot comes back on the map, it knows to reset the penDrawing to true to resume drawing
+    this.resetDrawing = false;
+
     //set the marker color
     this.setColor = function (color) {
         this.color = color;
@@ -643,7 +647,6 @@ function Marker(parent, x, y, name) {
     this.penUp = function () {
         this.penDrawing = false;
     }
-
 
     /**
      * Receive a message from the user thread
@@ -791,24 +794,29 @@ function Chassis(x, y, heading, name) {
                 var wxmax = simState.width + 40;
                 var wymax = simState.height + 40;
 
-                // check if the marker is out of the simstate
+                // Check if the marker is out of the simstate (out of bounds)
                 if (this.x <= -30 || this.x >= simState.width + 30 || this.y <= -30 || this.y >= simState.height + 30) {
-                    // if so, stop drawing
                     for (var i = 0; i < robot.parts.length; i++) {
-                        if (robot.parts[i].type == 'Marker') {
+                        // If the marker is drawing when it goes out of bounds, penUp but set resetDrawing to true
+                        if (robot.parts[i].type == 'Marker' && robot.parts[i].penDrawing) {
                             robot.parts[i].penUp();
+                            robot.parts[i].resetDrawing = true;
                         }
                     }
-                    //penDrawing = false;
-                } else {
-                    // if not, resume drawing
+                } 
+                else { // Marker is in bounds
                     for (var i = 0; i < robot.parts.length; i++) {
                         if (robot.parts[i].type == 'Marker') {
-                            robot.parts[i].penDown();
+                            // If the robot was drawing when it went out of bounds, set it to draw again now that it's in bounds
+                            if (robot.parts[i].resetDrawing){
+                                robot.parts[i].penDrawing = true;
+                                robot.parts[i].resetDrawing = false;
+                            }
+                            if (robot.parts[i].penDrawing){
+                                robot.parts[i].penDown();
+                            }
                         }
                     }
-                    //penDrawing = true;
-
                 }
 
                 if (this.x <= -40) {
@@ -1783,9 +1791,7 @@ function MarkerView(part) {
     this.drawPart = this.draw;
 
     this.draw = function (canvas, context) {
-        context.fill()
-        context.stroke()
-
+        
         this.drawPart(canvas, context);
 
         //draw a line if the pen is down and we have two endpoints
@@ -1797,6 +1803,9 @@ function MarkerView(part) {
             context.moveTo(this.prevLoc.x, this.prevLoc.y);
             context.lineTo(this.loc.x, this.loc.y);
             context.strokeStyle = this.part.color;
+            // These have to be here for the actual marker line drawing
+            context.fill()
+            context.stroke()
         }
     }
 
