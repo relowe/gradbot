@@ -3007,7 +3007,9 @@ function applyEditor(state) {
     }
     part.fill = fill;
     part.outline = outline;
-    part.name = name;
+    if (part.type != "Chassis" && part.type != "Motor"){
+        part.name = name;
+    }
 
     // When a part is selected, the editor removes the name from the drop-down list
     var dropDownElement = document.getElementById("partDropDown");
