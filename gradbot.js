@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */ 
+ */
 /**
  * @file gradbot.js
  * @copyright Robert Lowe 2021
@@ -27,17 +27,17 @@
  ******************************************/
 
 var simulationMode = 'toroidal';
-var addListTrue = 0; 
+var addListTrue = 0;
 var loadRobotTrue = 0;
 var wheelSize = .065 // original default wheel size
 var opponentClicked = 0; // check to see if the opponent as been clicked
-let blackList = ["Part","Motor","Marker","Chassis","Light","LightSensor","RangeSensor","Laser","constructPart","delay","runRobot","onmessage","getRobotFunction","updateRobot"]; // blacklist of part names
+let blackList = ["Part", "Motor", "Marker", "Chassis", "Light", "LightSensor", "RangeSensor", "Laser", "constructPart", "delay", "runRobot", "onmessage", "getRobotFunction", "updateRobot"]; // blacklist of part names
 let newPartList = []; // An array for the new parts
 var selectPartName; // The name of the current select part
 var cancelAdd = 0; // determines whether the name should be added to newPartList
 var dragX = 0;
-var dragY = 0; 
-var dragTrue = 0; 
+var dragY = 0;
+var dragTrue = 0;
 
 /**
  * This function takes an angle in radians and reduces it so its range
@@ -49,8 +49,8 @@ function reduceAngle(a) {
     var tau = 2 * Math.PI;
 
     a %= tau;
-    if(a<0) {
-        a+= tau;
+    if (a < 0) {
+        a += tau;
     }
 
     return a;
@@ -59,7 +59,7 @@ function reduceAngle(a) {
 /**
  * This function saves the drawing on the draw canvas to a png
  */
-function downloadUserDrawing(){
+function downloadUserDrawing() {
 
     let drawName = prompt("Please enter a name for your drawing:", "drawing");
     if (drawName == null || drawName == "") {
@@ -68,7 +68,7 @@ function downloadUserDrawing(){
     } else {
         var download = document.getElementById("downloadUserDraw");
         var image = document.getElementById("simdg").toDataURL("image/png")
-                    .replace("image/png", "image/octet-stream");
+            .replace("image/png", "image/octet-stream");
         download.setAttribute("href", image);
         download.download = drawName + ".png";
     }
@@ -78,7 +78,7 @@ function downloadUserDrawing(){
 /**
  * This function saves the drawing on the background canvas to a png
  */
-function downloadRobotDrawing(){
+function downloadRobotDrawing() {
     let fileName = prompt("Please enter a name for your drawing:", "drawing");
     if (fileName == null || fileName == "") {
         /* do nothing */
@@ -86,7 +86,7 @@ function downloadRobotDrawing(){
     } else {
         var download = document.getElementById("downloadRobotDraw");
         var image = document.getElementById("simbg").toDataURL("image/png")
-                    .replace("image/png", "image/octet-stream");
+            .replace("image/png", "image/octet-stream");
         download.setAttribute("href", image);
         download.download = fileName + ".png";
     }
@@ -105,24 +105,24 @@ function downloadRobotDrawing(){
  */
 function minLineDist(a, b, e) {
     //vectors
-    var ab = {x: b.x - a.x, y: b.y - a.y};
-    var be = {x: e.x - b.x, y: e.y - b.y};
-    var ae = {x: e.x - a.x, y: e.y - a.y};
+    var ab = { x: b.x - a.x, y: b.y - a.y };
+    var be = { x: e.x - b.x, y: e.y - b.y };
+    var ae = { x: e.x - a.x, y: e.y - a.y };
 
     //dot products
     ab_be = ab.x * be.x + ab.y * be.y;
     ab_ae = ab.x * ae.x + ab.y * ae.y;
-    
-    //Minimum distance from e to the line segment
-    var result = {distance: Infinity, angle: 0};
 
-    if(ab_be > 0) {
+    //Minimum distance from e to the line segment
+    var result = { distance: Infinity, angle: 0 };
+
+    if (ab_be > 0) {
         // Case 1 - Point b is the closest
         var y = b.y - e.y;
         var x = b.x - e.x;
         result.distance = Math.sqrt(x * x + y * y);
         result.angle = Math.atan2(y, x);
-    } else if(ab_ae < 0) {
+    } else if (ab_ae < 0) {
         // Case 2 - Point a is the closest
         var y = b.y - e.y;
         var x = b.x - e.x;
@@ -136,7 +136,7 @@ function minLineDist(a, b, e) {
         var y2 = ae.y;
         var mod = Math.sqrt(x1 * x1 + y1 * y1);
         result.distance = Math.abs(x1 * y2 - y1 * x2) / mod;
-        result.angle = Math.atan2(ab.y, ab.x) + Math.PI/2;
+        result.angle = Math.atan2(ab.y, ab.x) + Math.PI / 2;
     }
 
     return result;
@@ -152,14 +152,14 @@ function minLineDist(a, b, e) {
  * @returns {object} - an object {distance:, angle:}
  */
 function minPolyDist(p, poly) {
-    var result = {distance: Infinity, angle: 0};
+    var result = { distance: Infinity, angle: 0 };
     var dist;
 
     //handle single point polygons 
-    if(poly.length == 1) {
+    if (poly.length == 1) {
         var dx = poly[0].x - p.x;
         var dy = poly[0].y - p.y;
-        result.distance = Math.sqrt(dx*dx + dy*dy);
+        result.distance = Math.sqrt(dx * dx + dy * dy);
         result.angle = Math.atan2(dy, dx);
         return result;
     }
@@ -168,11 +168,11 @@ function minPolyDist(p, poly) {
     poly = poly.concat([poly[0]]);
 
     // check all the line segments
-    for(var i=0; i<poly.length - 1; i++) {
-        a = {x: poly[i].x, y: poly[i].y};
-        b = {x: poly[i+1].x, y: poly[i+1].y};
+    for (var i = 0; i < poly.length - 1; i++) {
+        a = { x: poly[i].x, y: poly[i].y };
+        b = { x: poly[i + 1].x, y: poly[i + 1].y };
         dist = minLineDist(a, b, p);
-        if(dist.distance < result.distance) {
+        if (dist.distance < result.distance) {
             result = dist;
         }
     }
@@ -189,22 +189,22 @@ function minPolyDist(p, poly) {
 function collision(view1, view2) {
     // Check for overlap in the x-axis
     if (view1.minx < view2.maxx && view1.maxx > view2.minx) {
-      // Check for overlap in the y-axis
-      if (view1.miny < view2.maxy && view1.maxy > view2.miny) {
-        // The views overlap
-        simState.currentlyCollided = true;      //05/07/2023
-        return true;
-      }
+        // Check for overlap in the y-axis
+        if (view1.miny < view2.maxy && view1.maxy > view2.miny) {
+            // The views overlap
+            simState.currentlyCollided = true;      //05/07/2023
+            return true;
+        }
     }
-    else{
+    else {
         simState.currentlyCollided = false;
     }
-  
+
     // The views do not overlap
     return false;
-  }
+}
 
-  
+
 
 /**
  * This is a prototype for a positionable object. It handles all the 
@@ -214,15 +214,15 @@ function collision(view1, view2) {
  * @param {number} heading  - the direction in which the object is facing
  */
 function Positionable(x, y, heading) {
-    
-    if(dragTrue == 1) {
+
+    if (dragTrue == 1) {
         this.x = dragX;
         this.y = dragY;
     } else {
         this.x = x != undefined ? x : 0;
         this.y = y != undefined ? y : 0;
     }
-   
+
     // original code starts here
     //this.x = x != undefined ? x : 0;
     //this.y = y != undefined ? y : 0;
@@ -233,7 +233,7 @@ function Positionable(x, y, heading) {
      * Rotate the positionable.
      * @param {number} a - The angle to rotate by (in radians)
      */
-    this.rotate = function(a) {
+    this.rotate = function (a) {
         this.heading = reduceAngle(this.heading + a);
     };
 
@@ -242,7 +242,7 @@ function Positionable(x, y, heading) {
      * Turn the positionable to face along the given heading.
      * @param {number} a - The new heading to face along
      */
-    this.face = function(a) {
+    this.face = function (a) {
         this.heading = reduceAngle(a);
     }
 
@@ -252,7 +252,7 @@ function Positionable(x, y, heading) {
      * @param {*} x 
      * @param {*} y 
      */
-    this.moveTo = function(x, y) {
+    this.moveTo = function (x, y) {
         this.x = x;
         this.y = y;
     }
@@ -283,12 +283,12 @@ function PartDoc() {
     this.vars = Array();
     this.showName = true;
 
-    this.display = function(parent, name) {
+    this.display = function (parent, name) {
         var ul = document.createElement("ul");
         parent.appendChild(ul);
 
         // process the functions
-        for(var i=0; i<this.functions.length; i++) {
+        for (var i = 0; i < this.functions.length; i++) {
             var f = this.functions[i];
 
             // create the list elements
@@ -303,15 +303,15 @@ function PartDoc() {
             //start off the function call
             code.classList.add('code');
             code.innerHTML = "";
-            if(this.showName) {
+            if (this.showName) {
                 code.innerHTML = name + ".";
             }
             code.innerHTML += f.name + "(";
 
             // process the parameters
-            for(var j=0; j < f.params.length; j++) {
+            for (var j = 0; j < f.params.length; j++) {
                 var p = f.params[j];
-                if(j != 0) { code.innerHTML += ","; }
+                if (j != 0) { code.innerHTML += ","; }
                 code.innerHTML += p.name;
 
                 var pli = document.createElement("li");
@@ -329,7 +329,7 @@ function PartDoc() {
         }
 
         // process the vars
-        for(var i=0; i<this.vars.length; i++) {
+        for (var i = 0; i < this.vars.length; i++) {
             var v = this.vars[i];
             var li = document.createElement("li");
             var code = document.createElement("span");
@@ -337,7 +337,7 @@ function PartDoc() {
             code.classList.add('code');
 
             code.innerHTML = "";
-            if(this.showName) {
+            if (this.showName) {
                 code.innerHTML = name + ".";
             }
             code.innerHTML += v.name;
@@ -368,12 +368,12 @@ function MovementDoc() {
     this.vars = Array();
     this.showName = true;
 
-    this.display = function(parent, name) {
+    this.display = function (parent, name) {
         var ul = document.createElement("ul");
         parent.appendChild(ul);
 
         // process the functions
-        for(var i=0; i<this.functions.length; i++) {
+        for (var i = 0; i < this.functions.length; i++) {
             var f = this.functions[i];
 
             // create the list elements
@@ -388,15 +388,15 @@ function MovementDoc() {
             //start off the function call
             code.classList.add('code');
             code.innerHTML = "";
-            if(this.showName) {
+            if (this.showName) {
                 code.innerHTML = name + ".";
             }
             code.innerHTML += f.name + ":";
 
             // process the parameters
-            for(var j=0; j < f.params.length; j++) {
+            for (var j = 0; j < f.params.length; j++) {
                 var p = f.params[j];
-                if(j != 0) { code.innerHTML += ","; }
+                if (j != 0) { code.innerHTML += ","; }
                 code.innerHTML += p.name;
 
                 var pli = document.createElement("li");
@@ -413,7 +413,7 @@ function MovementDoc() {
         }
 
         // process the vars
-        for(var i=0; i<this.vars.length; i++) {
+        for (var i = 0; i < this.vars.length; i++) {
             var v = this.vars[i];
             var li = document.createElement("li");
             var code = document.createElement("span");
@@ -421,7 +421,7 @@ function MovementDoc() {
             code.classList.add('code');
 
             code.innerHTML = "";
-            if(this.showName) {
+            if (this.showName) {
                 code.innerHTML = name + ".";
             }
             code.innerHTML += v.name;
@@ -441,8 +441,7 @@ function MovementDoc() {
  * @param {*} heading  - Angle (0-2*Pi) of the part. 
  */
 var partCount = 0;
-function Part(parent, x, y, heading, name) 
-{
+function Part(parent, x, y, heading, name) {
     partCount++;
     // populate the fields
     this.parent = parent;
@@ -453,7 +452,7 @@ function Part(parent, x, y, heading, name)
     this.doc = new PartDoc();
 
     // add the new part name to the drop-down list
-   
+
     if (loadRobotTrue == 1) {
         //do nothing
     }
@@ -476,13 +475,13 @@ function Part(parent, x, y, heading, name)
     * Send data to the part.
      * @param {*} data - The data to send.
      */
-    this.send = function(data){ };
+    this.send = function (data) { };
 
     /**
      * Receive data from the part.
      * @returns The data from the part.
      */
-    this.receive = function(){ };
+    this.receive = function () { };
 
     /**
      * The power level of the part.
@@ -494,23 +493,23 @@ function Part(parent, x, y, heading, name)
      * 0 and 100 inclusive.
      * @param {*} power - The power level.
      */
-    this.setPower = function(power) {
+    this.setPower = function (power) {
 
         // NOTE: the userbot side of set power will trigger first
         // check to make sure that the setPower() function isn't empty
-        if(power == undefined) {
+        if (power == undefined) {
             alert("Error: You left your power level blank. You must enter a power value between 1-100 in your code ( ex: left.setPower(70) )");
-            
+
             // set power to 0
             power = 0;
         }
-        
+
         //limit the power setting's range
-        if(power > 100) {
+        if (power > 100) {
             power = 100;
-        } else if(power < -100) {
+        } else if (power < -100) {
             power = -100;
-        } else if(simState.currentlyCollided == true){  
+        } else if (simState.currentlyCollided == true) {
             power = 0;
         }
         this.power = power;
@@ -520,7 +519,7 @@ function Part(parent, x, y, heading, name)
     /**
      * Update the part's state.
      */
-    this.update = function() { };
+    this.update = function () { };
 
 
     /**
@@ -542,7 +541,7 @@ function Part(parent, x, y, heading, name)
     /**
      * Return a sendable (postable to a worker) version of this object.
      */
-    this.sendable = function() {
+    this.sendable = function () {
         //by default, just use the toJSON function
         return this.toJSON();
     };
@@ -552,7 +551,7 @@ function Part(parent, x, y, heading, name)
      * Receive a message from the user thread
      * @param {*} message 
      */
-    this.receiveUser = function(message) {
+    this.receiveUser = function (message) {
         //by default, just ignore the message!
     }
 }
@@ -560,27 +559,27 @@ function Part(parent, x, y, heading, name)
 
 
 
-function Motor(parent, x, y, heading, name)
-{
+function Motor(parent, x, y, heading, name) {
     //construct the part
     Part.call(this, parent, x, y, heading, name);
     this.type = "Motor";
 
     //document the motor
     this.doc.functions = Array(
-        { name: 'setPower',
-          doc: 'This sets the power of the motor.',
-          params: Array( { name: 'p', doc: 'This is the power setting. Its value can range from -100 to 100.'})
+        {
+            name: 'setPower',
+            doc: 'This sets the power of the motor.',
+            params: Array({ name: 'p', doc: 'This is the power setting. Its value can range from -100 to 100.' })
         }
     );
     this.doc.vars = Array(
-        {name: 'power', doc: 'This represents the current power setting of the motor.'}
+        { name: 'power', doc: 'This represents the current power setting of the motor.' }
     );
 
     // handle speed of the motor
     this.speed = 0;  // motor speed in radians per second
 
-    this.update = function() {
+    this.update = function () {
         var multi = getSpeedMult();
         //we are basing this on the sparkfun hobby motors which spin at 65 RPM (max)
         //This maximum speed is roughly 6.81 radians per second
@@ -592,12 +591,12 @@ function Motor(parent, x, y, heading, name)
      * Receive a message from the user thread
      * @param {*} message 
      */
-    this.receiveUser = function(message) {
+    this.receiveUser = function (message) {
         //copy the power setting from the user model
-        if (simState.currentlyCollided == true){
+        if (simState.currentlyCollided == true) {
             this.setPower(0);
         }
-        else{
+        else {
             this.setPower(message.power);
         }
     }
@@ -611,15 +610,17 @@ function Marker(parent, x, y, name) {
 
     // document the part
     this.doc.functions = Array(
-        { name: 'penDown', doc: 'This begins drawing.', params: Array()},
-        { name: 'penUp', doc: 'This stops drawing.', params: Array()},
-        { name: 'setColor', doc: 'This changes the drawing color.', params: Array(
-            {name: 'c', doc: 'This is color (ex: blue)'}
-        )}
+        { name: 'penDown', doc: 'This begins drawing.', params: Array() },
+        { name: 'penUp', doc: 'This stops drawing.', params: Array() },
+        {
+            name: 'setColor', doc: 'This changes the drawing color.', params: Array(
+                { name: 'c', doc: 'This is color (ex: blue)' }
+            )
+        }
     );
     this.doc.vars = Array(
         { name: 'color', doc: 'The current color of the marker.' },
-        { name: 'penDrawing', doc: 'True if the pen is drawing.'}
+        { name: 'penDrawing', doc: 'True if the pen is drawing.' }
     );
 
     //by default we are coloring black
@@ -629,17 +630,17 @@ function Marker(parent, x, y, name) {
     this.penDrawing = false;
 
     //set the marker color
-    this.setColor = function(color) {
+    this.setColor = function (color) {
         this.color = color;
     }
 
     //lower the pen
-    this.penDown = function() {
+    this.penDown = function () {
         this.penDrawing = true;
     }
 
     //raise the pen
-    this.penUp = function() {
+    this.penUp = function () {
         this.penDrawing = false;
     }
 
@@ -648,24 +649,23 @@ function Marker(parent, x, y, name) {
      * Receive a message from the user thread
      * @param {*} message 
      */
-    this.receiveUser = function(message) {
+    this.receiveUser = function (message) {
         this.color = message.color;
         this.penDrawing = message.penDrawing;
     }
 }
 
 
-function Chassis(x, y, heading, name) 
-{
+function Chassis(x, y, heading, name) {
     Part.call(this, null, x, y, heading, name);
     this.type = "Chassis";
-    
+
     //no thread at first
     this.thread = null;
 
     //handle the subparts of the chassis
     this.parts = Array();
-    this.addPart = function(p) {
+    this.addPart = function (p) {
         this.parts.push(p);
     };
 
@@ -675,9 +675,9 @@ function Chassis(x, y, heading, name)
 
     // adding a wheel size variable to the chassis
     this.chassisWheelSize = document.getElementById("wheelSize").value;
-    
+
     // update function to preserve wheel size and update it to the robot
-    this.updateWheel = function() {
+    this.updateWheel = function () {
         this.chassisWheelSize = document.getElementById("wheelSize").value;
     }
 
@@ -693,9 +693,9 @@ function Chassis(x, y, heading, name)
     this.laserBattery = 50;
 
     // deal with explosions
-    this.explode = function() {
+    this.explode = function () {
         //terminate the robot thread
-        if(this.thread){
+        if (this.thread) {
             this.thread.terminate();
         }
         this.blowedUp = true;
@@ -704,7 +704,7 @@ function Chassis(x, y, heading, name)
         //put all the parts in the world with new velocities
         this.parts = this.parts.concat([this.left, this.right, this]);
         var speed = 10;
-        for(var i=0; i<this.parts.length; i++) {
+        for (var i = 0; i < this.parts.length; i++) {
             //worldify it!
             this.parts[i].x = this.parts[i].worldx;
             this.parts[i].y = this.parts[i].worldy;
@@ -712,8 +712,10 @@ function Chassis(x, y, heading, name)
 
             //compute the new velocities
             var heading = Math.random() * Math.PI * 2;
-            var velocity = { dx: speed * Math.cos(heading),
-                             dy: speed * Math.sin(heading) };
+            var velocity = {
+                dx: speed * Math.cos(heading),
+                dy: speed * Math.sin(heading)
+            };
             this.explosionVelocities.push(velocity);
         }
 
@@ -721,8 +723,8 @@ function Chassis(x, y, heading, name)
 
 
     //explosion frame
-    this.explosionUpdate = function() {
-        for(var i=0; i < this.parts.length; i++) {
+    this.explosionUpdate = function () {
+        for (var i = 0; i < this.parts.length; i++) {
             var p = this.parts[i];
 
             //tumble
@@ -735,24 +737,23 @@ function Chassis(x, y, heading, name)
     }
 
 
-    this.update = function() 
-    {
+    this.update = function () {
         //handle exploding
-        if(this.blowedUp) {
+        if (this.blowedUp) {
             this.explosionUpdate();
             return;
         }
 
         //has the end come?
-        if(this.hp <= 0) {
-          this.explode();
-          return;
+        if (this.hp <= 0) {
+            this.explode();
+            return;
         }
 
         this.updateWheel();
 
         //update all the sub parts
-        for(var i in this.parts) {
+        for (var i in this.parts) {
             var p = this.parts[i];
             p.update();
         }
@@ -766,11 +767,11 @@ function Chassis(x, y, heading, name)
 
         //var r = .065; // 65mm diameter wheels
         var l = 0.238; // 238mm axel length
-        var fwd = r/2 * (this.left.speed + this.right.speed) * 60;
-        var yaw = r/l * (this.left.speed - this.right.speed);
+        var fwd = r / 2 * (this.left.speed + this.right.speed) * 60;
+        var yaw = r / l * (this.left.speed - this.right.speed);
 
         //populate the last update (if needed)
-        if(this.lastUpdate == undefined) {
+        if (this.lastUpdate == undefined) {
             this.lastUpdate = Date.now();
         }
 
@@ -785,26 +786,24 @@ function Chassis(x, y, heading, name)
         this.heading += yaw * elapsed;
 
         // Update the position of the object based on the current simulation mode
-        switch(simulationMode) {
+        switch (simulationMode) {
             case 'toroidal':
                 var wxmax = simState.width + 40;
                 var wymax = simState.height + 40;
-                
+
                 // check if the marker is out of the simstate
-                if(this.x <= -30 || this.x >= simState.width + 30 || this.y <= -30 || this.y >= simState.height + 30) {
+                if (this.x <= -30 || this.x >= simState.width + 30 || this.y <= -30 || this.y >= simState.height + 30) {
                     // if so, stop drawing
-                    for(var i=0; i < robot.parts.length; i++) {
-                        if (robot.parts[i].type == 'Marker')
-                        {
+                    for (var i = 0; i < robot.parts.length; i++) {
+                        if (robot.parts[i].type == 'Marker') {
                             robot.parts[i].penUp();
                         }
                     }
                     //penDrawing = false;
                 } else {
                     // if not, resume drawing
-                    for(var i=0; i < robot.parts.length; i++) {
-                        if (robot.parts[i].type == 'Marker')
-                        {
+                    for (var i = 0; i < robot.parts.length; i++) {
+                        if (robot.parts[i].type == 'Marker') {
                             robot.parts[i].penDown();
                         }
                     }
@@ -812,16 +811,16 @@ function Chassis(x, y, heading, name)
 
                 }
 
-                if(this.x <= -40) {
-                    this.x = wxmax-1;
+                if (this.x <= -40) {
+                    this.x = wxmax - 1;
                 }
-                if(this.y <= -40) {
-                    this.y = wymax-1;
+                if (this.y <= -40) {
+                    this.y = wymax - 1;
                 }
-                if(this.x >= wxmax) {
+                if (this.x >= wxmax) {
                     this.x -= wxmax;
                 }
-                if(this.y >= wymax) {
+                if (this.y >= wymax) {
                     this.y -= wymax;
                 }
                 break;
@@ -830,7 +829,7 @@ function Chassis(x, y, heading, name)
                 var wymax = simState.height;
                 var removeFlag = false;
 
-                if(this.x < -40 || this.x > wxmax + 40 || this.y < -40 || this.y > wymax + 40) {
+                if (this.x < -40 || this.x > wxmax + 40 || this.y < -40 || this.y > wymax + 40) {
                     removeFlag = true;
                 }
                 break;
@@ -841,7 +840,7 @@ function Chassis(x, y, heading, name)
     /**
      * Return a sendable (postable to a worker) version of this object.
      */
-    this.sendable = function() {
+    this.sendable = function () {
         var result = {};
         result.name = this.name;
         result.type = this.type;
@@ -853,7 +852,7 @@ function Chassis(x, y, heading, name)
         result.parts.push(this.right.sendable());
 
         //push all the parts
-        for(var i=0; i<this.parts.length; i++) {
+        for (var i = 0; i < this.parts.length; i++) {
             result.parts.push(this.parts[i].sendable());
         }
 
@@ -864,18 +863,18 @@ function Chassis(x, y, heading, name)
      * Return the part with the given name
      * @param {*} name 
      */
-    this.getPartByName = function(name) {
+    this.getPartByName = function (name) {
         //try the motors
-        if(this.left.name == name) {
+        if (this.left.name == name) {
             return this.left;
         }
-        if(this.right.name == name) {
+        if (this.right.name == name) {
             return this.right;
         }
 
         //try the parts
-        for(var i=0; i<this.parts.length; i++) {
-            if(this.parts[i].name == name) {
+        for (var i = 0; i < this.parts.length; i++) {
+            if (this.parts[i].name == name) {
                 return this.parts[i];
             }
         }
@@ -886,17 +885,17 @@ function Chassis(x, y, heading, name)
 
 
     // reset the laser battery
-    this.resetLaserBattery = function() {
+    this.resetLaserBattery = function () {
         this.laserBattery = 50;
     }
 
     // deplete the laser battery by a certain amount
-    this.depleteLaserBattery = function(amount) {
-        
+    this.depleteLaserBattery = function (amount) {
+
         // clear the current HUD
         //drawPlayerHUDClear(); 
-        if(opponentClicked == 1) {
-            drawPlayerHUDClear(); 
+        if (opponentClicked == 1) {
+            drawPlayerHUDClear();
             drawOpponentHUDClear();
         }
 
@@ -904,9 +903,9 @@ function Chassis(x, y, heading, name)
 
         // display the new HUD with the current battery count
         //drawPlayerHUD(); 
-        if(opponentClicked == 1) {
+        if (opponentClicked == 1) {
             drawPlayerHUD();
-            drawOpponentHUD(); 
+            drawOpponentHUD();
         }
     }
 }
@@ -922,12 +921,14 @@ function Light(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "Light";
     this.radius = 3;
-    this.fill = "yellow"       
-    this.moveable = true;      
+    this.fill = "yellow"
+    this.moveable = true;
     this.doc.functions = Array(
-        { name: 'setColor', doc: 'This changes the light color.', params: Array(
-            {name: 'c', doc: 'The color value (ex: blue)'}
-        )}
+        {
+            name: 'setColor', doc: 'This changes the light color.', params: Array(
+                { name: 'c', doc: 'The color value (ex: blue)' }
+            )
+        }
     );
 
 
@@ -935,7 +936,7 @@ function Light(parent, x, y) {
      * Receive a message from the user thread
      * @param {*} message 
      */
-    this.receiveUser = function(message) {
+    this.receiveUser = function (message) {
         //copy the power setting from the user model
         this.fill = message.fill;
     }
@@ -951,10 +952,10 @@ function Light(parent, x, y) {
 function Wall(parent, x, y) {
     Part.call(this, parent, x, y);
     this.type = "Wall";
-    this.outline="blue";    
+    this.outline = "blue";
     this.fill = "blue";
-    this.rotated = false;    
-    this.moveable = true;       
+    this.rotated = false;
+    this.moveable = true;
 }
 
 /**
@@ -970,7 +971,7 @@ function Box(parent, x, y, size) {
     this.outline = "blue";
     this.fill = "lightblue";
     this.size = size;
-    this.moveable = true;  
+    this.moveable = true;
 }
 
 /*
@@ -1009,63 +1010,63 @@ function RangeSensor(parent, x, y) {
     this.worldy = 0;
 
     this.doc.vars = Array(
-        {name: 'distance', doc: 'The distance to the nearest object.'}
+        { name: 'distance', doc: 'The distance to the nearest object.' }
     );
 
 
-    this.updateSensor = function() {
-        var closest = Infinity; 
-        var bots = [ simView ];
-        if(opponent) {
+    this.updateSensor = function () {
+        var closest = Infinity;
+        var bots = [simView];
+        if (opponent) {
             bots.push(opponentView);
         }
         var objects = bots.concat(simState.worldObjects);
 
         //find the closest visible light source
-        for(var i in objects) {
+        for (var i in objects) {
             var part = objects[i].part;
 
             //Do not lights in pacman, this will break the game
-            if(simState.pacmanWorldLoaded == true && part.type == "Light"){
+            if (simState.pacmanWorldLoaded == true && part.type == "Light") {
                 continue;
             }
 
             //skip our parent part
-            if(this.parent === part) {
+            if (this.parent === part) {
                 continue;
             }
-    
+
             //calculate displacement to the object
-            var dist = minPolyDist({x: this.worldx, y: this.worldy}, objects[i].view.polygon);
+            var dist = minPolyDist({ x: this.worldx, y: this.worldy }, objects[i].view.polygon);
             var angle = reduceAngle(dist.angle);
             angle = reduceAngle(this.parent.heading - angle);
             //skip the lights outside of our field of view
-            if(angle > 0.52 && angle < 5.76) { 
+            if (angle > 0.52 && angle < 5.76) {
                 continue;
             }
 
             //check for being the closest
-            if(dist.distance < closest) {
+            if (dist.distance < closest) {
                 closest = dist.distance;
             }
         }
 
         //calculate the distance
         this.distance = closest / 60;
-        if(isNaN(this.distance) || this.distance > 5) {
+        if (isNaN(this.distance) || this.distance > 5) {
             //this.distance = Infinity;
         }
 
         //pass the update into the web worker
-        if(this.parent.thread) {
-            this.parent.thread.postMessage({type: "update", update: {name: this.name, distance: this.distance}});
+        if (this.parent.thread) {
+            this.parent.thread.postMessage({ type: "update", update: { name: this.name, distance: this.distance } });
         }
     };
 
 
-    this.update = function() {
+    this.update = function () {
         //populate the last update (if needed)
-        if(this.lastUpdate == undefined) {
+        if (this.lastUpdate == undefined) {
             this.lastUpdate = Date.now();
         }
 
@@ -1074,7 +1075,7 @@ function RangeSensor(parent, x, y) {
         var elapsed = (cur - this.lastUpdate) / 1000;
 
         // trigger the sensor
-        if(elapsed >= 1 / this.freq) {
+        if (elapsed >= 1 / this.freq) {
             this.updateSensor();
             this.lastUpdate = cur;
         }
@@ -1100,14 +1101,14 @@ function LightSensor(parent, x, y) {
     this.freq = 10;  //frequency in hertz
 
     this.doc.vars = Array(
-        {name: 'intensity', doc: 'The intensity of the sensed light.'}
+        { name: 'intensity', doc: 'The intensity of the sensed light.' }
     );
 
-    this.getRobotLights = function(r) {
+    this.getRobotLights = function (r) {
         var lights = [];
 
-        for(var i=0; i<r.parts.length; i++) {
-            if(r.parts[i].type == "Light") {
+        for (var i = 0; i < r.parts.length; i++) {
+            if (r.parts[i].type == "Light") {
                 lights.push(r.parts[i]);
             }
         }
@@ -1116,12 +1117,12 @@ function LightSensor(parent, x, y) {
     }
 
 
-    this.getWorldLights = function() {
+    this.getWorldLights = function () {
         var lights = [];
-        for(var i=0; i<simState.worldObjects.length; i++) {
+        for (var i = 0; i < simState.worldObjects.length; i++) {
             var part = simState.worldObjects[i].part;
 
-            if(part.type=="Light") {
+            if (part.type == "Light") {
                 lights.push(part);
             }
         }
@@ -1130,25 +1131,25 @@ function LightSensor(parent, x, y) {
 
 
 
-    this.updateSensor = function() {
-        var closest = Infinity; 
+    this.updateSensor = function () {
+        var closest = Infinity;
         var lights = this.getWorldLights();
         lights = lights.concat(this.getRobotLights(robot));
-        if(opponent) {
+        if (opponent) {
             lights = lights.concat(this.getRobotLights(opponent));
         }
 
         //find the closest visible light source
-        for(var i in lights) {
+        for (var i in lights) {
             var part = lights[i];
-    
+
             //we only sense lights
-            if(part.type != "Light") { 
-                continue; 
+            if (part.type != "Light") {
+                continue;
             }
 
             //filter the lighty by our fill color
-            if(this.fill != "white" && part.fill != this.fill) {
+            if (this.fill != "white" && part.fill != this.fill) {
                 continue;
             }
 
@@ -1161,13 +1162,13 @@ function LightSensor(parent, x, y) {
             angle = reduceAngle(this.parent.heading - angle);
 
             //skip the lights outside of our field of view
-            if(angle > 0.52 && angle < 5.76) {
+            if (angle > 0.52 && angle < 5.76) {
                 continue;
             }
 
             //calculate the square distance
-            var dist = dx*dx + dy*dy;
-            if(dist < closest) {
+            var dist = dx * dx + dy * dy;
+            if (dist < closest) {
                 closest = dist;
             }
         }
@@ -1177,23 +1178,23 @@ function LightSensor(parent, x, y) {
 
         // 100% intensity at 1 m so...
         this.intensity = 100 / closest;
-        if(isNaN(this.intensity)) {
+        if (isNaN(this.intensity)) {
             this.intensity = 0;
         }
-        if(this.intensity > 100) {
-            this.intensity=100;
+        if (this.intensity > 100) {
+            this.intensity = 100;
         }
 
         //pass the update into the web worker
-        if(this.parent.thread) {
-            this.parent.thread.postMessage({type: "update", update: {name: this.name, intensity: this.intensity}});
+        if (this.parent.thread) {
+            this.parent.thread.postMessage({ type: "update", update: { name: this.name, intensity: this.intensity } });
         }
     };
 
 
-    this.update = function() {
+    this.update = function () {
         //populate the last update (if needed)
-        if(this.lastUpdate == undefined) {
+        if (this.lastUpdate == undefined) {
             this.lastUpdate = Date.now();
         }
 
@@ -1202,7 +1203,7 @@ function LightSensor(parent, x, y) {
         var elapsed = (cur - this.lastUpdate) / 1000;
 
         // trigger the sensor
-        if(elapsed >= 1 / this.freq) {
+        if (elapsed >= 1 / this.freq) {
             this.updateSensor();
             this.lastUpdate = cur;
         }
@@ -1219,36 +1220,36 @@ function LaserBlast(x, y, heading, firedBy) {
     Part.call(this, null, x, y, heading);
     this.type = "LaserBlast";
 
-    this.outline="red";
-    this.fill="red";
+    this.outline = "red";
+    this.fill = "red";
 
-    var speed = 20;     
+    var speed = 20;
 
     this.dx = speed * Math.cos(heading);
     this.dy = speed * Math.sin(heading);
     this.firedBy = firedBy;
 
-    this.vanish = function() {
+    this.vanish = function () {
         //take ourselves out of the world objects
-        var toRemove = 10000000000;     
-        for(var i = 0; i< simState.worldObjects.length; i++) {
-            if(simState.worldObjects[i].part === this) {
+        var toRemove = 10000000000;
+        for (var i = 0; i < simState.worldObjects.length; i++) {
+            if (simState.worldObjects[i].part === this) {
                 toRemove = i;
                 break;
             }
         }
-        if(i >= 0) {
+        if (i >= 0) {
             simState.worldObjects.splice(toRemove, 1);
         }
     }
 
 
-    this.update = function() {
+    this.update = function () {
         this.x += this.dx;
         this.y += this.dy;
 
         //TODO, dont' hardcode the sizes
-        if(this.x < 0 || this.x > 800 || this.y < 0 || this.y > 600) {
+        if (this.x < 0 || this.x > 800 || this.y < 0 || this.y > 600) {
             this.vanish();
         }
     }
@@ -1266,16 +1267,16 @@ function Laser(parent, x, y, heading) {
     this.chargeTime = 500;
 
     this.doc.functions = Array(
-        {name: 'fire', doc: 'This fires the laser beam once.', params: Array()}
+        { name: 'fire', doc: 'This fires the laser beam once.', params: Array() }
     );
 
     //fire the laser beam
-    this.fire = function() {
+    this.fire = function () {
         // no charge, no pew
-        if(!this.charged) { return; }
+        if (!this.charged) { return; }
 
         // check that we have ample battery power
-        if(this.parent.laserBattery <= 0) {
+        if (this.parent.laserBattery <= 0) {
             return;
         }
 
@@ -1290,14 +1291,14 @@ function Laser(parent, x, y, heading) {
     }
 
     //update the laser (charge it)
-    this.update = function() {
+    this.update = function () {
         //already charged?
-        if(this.charged) { 
+        if (this.charged) {
             return;
         }
 
         var elapsed = Date.now() - this.lastUpdate;
-        if(elapsed > this.chargeTime) {
+        if (elapsed > this.chargeTime) {
             this.charged = true;
             this.lastUpdate = undefined;
         }
@@ -1305,7 +1306,7 @@ function Laser(parent, x, y, heading) {
 
 
     //fire the laser when we receive a message
-    this.receiveUser = function(obj) {
+    this.receiveUser = function (obj) {
         this.fire();
     }
 }
@@ -1321,9 +1322,11 @@ function SystemFunctions() {
     this.type = '';
 
     this.doc.functions = Array(
-        { name: 'await delay',
-          doc: 'Wait for a period of time to pass.',
-          params: Array({name: 'ms', doc: 'The amount of delay in milliseconds'})} 
+        {
+            name: 'await delay',
+            doc: 'Wait for a period of time to pass.',
+            params: Array({ name: 'ms', doc: 'The amount of delay in milliseconds' })
+        }
     );
 
 }
@@ -1338,14 +1341,22 @@ function RobotMovement() {
     this.type = '';
 
     this.doc.functions = Array(
-        { name: 'Forward movement', doc: 'left.setPower(100) \n right.setPower(100) \n', 
-            params: Array()},
-        { name: 'Backward movement', doc: 'left.setPower(-100) \n right.setPower(-100) \n', 
-            params: Array()},
-        { name: 'Left Turn', doc: 'left.setPower(50) \n right.setPower(100) \n', 
-            params: Array()},
-        { name: 'Right Turn', doc: 'left.setPower(100) \n right.setPower(50) \n', 
-            params: Array()},
+        {
+            name: 'Forward movement', doc: 'left.setPower(100) \n right.setPower(100) \n',
+            params: Array()
+        },
+        {
+            name: 'Backward movement', doc: 'left.setPower(-100) \n right.setPower(-100) \n',
+            params: Array()
+        },
+        {
+            name: 'Left Turn', doc: 'left.setPower(50) \n right.setPower(100) \n',
+            params: Array()
+        },
+        {
+            name: 'Right Turn', doc: 'left.setPower(100) \n right.setPower(50) \n',
+            params: Array()
+        },
     );
 }
 
@@ -1363,12 +1374,12 @@ function VectorView(x, y, heading, scale, points) {
     this.outline = undefined;
     this.fill = undefined;
     this.polygon = [];
-    
+
 
     /**
      * Reset the minx, miny, maxx, and maxy to Infinity and -Infinity
      */
-    this.resetExtents = function() {
+    this.resetExtents = function () {
         //extents of the vector view
         this.minx = Infinity;
         this.miny = Infinity;
@@ -1379,7 +1390,7 @@ function VectorView(x, y, heading, scale, points) {
 
 
     // draw the shape
-    this.draw = function(canvas, context) {
+    this.draw = function (canvas, context) {
         var x;
         var y;
         var started = false;
@@ -1389,7 +1400,7 @@ function VectorView(x, y, heading, scale, points) {
         this.resetExtents();
 
         // skip the blank shapes
-        if(this.points.length == 0) {
+        if (this.points.length == 0) {
             return;
         }
 
@@ -1398,7 +1409,7 @@ function VectorView(x, y, heading, scale, points) {
         var cos_th = Math.cos(this.heading);
 
         context.beginPath();
-        for(var i in points) {
+        for (var i in points) {
             var p = points[i];
 
             // get the raw point and scale
@@ -1417,10 +1428,10 @@ function VectorView(x, y, heading, scale, points) {
             y += this.y;
 
             // add to the polygon
-            this.polygon.push({x: x, y: y});
+            this.polygon.push({ x: x, y: y });
 
             //add the line or start the shape
-            if(started) {
+            if (started) {
                 context.lineTo(x, y);
             } else {
                 context.moveTo(x, y);
@@ -1428,21 +1439,21 @@ function VectorView(x, y, heading, scale, points) {
             }
 
             //track extents
-            if(x < this.minx) { this.minx = x; }
-            if(x > this.maxx) { this.maxx = x; }
-            if(y < this.miny) { this.miny = y; }
-            if(y > this.maxy) { this.maxy = y; }
+            if (x < this.minx) { this.minx = x; }
+            if (x > this.maxx) { this.maxx = x; }
+            if (y < this.miny) { this.miny = y; }
+            if (y > this.maxy) { this.maxy = y; }
         }
         context.closePath();
 
         // set the colors, if needed
-        if(this.outline) {
+        if (this.outline) {
             context.strokeStyle = this.outline;
-        } 
-        if(this.fill) {
+        }
+        if (this.fill) {
             context.fillStyle = this.fill;
         }
-        
+
         //draw the path
         context.fill();
         context.stroke();
@@ -1455,9 +1466,9 @@ function VectorView(x, y, heading, scale, points) {
      * @param {*} y - y coordinate
      * @returns true if (x,y) is inside this view, false otherwise.
      */
-    this.encloses = function(x, y) {
+    this.encloses = function (x, y) {
         return x >= this.minx && x <= this.maxx &&
-               y >= this.miny && y <= this.maxy;
+            y >= this.miny && y <= this.maxy;
     }
 }
 
@@ -1469,25 +1480,25 @@ function VectorView(x, y, heading, scale, points) {
  * @returns The newly constructed part. Returns undefined for parts with no known view.
  */
 function constructView(part) {
-    if(part.type == "Chassis") {
+    if (part.type == "Chassis") {
         return new ChassisView(part);
-    } else if(part.type == "Motor") {
+    } else if (part.type == "Motor") {
         return new MotorView(part);
-    } else if(part.type == "Marker") {
+    } else if (part.type == "Marker") {
         return new MarkerView(part);
-    } else if(part.type == "Light") {
+    } else if (part.type == "Light") {
         return new LightView(part);
-    } else if(part.type == "LightSensor") {
+    } else if (part.type == "LightSensor") {
         return new LightSensorView(part);
-    } else if(part.type == "RangeSensor") {
+    } else if (part.type == "RangeSensor") {
         return new RangeSensorView(part);
-    } else if(part.type == "Wall") {
+    } else if (part.type == "Wall") {
         return new WallView(part);
-    } else if(part.type == "Box") {
-        return new BoxView(part); 
-    } else if(part.type == "LaserBlast") {
+    } else if (part.type == "Box") {
+        return new BoxView(part);
+    } else if (part.type == "LaserBlast") {
         return new LaserBlastView(part);
-    } else if(part.type == "Laser") {
+    } else if (part.type == "Laser") {
         return new LaserView(part);
     }
     // NOTE: The line sensor is unfinished. 
@@ -1515,7 +1526,7 @@ function PartView(part) {
 
     // We also need a list of sub views 
     this.subviews = [];
-    this.addSubview = function(view) {
+    this.addSubview = function (view) {
         view.reOrigin();
         this.subviews.push(view);
     }
@@ -1528,10 +1539,10 @@ function PartView(part) {
      * @param {*} canvas - The canvas to draw on.
      * @param {*} context - The context to draw on.
      */
-    this.draw = function(canvas, context) {
+    this.draw = function (canvas, context) {
         // unparented parts are in the world (but not necessarily of
         // it!)
-        if(!this.part.parent) {
+        if (!this.part.parent) {
             this.x = this.part.x;
             this.y = this.part.y;
             this.heading = this.part.heading;
@@ -1542,18 +1553,18 @@ function PartView(part) {
         this.view.fill = this.part.fill;
 
         // draw the base view (if it exists)
-        if(this.view) {
+        if (this.view) {
             this.view.x = this.x;
             this.view.y = this.y;
             this.view.heading = this.heading;
             this.view.scale = this.scale;
             this.view.draw(canvas, context);
-            part.worldx = (this.view.minx + this.view.maxx)/2;
-            part.worldy = (this.view.miny + this.view.maxy)/2;
+            part.worldx = (this.view.minx + this.view.maxx) / 2;
+            part.worldy = (this.view.miny + this.view.maxy) / 2;
         }
 
         // draw each subviews offset to this view's pose
-        for(var i = 0; i < this.subviews.length; i++) {
+        for (var i = 0; i < this.subviews.length; i++) {
             var v = this.subviews[i];
             v.x = this.x;
             v.y = this.y;
@@ -1563,16 +1574,16 @@ function PartView(part) {
         }
     };
 
-    
+
     /**
      * Shift the part's origin to its x,y and set its position to 0,0.
      */
-    this.reOrigin = function() {
+    this.reOrigin = function () {
         //compute rotation coeffecients
         var sin_th = Math.sin(this.heading);
         var cos_th = Math.cos(this.heading);
 
-        for(var i=0; i < this.view.points.length; i++) {
+        for (var i = 0; i < this.view.points.length; i++) {
             var p = this.view.points[i];
             var rx, ry;
             rx = p.x * cos_th - p.y * sin_th;
@@ -1595,12 +1606,12 @@ function PartView(part) {
      * @param {*} x 
      * @param {*} y 
      */
-    this.moveTo = function(x, y) {
+    this.moveTo = function (x, y) {
         var dx = x - this.part.x;
         var dy = y - this.part.y;
 
         // Move all the points in the view
-        for(var i=0; i < this.view.points.length; i++) {
+        for (var i = 0; i < this.view.points.length; i++) {
             var p = this.view.points[i];
             p.x += dx;
             p.y += dy;
@@ -1618,7 +1629,7 @@ function PartView(part) {
      * @param {*} y 
      * @returns Location object {x:, y:}
      */
-    this.globalToPartLoc = function(x, y) {
+    this.globalToPartLoc = function (x, y) {
         var sin_th = Math.sin(-this.heading);
         var cos_th = Math.cos(-this.heading);
         var result = {};
@@ -1650,16 +1661,16 @@ function ChassisView(part) {
     this.addSubview(constructView(part.right));
 
     //add the other parts to the view
-    for(var i=0; i<part.parts.length; i++) {
+    for (var i = 0; i < part.parts.length; i++) {
         this.addSubview(constructView(part.parts[i]));
     }
 
     //create my vector view
     var points = [
-        {x: -10, y: -6},
-        {x: 10, y: -6},
-        {x: 10, y: 6},
-        {x: -10, y: 6},
+        { x: -10, y: -6 },
+        { x: 10, y: -6 },
+        { x: 10, y: 6 },
+        { x: -10, y: 6 },
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -1689,7 +1700,7 @@ function ChassisView(part) {
      * Add a part to the view
      * @param {*} part 
      */
-    this.addPart = function(part) {
+    this.addPart = function (part) {
         this.addSubview(constructView(part));
     }
 }
@@ -1701,11 +1712,11 @@ function ChassisBuildView(part) {
     // This view has a fixed position and heading
     this.x = 400;
     this.y = 300;
-    this.scale=30; //it's also big!
-    this.heading = -Math.PI/2;
+    this.scale = 30; //it's also big!
+    this.heading = -Math.PI / 2;
 
     this.partDraw = this.draw;
-    this.draw = function(canvas, context) {
+    this.draw = function (canvas, context) {
         // remember the real location
         var x = this.part.x;
         var y = this.part.y;
@@ -1738,10 +1749,10 @@ function MotorView(part) {
 
     //create my vector view
     var points = [
-        {x: -3, y: -1},
-        {x: 3, y: -1},
-        {x: 3, y: 1},
-        {x: -3, y: 1},
+        { x: -3, y: -1 },
+        { x: 3, y: -1 },
+        { x: 3, y: 1 },
+        { x: -3, y: 1 },
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -1759,10 +1770,10 @@ function MarkerView(part) {
 
     //create my vector view
     var points = [
-        {x: -1, y: -1.5},
-        {x: 1, y: -1.5},
-        {x: -1, y: 1.5},
-        {x: 1, y: 1.5},
+        { x: -1, y: -1.5 },
+        { x: 1, y: -1.5 },
+        { x: -1, y: 1.5 },
+        { x: 1, y: 1.5 },
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -1771,31 +1782,27 @@ function MarkerView(part) {
     //store the original draw
     this.drawPart = this.draw;
 
-    this.draw = function(canvas, context) {
-        if(part.penDrawing) {
-            part.fill = part.color;
-        } else {
-            part.fill = "#00000000";
-        }
-        part.outline = part.color;
+    this.draw = function (canvas, context) {
+        context.fill()
+        context.stroke()
+
         this.drawPart(canvas, context);
 
         //draw a line if the pen is down and we have two endpoints
         this.updateLoc();
-        if(this.part.penDrawing && this.loc && this.prevLoc && simState.running) {
+        if (this.part.penDrawing && this.loc && this.prevLoc && simState.running) {
             var canvas = document.getElementById("simbg");
             var context = canvas.getContext("2d");
             context.beginPath();
             context.moveTo(this.prevLoc.x, this.prevLoc.y);
             context.lineTo(this.loc.x, this.loc.y);
             context.strokeStyle = this.part.color;
-            context.stroke();
         }
     }
 
     this.loc = null;
     this.prevLoc = null;
-    this.updateLoc = function() {
+    this.updateLoc = function () {
         this.prevLoc = this.loc;
         this.loc = {};
         this.loc.x = (this.view.maxx + this.view.minx) / 2;
@@ -1814,12 +1821,12 @@ function LightView(part) {
 
 
     //create the actual drawing part
-    var points = [ {x: 0, y: 0} ];
+    var points = [{ x: 0, y: 0 }];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.outline = "black";
-    this.view.radius=part.radius;
-    this.view.draw = function(canvas, context) {
+    this.view.radius = part.radius;
+    this.view.draw = function (canvas, context) {
         var sin_th = Math.sin(this.heading);
         var cos_th = Math.cos(this.heading);
         var x = this.points[0].x * this.scale;
@@ -1829,7 +1836,7 @@ function LightView(part) {
         ry = x * sin_th + y * cos_th;
         x = rx + this.x;
         y = ry + this.y;
-        this.polygon = [{x: x, y: y}];
+        this.polygon = [{ x: x, y: y }];
 
         //set the extents
         this.minx = x - this.radius * this.scale;
@@ -1847,9 +1854,9 @@ function LightView(part) {
     }
 
     //handle world-centric drawing
-    if(!part.parent) {
+    if (!part.parent) {
         this.partDraw = this.draw;
-        this.draw = function(canvas, context) {
+        this.draw = function (canvas, context) {
             this.x = part.x;
             this.y = part.y;
             this.partDraw(canvas, context);
@@ -1863,19 +1870,19 @@ function LightSensorView(part) {
     PartView.call(this, part);
 
     //points for the light sensor
-    var points = [ {x:0.5, y:-1},
-                   {x:-0.5, y:-1},
-                   {x:-0.5, y:1},
-                   {x:0.5, y:1} ];
+    var points = [{ x: 0.5, y: -1 },
+    { x: -0.5, y: -1 },
+    { x: -0.5, y: 1 },
+    { x: 0.5, y: 1 }];
     this.view = new VectorView(this.x, this.y, this.heading, this.scale, points);
 
     // a little custom drawing action
     this.partDraw = this.draw;
-    this.draw = function(canvas, context) {
+    this.draw = function (canvas, context) {
         var outline = part.outline;
         part.outline = part.fill;
-        part.worldx = (this.view.minx + this.view.maxx)/2;
-        part.worldy = (this.view.miny + this.view.maxy)/2;
+        part.worldx = (this.view.minx + this.view.maxx) / 2;
+        part.worldy = (this.view.miny + this.view.maxy) / 2;
 
         //draw the filter
         this.partDraw(canvas, context);
@@ -1889,7 +1896,7 @@ function LightSensorView(part) {
         //draw the actual part outline.
         context.beginPath();
         var started = false;
-        for(var i=0; i<this.view.points.length; i++ ) {
+        for (var i = 0; i < this.view.points.length; i++) {
             var p = this.view.points[i];
             var x = p.x * this.scale;
             var y = p.y * this.scale;
@@ -1906,7 +1913,7 @@ function LightSensorView(part) {
             y += this.y;
 
             //plot the point
-            if(!started) {
+            if (!started) {
                 context.moveTo(x, y);
                 started = true;
             } else {
@@ -1931,18 +1938,18 @@ function RangeSensorView(part) {
 
     //create my vector view
     var points = [
-        {x: -0.5, y: -2.5},
-        {x:  0, y: -2.5},
-        {x:  0, y: -1.5},
-        {x:  1, y: -1.5},
-        {x:  1, y: -0.5},
-        {x:  0, y: -0.5},
-        {x:  0, y:  0.5},
-        {x:  1, y:  0.5},
-        {x:  1, y:  1.5},
-        {x:  0, y:  1.5},
-        {x:  0, y:  2.5},
-        {x: -0.5, y:  2.5}
+        { x: -0.5, y: -2.5 },
+        { x: 0, y: -2.5 },
+        { x: 0, y: -1.5 },
+        { x: 1, y: -1.5 },
+        { x: 1, y: -0.5 },
+        { x: 0, y: -0.5 },
+        { x: 0, y: 0.5 },
+        { x: 1, y: 0.5 },
+        { x: 1, y: 1.5 },
+        { x: 0, y: 1.5 },
+        { x: 0, y: 2.5 },
+        { x: -0.5, y: 2.5 }
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -1951,10 +1958,10 @@ function RangeSensorView(part) {
 
     // a little custom drawing action
     this.partDraw = this.draw;
-    this.draw = function(canvas, context) {
+    this.draw = function (canvas, context) {
         //report world coordinates
-        part.worldx = (this.view.minx + this.view.maxx)/2;
-        part.worldy = (this.view.miny + this.view.maxy)/2;
+        part.worldx = (this.view.minx + this.view.maxx) / 2;
+        part.worldy = (this.view.miny + this.view.maxy) / 2;
 
         //draw the filter
         this.partDraw(canvas, context);
@@ -1997,32 +2004,32 @@ function LineSensorView(part) {
  */
 
 function WallView(part) {
-    if (!part.resizeFactor){
+    if (!part.resizeFactor) {
         part.resizeFactor = 1;
     }
-    if (!part.resizeFactorHeight){
+    if (!part.resizeFactorHeight) {
         part.resizeFactorHeight = 1;
     }
-    if (!part.resizeFactorWidth){
+    if (!part.resizeFactorWidth) {
         part.resizeFactorWidth = 1;
     }
     PartView.call(this, part);
 
     //create my vector view
-    if((simState.dragMode == DRAG_ROTATE90 && part.rotated == true) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == true)){
+    if ((simState.dragMode == DRAG_ROTATE90 && part.rotated == true) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == true)) {
         var points = [
-            {x: -10 * part.resizeFactor, y: -5 * part.resizeFactor},
-            {x: 10 * part.resizeFactorHeight, y: -5 * part.resizeFactor},
-            {x: 10 * part.resizeFactorHeight, y: 5 * part.resizeFactorWidth},
-            {x: -10 * part.resizeFactor, y: 5 * part.resizeFactorWidth},
+            { x: -10 * part.resizeFactor, y: -5 * part.resizeFactor },
+            { x: 10 * part.resizeFactorHeight, y: -5 * part.resizeFactor },
+            { x: 10 * part.resizeFactorHeight, y: 5 * part.resizeFactorWidth },
+            { x: -10 * part.resizeFactor, y: 5 * part.resizeFactorWidth },
         ];
     }
-    if((simState.dragMode == DRAG_ROTATE90 && part.rotated == false) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == false)){
+    if ((simState.dragMode == DRAG_ROTATE90 && part.rotated == false) || (simState.dragMode != DRAG_ROTATE90 && part.rotated == false)) {
         var points = [
-            {x: -5 * part.resizeFactor, y: -10 * part.resizeFactorHeight},
-            {x: 5 * part.resizeFactorWidth, y: -10 * part.resizeFactorHeight},
-            {x: 5 * part.resizeFactorWidth, y: 10 * part.resizeFactor},
-            {x: -5 * part.resizeFactor, y: 10 * part.resizeFactor},
+            { x: -5 * part.resizeFactor, y: -10 * part.resizeFactorHeight },
+            { x: 5 * part.resizeFactorWidth, y: -10 * part.resizeFactorHeight },
+            { x: 5 * part.resizeFactorWidth, y: 10 * part.resizeFactor },
+            { x: -5 * part.resizeFactor, y: 10 * part.resizeFactor },
         ];
     }
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
@@ -2037,17 +2044,17 @@ function WallView(part) {
  * @param {*} part 
  */
 function BoxView(part) {
-    if (!part.resizeFactor){
+    if (!part.resizeFactor) {
         part.resizeFactor = 1;
     }
     PartView.call(this, part);
 
-     //create my vector view
+    //create my vector view
     var points = [
-        {x: -8 * part.resizeFactor, y: -8 * part.resizeFactor},
-        {x: 8 * part.resizeFactor, y: -8 * part.resizeFactor},
-        {x: 8 * part.resizeFactor, y: 8 * part.resizeFactor},
-        {x: -8 * part.resizeFactor, y: 8 * part.resizeFactor},
+        { x: -8 * part.resizeFactor, y: -8 * part.resizeFactor },
+        { x: 8 * part.resizeFactor, y: -8 * part.resizeFactor },
+        { x: 8 * part.resizeFactor, y: 8 * part.resizeFactor },
+        { x: -8 * part.resizeFactor, y: 8 * part.resizeFactor },
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
@@ -2064,10 +2071,10 @@ function LaserBlastView(part) {
 
     //create my vector view
     var points = [
-        {x: -10, y:-1},
-        {x: 0, y: -1}, 
-        {x: 0, y: 1}, 
-        {x: -10, y:1},
+        { x: -10, y: -1 },
+        { x: 0, y: -1 },
+        { x: 0, y: 1 },
+        { x: -10, y: 1 },
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
 }
@@ -2082,14 +2089,14 @@ function LaserView(part) {
 
     //create my vector view
     var points = [
-        {x: -3, y: 1.5 },
-        {x: 1.0, y: 1.5 },
-        {x: 1.0, y: 0.5 },
-        {x: 3, y: 0.5 },
-        {x: 3, y: -0.5 },
-        {x: 1.0, y:-0.5},
-        {x: 1.0, y: -1.5},
-        {x: -3, y: -1.5}
+        { x: -3, y: 1.5 },
+        { x: 1.0, y: 1.5 },
+        { x: 1.0, y: 0.5 },
+        { x: 3, y: 0.5 },
+        { x: 3, y: -0.5 },
+        { x: 1.0, y: -0.5 },
+        { x: 1.0, y: -1.5 },
+        { x: -3, y: -1.5 }
     ];
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
 }
@@ -2107,12 +2114,12 @@ var buildView;
 var flask;
 
 // dragmodes
-const DRAG_NONE= 0;
-const DRAG_MOVE=1;
-const DRAG_ROTATE=2;
-const DRAG_RESIZEHEIGHT=3;    
-const DRAG_RESIZEWIDTH=4;     
-const DRAG_ROTATE90=5;        
+const DRAG_NONE = 0;
+const DRAG_MOVE = 1;
+const DRAG_ROTATE = 2;
+const DRAG_RESIZEHEIGHT = 3;
+const DRAG_RESIZEWIDTH = 4;
+const DRAG_ROTATE90 = 5;
 
 //state of the simulator ui
 var simState = {
@@ -2127,7 +2134,7 @@ var simState = {
     robotResetStartY: 100,
     robotRestartStartHeading: 0,
     //robot start location for maze map
-    robotMazeStartX: 60,        
+    robotMazeStartX: 60,
     robotMazeStartY: 60,
     //robot start location for combat map
     robotCombatStartX: 60,
@@ -2137,13 +2144,13 @@ var simState = {
     robotPacmanStartY: 300,
     robotStartHeading: 0,
     //faces the robot upward for pacman
-    pacmanStartHeading: 4.7123889804,     
+    pacmanStartHeading: 4.7123889804,
     //opponent start location
     opponentStartX: 700,
     opponentStartY: 500,
     //location for opponent start on combat
-    opponentCombatStartX: 740,      
-    opponentCombatStartY: 300,     
+    opponentCombatStartX: 740,
+    opponentCombatStartY: 300,
     opponentStartHeading: Math.PI,
     timer: null,
     prevTab: null,
@@ -2152,17 +2159,17 @@ var simState = {
     worldObjects: [],
     editTarget: null,
     editOriginalOutline: null,
-    running : false,
+    running: false,
     width: 0,
     height: 0,
-    rotated: false,        
+    rotated: false,
     //sets the maps currently loaded
     mazeWorldLoaded: false,
     combatWorldLoaded: false,
     pacmanWorldLoaded: false,
-    premadeUserBotLoaded: false,      
+    premadeUserBotLoaded: false,
     pacmanPoints: 0,
-    currentlyCollided: false,   
+    currentlyCollided: false,
 };
 
 
@@ -2199,38 +2206,38 @@ function openTab(evt, tabId) {
 
 
     //handle switching to specific tabs
-    if(tabId == "Simulate") {
+    if (tabId == "Simulate") {
         deselectPart(buildState);
         drawSim();
-    } else if(tabId == "Build") {
+    } else if (tabId == "Build") {
         drawBuild();
-    } else if(tabId == "Code") {
+    } else if (tabId == "Code") {
         var partList = document.getElementById("codePartList");
-        partList.innerHTML="";
+        partList.innerHTML = "";
         addPartToPartList(partList, new SystemFunctions());
 
         addPartToPartList(partList, new RobotMovement());
 
         addPartToPartList(partList, robot.left);
         addPartToPartList(partList, robot.right);
-        for(var i=0; i < robot.parts.length; i++) {
+        for (var i = 0; i < robot.parts.length; i++) {
             addPartToPartList(partList, robot.parts[i]);
         }
         flask.updateCode(robot.code);
     }
 
     //handle previous tab transitions
-    if(simState.prevTab == "Simulate") {
+    if (simState.prevTab == "Simulate") {
         //stop the simulation
         simulationStop();
-    } else if(simState.prevTab == "Build") {
+    } else if (simState.prevTab == "Build") {
         //reconstruct the chassis view after build
         simView = new ChassisView(robot);
         drawSim();
         graphPaperFill("simbg");
-    } else if(simState.prevTab == "Code") {
+    } else if (simState.prevTab == "Code") {
         robot.code = flask.getCode();
-    } 
+    }
 
     //save robot in local store
     saveRobot(robot);
@@ -2246,7 +2253,7 @@ function openTab(evt, tabId) {
 function changeWheelSize(state) {
     event.preventDefault()
 
-    if(simState.premadeUserBotLoaded == true){
+    if (simState.premadeUserBotLoaded == true) {
         noWheelSizeChange();
         return;
     }
@@ -2264,7 +2271,7 @@ function changeWheelSize(state) {
 function addPartToPartList(partList, part) {
     var li = document.createElement('li');
     li.innerHTML = part.name + ": <i>" + part.type + "</i>";
-    li.onclick = function() {displayPartDoc(part); };
+    li.onclick = function () { displayPartDoc(part); };
     partList.appendChild(li);
 }
 
@@ -2292,13 +2299,13 @@ function drawSim() {
     var context = canvas.getContext("2d");
 
     //scale the view
-    simView.scale=2;
+    simView.scale = 2;
 
     // clear the frame
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     //draw the world objects
-    for(i in simState.worldObjects) {
+    for (i in simState.worldObjects) {
         simState.worldObjects[i].scale = 2;
         simState.worldObjects[i].draw(canvas, context);
     }
@@ -2307,8 +2314,8 @@ function drawSim() {
     simView.draw(canvas, context);
 
     //draw the opponent (if there is one)
-    if(opponent) {
-        opponentView.scale=2;
+    if (opponent) {
+        opponentView.scale = 2;
         opponentView.draw(canvas, context);
     }
 }
@@ -2320,7 +2327,7 @@ function drawSim() {
 function drawBuild() {
     var canvas = document.getElementById("buildCanvas");
     var context = canvas.getContext("2d");
-    
+
     //draw the build window
     graphPaperFill("buildCanvas");
     buildView.draw(canvas, context);
@@ -2332,11 +2339,11 @@ function drawBuild() {
      * @param {*} context - The context to draw on.
 */
 function DrawFunction() {
-    
+
     const canvas = document.getElementById('simfg');
     const canvasDraw = document.getElementById('simdg');
     const contextDraw = canvasDraw.getContext('2d');
-    
+
 
     let isPainting = false;
     let lineWidth = 1;
@@ -2344,7 +2351,7 @@ function DrawFunction() {
     let startY;
 
     const draw = (e) => {
-        if(!isPainting) {
+        if (!isPainting) {
             return;
         }
 
@@ -2358,7 +2365,7 @@ function DrawFunction() {
     }
 
     canvas.addEventListener('mousedown', (e) => {
-        if(document.getElementById('dragDraw').checked) {
+        if (document.getElementById('dragDraw').checked) {
             isPainting = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -2373,120 +2380,120 @@ function DrawFunction() {
     });
 
     canvas.addEventListener('mousemove', draw);
-    
+
 }
 
 /**
  * Draws the hud on the canvas.
  */
 function drawPlayerHUD() {
-    
-    var simCanvas = document.getElementById("simbg"); 
+
+    var simCanvas = document.getElementById("simbg");
     var context = simCanvas.getContext("2d");
 
     // SetUp player and opponent titles
-    
-    context.font = "20px Trebuchet MS"; 
+
+    context.font = "20px Trebuchet MS";
     textAlign = "center";
-    context.fillStyle = "black"; 
+    context.fillStyle = "black";
     context.color = "black";
-    context.fillText("Player 1",535,38);
-   
-    
+    context.fillText("Player 1", 535, 38);
+
+
     // set up lives and power level
-    context.font = "15px Trebuchet MS"; 
+    context.font = "15px Trebuchet MS";
     textAlign = "center";
     //context.fillStyle = "black"; 
     //context.color = "black";
 
     // player 1 info
-    context.fillText("Lives:",535,58); // x,y
+    context.fillText("Lives:", 535, 58); // x,y
     //context.fillText(playerHealthPoints,595,40);
-    context.fillText(robot.hp,580,58);
+    context.fillText(robot.hp, 580, 58);
     context.fillText("Laser Power:", 535, 78);
-    context.fillText(robot.laserBattery,630,78);
+    context.fillText(robot.laserBattery, 630, 78);
 }
 
 /**
  * Draws the hud on the canvas.
  */
 function drawOpponentHUD() {
-    
-    var simCanvas = document.getElementById("simbg"); 
+
+    var simCanvas = document.getElementById("simbg");
     var context = simCanvas.getContext("2d");
-    
+
     // SetUp player and opponent titles
-    context.font = "20px Trebuchet MS"; 
+    context.font = "20px Trebuchet MS";
     textAlign = "center";
-    context.fillStyle = "black"; 
+    context.fillStyle = "black";
     context.color = "black";
-    context.fillText("Player 2",665,38);
-    
+    context.fillText("Player 2", 665, 38);
+
     // set up lives and power level
-    context.font = "15px Trebuchet MS"; 
+    context.font = "15px Trebuchet MS";
     textAlign = "center";
 
-    context.fillStyle = "black"; 
+    context.fillStyle = "black";
     context.color = "black";
-    
+
     //player 2 info
-    context.fillText("Lives:",665,58); // x,y
-    context.fillText(opponent.hp,710,58);
-    context.fillText("Laser Power:", 665,78);
-    context.fillText(opponent.laserBattery,760,78);
+    context.fillText("Lives:", 665, 58); // x,y
+    context.fillText(opponent.hp, 710, 58);
+    context.fillText("Laser Power:", 665, 78);
+    context.fillText(opponent.laserBattery, 760, 78);
 }
 
 /**
  *  Draws a white overlay over the player HUD text to clear it
  */
 function drawPlayerHUDClear() {
-    var simCanvas = document.getElementById("simbg"); 
+    var simCanvas = document.getElementById("simbg");
     var context = simCanvas.getContext("2d");
 
     // SetUp player and opponent titles
-    
-    context.font = "20px Trebuchet MS"; 
+
+    context.font = "20px Trebuchet MS";
     textAlign = "center";
-    context.fillStyle = "white"; 
+    context.fillStyle = "white";
     context.color = "white";
-    context.fillText("Player 1",535,38);
-   
-    
+    context.fillText("Player 1", 535, 38);
+
+
     // set up lives and power level
-    context.font = "15px Trebuchet MS"; 
+    context.font = "15px Trebuchet MS";
     textAlign = "center";
 
     // player 1 info
-    context.fillText("Lives:",535,58); // x,y
-    context.fillText(robot.hp,580,58);
-    context.fillText("Laser Power:", 535,78);
-    context.fillText(robot.laserBattery,630,78);
-    
+    context.fillText("Lives:", 535, 58); // x,y
+    context.fillText(robot.hp, 580, 58);
+    context.fillText("Laser Power:", 535, 78);
+    context.fillText(robot.laserBattery, 630, 78);
+
 }
 
 /**
  * Draws a white overlay over the opponent HUD text to clear it
  */
 function drawOpponentHUDClear() {
-        var simCanvas = document.getElementById("simbg"); 
-        var context = simCanvas.getContext("2d");
-        
-        // SetUp player and opponent titles
-        context.font = "20px Trebuchet MS"; 
-        textAlign = "center";
-        context.fillStyle = "white"; 
-        context.color = "white";
-        context.fillText("Player 2",665,38);
-        
-        // set up lives and power level
-        context.font = "15px Trebuchet MS"; 
-        textAlign = "center";
-        
-        //player 2 info
-        context.fillText("Lives:",665,58); // x,y
-        context.fillText(opponent.hp,710,58);
-        context.fillText("Laser Power:", 665,78);
-        context.fillText(opponent.laserBattery,760,78);
+    var simCanvas = document.getElementById("simbg");
+    var context = simCanvas.getContext("2d");
+
+    // SetUp player and opponent titles
+    context.font = "20px Trebuchet MS";
+    textAlign = "center";
+    context.fillStyle = "white";
+    context.color = "white";
+    context.fillText("Player 2", 665, 38);
+
+    // set up lives and power level
+    context.font = "15px Trebuchet MS";
+    textAlign = "center";
+
+    //player 2 info
+    context.fillText("Lives:", 665, 58); // x,y
+    context.fillText(opponent.hp, 710, 58);
+    context.fillText("Laser Power:", 665, 78);
+    context.fillText(opponent.laserBattery, 760, 78);
 }
 
 /**
@@ -2526,28 +2533,28 @@ function simMouseDown(event) {
 
     // get the target of the click
     simState.dragTarget = null;
-    if(simView.view.encloses(event.offsetX, event.offsetY)) {
+    if (simView.view.encloses(event.offsetX, event.offsetY)) {
         simState.dragTarget = simView;
     } else {
-        for(i in simState.worldObjects) {
+        for (i in simState.worldObjects) {
             var obj = simState.worldObjects[i];
-            if ((obj.part.type == "Light" && obj.part.moveable == false) || (obj.part.type == "Wall" && obj.part.moveable == false) || (obj.part.type == "Box" && obj.part.moveable == false)){
+            if ((obj.part.type == "Light" && obj.part.moveable == false) || (obj.part.type == "Wall" && obj.part.moveable == false) || (obj.part.type == "Box" && obj.part.moveable == false)) {
                 break;
             }
-            if(obj.view.encloses(event.offsetX, event.offsetY)) {
+            if (obj.view.encloses(event.offsetX, event.offsetY)) {
                 simState.dragTarget = obj;
                 break;
             }
         }
     }
 
-    if(opponent){
-        if(opponentView.view.encloses(event.offsetX, event.offsetY)){
+    if (opponent) {
+        if (opponentView.view.encloses(event.offsetX, event.offsetY)) {
             simState.dragTarget = opponentView;
         }
     }
 
-    if(!simState.dragTarget) {
+    if (!simState.dragTarget) {
         return false;
     }
 
@@ -2556,19 +2563,19 @@ function simMouseDown(event) {
     simState.lastY = event.offsetY;
 
     //get the mode
-    if(document.getElementById('dragRotate').checked) {
+    if (document.getElementById('dragRotate').checked) {
         simState.dragMode = DRAG_ROTATE;
-    } else if(document.getElementById('dragMove').checked) {
+    } else if (document.getElementById('dragMove').checked) {
         simState.dragMode = DRAG_MOVE;
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
 
-    } else if(document.getElementById('dragResizeHeight').checked) {
-        simState.dragMode = DRAG_RESIZEHEIGHT; 
-    }else if(document.getElementById('dragResizeWidth').checked) {
-        simState.dragMode = DRAG_RESIZEWIDTH; 
-    } else if(document.getElementById('dragRotate90').checked) {
-        simState.dragMode = DRAG_ROTATE90;  
-    } 
+    } else if (document.getElementById('dragResizeHeight').checked) {
+        simState.dragMode = DRAG_RESIZEHEIGHT;
+    } else if (document.getElementById('dragResizeWidth').checked) {
+        simState.dragMode = DRAG_RESIZEWIDTH;
+    } else if (document.getElementById('dragRotate90').checked) {
+        simState.dragMode = DRAG_ROTATE90;
+    }
 
     else {
         simState.dragMode = DRAG_NONE;
@@ -2586,17 +2593,17 @@ function simMouseDown(event) {
  */
 function simMouseUp(event) {
     // one last move (if that is what we are up to!)
-    if(simState.dragMode == DRAG_MOVE) {
+    if (simState.dragMode == DRAG_MOVE) {
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
-    } 
-    else if (simState.dragMode == DRAG_RESIZEHEIGHT && simState.dragTarget.part.type == 'Wall'){
-        if (simState.dragTarget.part.resizeFactorHeight < 100){
+    }
+    else if (simState.dragMode == DRAG_RESIZEHEIGHT && simState.dragTarget.part.type == 'Wall') {
+        if (simState.dragTarget.part.resizeFactorHeight < 100) {
             simState.dragTarget.part.resizeFactorHeight = simState.dragTarget.part.resizeFactorHeight + 1;
-        }else{
+        } else {
             simState.dragTarget.part.resizeFactorHeight = 1;
         }
-        for (var i=0; simState.worldObjects.length; i++){
-            if (simState.worldObjects[i].part.name == simState.dragTarget.part.name){
+        for (var i = 0; simState.worldObjects.length; i++) {
+            if (simState.worldObjects[i].part.name == simState.dragTarget.part.name) {
                 simState.worldObjects.splice(i, 1);
                 break;
             };
@@ -2604,14 +2611,14 @@ function simMouseUp(event) {
         simState.worldObjects.push(new WallView(simState.dragTarget.part));
     }
 
-    else if (simState.dragMode == DRAG_RESIZEWIDTH && simState.dragTarget.part.type == 'Wall'){
-        if (simState.dragTarget.part.resizeFactorWidth < 100){
+    else if (simState.dragMode == DRAG_RESIZEWIDTH && simState.dragTarget.part.type == 'Wall') {
+        if (simState.dragTarget.part.resizeFactorWidth < 100) {
             simState.dragTarget.part.resizeFactorWidth = simState.dragTarget.part.resizeFactorWidth + 1;
-        }else{
+        } else {
             simState.dragTarget.part.resizeFactorWidth = 1;
         }
-        for (var i=0; simState.worldObjects.length; i++){
-            if (simState.worldObjects[i].part.name == simState.dragTarget.part.name){
+        for (var i = 0; simState.worldObjects.length; i++) {
+            if (simState.worldObjects[i].part.name == simState.dragTarget.part.name) {
                 simState.worldObjects.splice(i, 1);
                 break;
             };
@@ -2619,15 +2626,15 @@ function simMouseUp(event) {
         simState.worldObjects.push(new WallView(simState.dragTarget.part));
     }
 
-    else if (simState.dragMode == DRAG_ROTATE90 && simState.dragTarget.part.type == 'Wall'){
-       
+    else if (simState.dragMode == DRAG_ROTATE90 && simState.dragTarget.part.type == 'Wall') {
+
         simState.dragTarget.part.rotated ^= true;
         var part = simState.dragTarget.part;
         deselectPart(simState);
 
         var partArray = [];
 
-        for(var i=0; i<simState.worldObjects.length; i++) {
+        for (var i = 0; i < simState.worldObjects.length; i++) {
             partArray[i] = simState.worldObjects[i].part;
         }
 
@@ -2644,17 +2651,17 @@ function simMouseUp(event) {
     simState.dragMode = DRAG_NONE;
 
     //if this is not the robot, select it
-    if(simState.dragTarget && simState.dragTarget.part.type != "Chassis") {
+    if (simState.dragTarget && simState.dragTarget.part.type != "Chassis") {
         selectPart(simState.dragTarget, simState);
     }
 
     //refresh the canvas
-    if(document.getElementById('dragDraw').checked) {
+    if (document.getElementById('dragDraw').checked) {
         // don't draw sim, drawing won't stay otherwise
         return true;
     }
     else {
-        drawSim(); 
+        drawSim();
     }
 
     drawSim();
@@ -2667,18 +2674,18 @@ function simMouseUp(event) {
  */
 function simMouseMove(event) {
     // if we have no drag mode, do nothing
-    if(simState.dragMode == DRAG_NONE) {
+    if (simState.dragMode == DRAG_NONE) {
         return false;
     }
 
     // process movement
-    if(simState.dragMode == DRAG_MOVE) {
+    if (simState.dragMode == DRAG_MOVE) {
         simState.dragTarget.part.moveTo(event.offsetX, event.offsetY);
     }
 
     //process rotation
-    if(simState.dragMode == DRAG_ROTATE) {
-        simState.dragTarget.part.rotate((event.offsetY-simState.lastY) * .01); //.01 actual
+    if (simState.dragMode == DRAG_ROTATE) {
+        simState.dragTarget.part.rotate((event.offsetY - simState.lastY) * .01); //.01 actual
     }
 
     //record this position
@@ -2698,13 +2705,13 @@ function simMouseMove(event) {
  */
 function simAddLight(event) {
     //Don't create light in premade world
-    if(simState.combatWorldLoaded || simState.mazeWorldLoaded || simState.pacmanWorldLoaded){
+    if (simState.combatWorldLoaded || simState.mazeWorldLoaded || simState.pacmanWorldLoaded) {
         notAvailablePopup();
         return;
     }
 
     var canvas = document.getElementById("simfg");
-    var light = new Light(null, canvas.width/2, canvas.height/2);
+    var light = new Light(null, canvas.width / 2, canvas.height / 2);
 
     simState.worldObjects.push(constructView(light));
     drawSim();
@@ -2717,16 +2724,16 @@ function simAddLight(event) {
  */
 function simAddWall(event) {
     //Don't create wall in premade world
-    if(simState.combatWorldLoaded || simState.mazeWorldLoaded || simState.pacmanWorldLoaded){
+    if (simState.combatWorldLoaded || simState.mazeWorldLoaded || simState.pacmanWorldLoaded) {
         notAvailablePopup();
         return;
     }
     var canvas = document.getElementById("simfg");
-    simState.rotated = false;   
-    var wall = new Wall(null, canvas.width/2, canvas.height/2);
+    simState.rotated = false;
+    var wall = new Wall(null, canvas.width / 2, canvas.height / 2);
 
     simState.worldObjects.push(constructView(wall));
-    
+
     drawSim();
 }
 
@@ -2737,12 +2744,12 @@ function simAddWall(event) {
  */
 function simAddBox(event) {
     //Don't create box in premade world
-    if(simState.combatWorldLoaded || simState.mazeWorldLoaded || simState.pacmanWorldLoaded){
+    if (simState.combatWorldLoaded || simState.mazeWorldLoaded || simState.pacmanWorldLoaded) {
         notAvailablePopup();
         return;
     }
     var canvas = document.getElementById("simfg");
-    var box = new Box(null, canvas.width/2, canvas.height/2, 50);
+    var box = new Box(null, canvas.width / 2, canvas.height / 2, 50);
 
     simState.worldObjects.push(constructView(box));
     drawSim();
@@ -2759,8 +2766,8 @@ function simAddBox(event) {
  */
 function showPartEditor(view, state) {
     //populate the type and name
-    document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
-    document.getElementById(state.prefix +"PartName").value = view.part.name;
+    document.getElementById(state.prefix + "PartType").innerHTML = view.part.type;
+    document.getElementById(state.prefix + "PartName").value = view.part.name;
 
     //get the colors populated
     document.getElementById(state.prefix + "PartOutlineColor").value = view.part.outline;
@@ -2768,7 +2775,7 @@ function showPartEditor(view, state) {
 
 
     //show the editor pane
-    document.getElementById(state.prefix + "PartEditor").style.display="block";
+    document.getElementById(state.prefix + "PartEditor").style.display = "block";
 
     // If a part is click on the grid, the drop-down menu auto selects it
     var options = document.getElementById("partDropDown").options;
@@ -2786,12 +2793,12 @@ function showPartEditor(view, state) {
  * @param {*} view 
  */
 function dropDownClick(view, state) {
-    
+
     selectPartName = view.part.name;
-    
+
     //populate the type and name
-    document.getElementById(state.prefix +"PartType").innerHTML = view.part.type;
-    document.getElementById(state.prefix +"PartName").value = view.part.name;
+    document.getElementById(state.prefix + "PartType").innerHTML = view.part.type;
+    document.getElementById(state.prefix + "PartName").value = view.part.name;
 
     //get the colors populated
     document.getElementById(state.prefix + "PartOutlineColor").value = view.part.outline;
@@ -2799,8 +2806,8 @@ function dropDownClick(view, state) {
 
 
     //show the editor pane
-    document.getElementById(state.prefix + "PartEditor").style.display="block";
-    
+    document.getElementById(state.prefix + "PartEditor").style.display = "block";
+
 }
 
 /**
@@ -2808,7 +2815,7 @@ function dropDownClick(view, state) {
  */
 function hidePartEditor(state) {
     //hide the editor pane
-    document.getElementById(state.prefix + "PartEditor").style.display="none";
+    document.getElementById(state.prefix + "PartEditor").style.display = "none";
 }
 
 
@@ -2820,9 +2827,9 @@ function selectPart(view, state) {
 
     selectPartName = view.part.name;
     // end of addition
-    
+
     // deselect (if needed) 
-    if(state.editTarget != null) {
+    if (state.editTarget != null) {
         deselectPart(state);
     }
 
@@ -2840,9 +2847,9 @@ function selectPart(view, state) {
 
 
     // redraw the canvas
-    if(state.prefix == "build") {
+    if (state.prefix == "build") {
         drawBuild();
-    } else if(state.prefix == "sim") {
+    } else if (state.prefix == "sim") {
         drawSim();
     }
 }
@@ -2856,27 +2863,27 @@ function dropDownPartSelect(event) {
     // get part name from the drop-down menu
     var dropDownMenu = document.getElementById("partDropDown");
     var dropPartName = dropDownMenu.options[dropDownMenu.selectedIndex].text;
-  
+
     // check for clicking on a robot subpart
-    for(var i=0; i < buildView.subviews.length; i++) {
+    for (var i = 0; i < buildView.subviews.length; i++) {
         var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
-       
+
         // if the part selected matches the part current partview, select it
         //NOTE: THERE IS NO CHASSISS IN THE buildView.subviews ARRAY, so chassiss select doesn't work
-        if(partView.part.name == dropPartName) {
+        if (partView.part.name == dropPartName) {
             buildState.dragTarget = partView;
             break;
         }
     }
 
     // deselect (if needed) 
-    if(buildState.editTarget != null) {
+    if (buildState.editTarget != null) {
         deselectPart(buildState);
     }
 
     // grab the original color 
     buildState.editOriginalOutline = buildState.dragTarget.part.outline;
-    
+
     // set up the target
     buildState.editTarget = buildState.dragTarget;
 
@@ -2889,9 +2896,9 @@ function dropDownPartSelect(event) {
 
 
     // redraw the canvas
-    if(buildState.prefix == "build") {
+    if (buildState.prefix == "build") {
         drawBuild();
-    } else if(buildState.prefix == "sim") {
+    } else if (buildState.prefix == "sim") {
         drawSim();
     }
 }
@@ -2902,7 +2909,7 @@ function dropDownPartSelect(event) {
  */
 function deselectPart(state) {
     // do nothing if there is no selected part
-    if(state.editTarget == null) {
+    if (state.editTarget == null) {
         return;
     }
 
@@ -2914,9 +2921,9 @@ function deselectPart(state) {
     hidePartEditor(state);
 
     // redraw the canvas
-    if(state.prefix == "build") {
+    if (state.prefix == "build") {
         drawBuild();
-    } else if(state.prefix == "sim") {
+    } else if (state.prefix == "sim") {
         drawSim();
     }
 }
@@ -2924,11 +2931,11 @@ function deselectPart(state) {
 // check to see if a string input is a valid javascript variable name
 function isVariableName(string) {
     // Check to make sure the input is a string
-    if(typeof string !== 'string') {
+    if (typeof string !== 'string') {
         return false;
     }
     // Check for whitepace before or after
-    if(string.trim() !== string) {
+    if (string.trim() !== string) {
         return false;
     }
     // try the value as a variable
@@ -2948,21 +2955,21 @@ function applyEditor(state) {
     //get the color from the editor
     var fill = document.getElementById(state.prefix + "PartFillColor").value;
     var outline = document.getElementById(state.prefix + "PartOutlineColor").value;
-    
+
     //get the part name
     var name = document.getElementById(state.prefix + "PartName").value;
 
     // check to make sure the new part name is a valid javascript variable
-    if(isVariableName(name) == false) {
+    if (isVariableName(name) == false) {
         alert("Part name must be a valid JavaScript variable name");
         return;
     }
-    
+
     // Check to make sure new part name is not one 
     // of the function names in userbot
     let i = 0;
     while (i < blackList.length) {
-        if(name == blackList[i]) {
+        if (name == blackList[i]) {
             alert("Part name cannot be a default gradbot name.");
             return;
         }
@@ -2970,11 +2977,11 @@ function applyEditor(state) {
     }
 
     // check to make sure the part name was changed
-    if(name != selectPartName) {
+    if (name != selectPartName) {
         // Check to make sure new part name already used
         let j = 0;
         while (j < newPartList.length) {
-            if(name == newPartList[j]) {
+            if (name == newPartList[j]) {
                 alert("Part name must be unique.");
                 return;
             }
@@ -2995,7 +3002,7 @@ function applyEditor(state) {
     deselectPart(state);
 
     //set the fields
-    if (part.type == "Marker"){
+    if (part.type == "Marker") {
         part.color = fill;
     }
     part.fill = fill;
@@ -3012,9 +3019,9 @@ function applyEditor(state) {
     addListTrue = 0;
 
     // redraw the canvas
-    if(state.prefix == "build") {
+    if (state.prefix == "build") {
         drawBuild();
-    } else if(state.prefix == "sim") {
+    } else if (state.prefix == "sim") {
         drawSim();
     }
 }
@@ -3026,155 +3033,155 @@ function DropMarker(event) {
     drawBuild();
 }
 
-    //For Dragging part editor for build
+//For Dragging part editor for build
 
-    var dragMarkerButton = document.getElementById("DragMarker");
-    var dragLightButton = document.getElementById("DragLight");
-    var dragLightSensorButton = document.getElementById("DragLightSensor");
-    var dragRangeFinderButton = document.getElementById("DragRangeFinder");
-    var dragLaserButton = document.getElementById("DragLaser");
+var dragMarkerButton = document.getElementById("DragMarker");
+var dragLightButton = document.getElementById("DragLight");
+var dragLightSensorButton = document.getElementById("DragLightSensor");
+var dragRangeFinderButton = document.getElementById("DragRangeFinder");
+var dragLaserButton = document.getElementById("DragLaser");
 
-    // Add event listeners for dragstart, dragmove, and dragend events to all buttons
-    [dragMarkerButton, dragLightButton, dragLightSensorButton, dragRangeFinderButton, dragLaserButton].forEach(function(button) {
-        // Add event listener for dragstart event
-        button.addEventListener("dragstart", function(event) {
-            
-            event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
-        });
+// Add event listeners for dragstart, dragmove, and dragend events to all buttons
+[dragMarkerButton, dragLightButton, dragLightSensorButton, dragRangeFinderButton, dragLaserButton].forEach(function (button) {
+    // Add event listener for dragstart event
+    button.addEventListener("dragstart", function (event) {
 
-        // Add event listener for dragmove event
-        button.addEventListener("dragmove", function(event) {
-            
-        });
-
-        // Add event listener for dragend event
-        button.addEventListener("dragend", function(event) {
-            dragTrue = 1;
-            var data = event.dataTransfer.getData("text/plain");
-            if (button == dragMarkerButton) {
-                //DropMarker(event);
-                buildAddMarker();
-            } else if (button == dragLightButton) {
-                buildAddLight();
-            } else if (button == dragLightSensorButton) {
-                buildAddLightSensor();
-            } else if (button == dragRangeFinderButton) {
-                buildAddRangeSensor();
-            } else if (button == dragLaserButton) {
-                buildAddLaser();
-            }
-            dragTrue = 0;
-        });
+        event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
     });
 
+    // Add event listener for dragmove event
+    button.addEventListener("dragmove", function (event) {
 
-    //Drag for Buttons
-    var buildAddMarkerButton = document.getElementById("buildAddMarker");
-        // Add event listener for dragstart event
-	buildAddMarkerButton.addEventListener("dragstart", function(event) {
-		event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
-	});
-
-	// Add event listener for dragmove event
-	buildAddMarkerButton.addEventListener("dragmove", function(event) {
-	});
-
-	// Add event listener for dragend event
-	buildAddMarkerButton.addEventListener("dragend", function(event) {
-        DropMarker(event);
-	});
-
-	// Add event listener for drop event
-	document.body.addEventListener("drop", function(event) {
-
-        // taken from globalToPartLoc
-        var scale = 40;
-        var heading = 4.71238898038469;
-        var sin_th = Math.sin(-heading);
-        var cos_th = Math.cos(-heading);
-        var result = {};
-       
-        var x = event.offsetX;
-        var y = event.offsetY;
-
-        x /= scale;
-        y /= scale;
-        x -= x / scale;
-        y -= y / scale;
-
-        // The object will not be placed precisely on point every time but it is close
-        dragX = x * cos_th - y * sin_th + 8; // through trial and error, + 8 gets close
-        dragY = x * sin_th + y * cos_th - 9; // through trial and error, - 9 gets close
-
-        // make sure that the items stay on the chassis
-        // if the item is off the chassis range, autocenter
-        if(dragX > 10 || dragX < -10){
-            dragX = 0;
-        }
-        if(dragY > 6 || dragY < -6){
-            dragY = 0;
-        }
-
-        //dragX = event.offsetX;
-        //dragY = event.offsetY;
-        //dragX = -10;
-        //dragY = -6;
-        //dragX = (event.clientX / 100);
-        //dragY = (event.clientY / );
-        /*
-        if (event.clientX >= 200) {
-            dragX = (event.clientX / 80)
-        }
-        if (event.clientX < 200) {
-            dragX = (event.clientX / -80)
-        }
-        if ( event.clientY >= 300) {
-            dragY = (event.clientY / -116);
-        }
-        if (event.clientY < 300) {
-            dragY = (event.clientY / 116)
-        }
-        */
-        
-        
-        //dragX = (event.clientX / 410); 
-        //if (event.clientY > 388) {
-            //dragX = (-1 * event.clientY / 410)
-        //} 
-        //dragY = (event.clientY / 388); 
-
-		event.preventDefault();
-		var data = event.dataTransfer.getData("text/plain");
-	});
-
-	// Add event listener for dragover event
-	document.body.addEventListener("dragover", function(event) {
-		event.preventDefault();
-	});
-
-    var buildAddLightButton = document.getElementById("buildAddLight");
-    // Add event listener for dragend event
-    buildAddLightButton.addEventListener("dragend", function(event) {
-        buildAddLight(event);
-    });           
-        
-    var buildAddLightSensorButton = document.getElementById("buildAddLightSensor");
-    // Add event listener for dragend event
-    buildAddLightSensorButton.addEventListener("dragend", function(event) {
-        buildAddLightSensor(event);
     });
 
-    var buildAddRangeSensorButton = document.getElementById("buildAddRangeSensor");
     // Add event listener for dragend event
-    buildAddRangeSensorButton.addEventListener("dragend", function(event) {
-        buildAddRangeSensor(event);
-    });         
-        
-    var buildAddLaserButton = document.getElementById("buildAddLaser");
-    // Add event listener for dragend event
-    buildAddLaserButton.addEventListener("dragend", function(event) {
-        buildAddLaser(event);
+    button.addEventListener("dragend", function (event) {
+        dragTrue = 1;
+        var data = event.dataTransfer.getData("text/plain");
+        if (button == dragMarkerButton) {
+            //DropMarker(event);
+            buildAddMarker();
+        } else if (button == dragLightButton) {
+            buildAddLight();
+        } else if (button == dragLightSensorButton) {
+            buildAddLightSensor();
+        } else if (button == dragRangeFinderButton) {
+            buildAddRangeSensor();
+        } else if (button == dragLaserButton) {
+            buildAddLaser();
+        }
+        dragTrue = 0;
     });
+});
+
+
+//Drag for Buttons
+var buildAddMarkerButton = document.getElementById("buildAddMarker");
+// Add event listener for dragstart event
+buildAddMarkerButton.addEventListener("dragstart", function (event) {
+    event.dataTransfer.setData("text/plain", "This is a test drag and drop.");
+});
+
+// Add event listener for dragmove event
+buildAddMarkerButton.addEventListener("dragmove", function (event) {
+});
+
+// Add event listener for dragend event
+buildAddMarkerButton.addEventListener("dragend", function (event) {
+    DropMarker(event);
+});
+
+// Add event listener for drop event
+document.body.addEventListener("drop", function (event) {
+
+    // taken from globalToPartLoc
+    var scale = 40;
+    var heading = 4.71238898038469;
+    var sin_th = Math.sin(-heading);
+    var cos_th = Math.cos(-heading);
+    var result = {};
+
+    var x = event.offsetX;
+    var y = event.offsetY;
+
+    x /= scale;
+    y /= scale;
+    x -= x / scale;
+    y -= y / scale;
+
+    // The object will not be placed precisely on point every time but it is close
+    dragX = x * cos_th - y * sin_th + 8; // through trial and error, + 8 gets close
+    dragY = x * sin_th + y * cos_th - 9; // through trial and error, - 9 gets close
+
+    // make sure that the items stay on the chassis
+    // if the item is off the chassis range, autocenter
+    if (dragX > 10 || dragX < -10) {
+        dragX = 0;
+    }
+    if (dragY > 6 || dragY < -6) {
+        dragY = 0;
+    }
+
+    //dragX = event.offsetX;
+    //dragY = event.offsetY;
+    //dragX = -10;
+    //dragY = -6;
+    //dragX = (event.clientX / 100);
+    //dragY = (event.clientY / );
+    /*
+    if (event.clientX >= 200) {
+        dragX = (event.clientX / 80)
+    }
+    if (event.clientX < 200) {
+        dragX = (event.clientX / -80)
+    }
+    if ( event.clientY >= 300) {
+        dragY = (event.clientY / -116);
+    }
+    if (event.clientY < 300) {
+        dragY = (event.clientY / 116)
+    }
+    */
+
+
+    //dragX = (event.clientX / 410); 
+    //if (event.clientY > 388) {
+    //dragX = (-1 * event.clientY / 410)
+    //} 
+    //dragY = (event.clientY / 388); 
+
+    event.preventDefault();
+    var data = event.dataTransfer.getData("text/plain");
+});
+
+// Add event listener for dragover event
+document.body.addEventListener("dragover", function (event) {
+    event.preventDefault();
+});
+
+var buildAddLightButton = document.getElementById("buildAddLight");
+// Add event listener for dragend event
+buildAddLightButton.addEventListener("dragend", function (event) {
+    buildAddLight(event);
+});
+
+var buildAddLightSensorButton = document.getElementById("buildAddLightSensor");
+// Add event listener for dragend event
+buildAddLightSensorButton.addEventListener("dragend", function (event) {
+    buildAddLightSensor(event);
+});
+
+var buildAddRangeSensorButton = document.getElementById("buildAddRangeSensor");
+// Add event listener for dragend event
+buildAddRangeSensorButton.addEventListener("dragend", function (event) {
+    buildAddRangeSensor(event);
+});
+
+var buildAddLaserButton = document.getElementById("buildAddLaser");
+// Add event listener for dragend event
+buildAddLaserButton.addEventListener("dragend", function (event) {
+    buildAddLaser(event);
+});
 
 
 
@@ -3191,11 +3198,11 @@ function buildMouseDown(event) {
     buildState.dragMode = DRAG_NONE;
 
     // check for clicking on a robot subpart
-    for(var i=0; i < buildView.subviews.length; i++) {
+    for (var i = 0; i < buildView.subviews.length; i++) {
         var partView = buildView.subviews[i];
-        if(partView.view.encloses(x, y)) {
+        if (partView.view.encloses(x, y)) {
             buildState.dragTarget = partView;
-            if(buildState.dragTarget.part.type != "Motor") {
+            if (buildState.dragTarget.part.type != "Motor") {
                 buildState.dragMode = DRAG_MOVE;
             }
             break;
@@ -3203,12 +3210,12 @@ function buildMouseDown(event) {
     }
 
     // if no subpart is selected, see if we have selected the chassis body.
-    if(buildState.dragTarget == null && buildView.view.encloses(x,y)) {
+    if (buildState.dragTarget == null && buildView.view.encloses(x, y)) {
         buildState.dragTarget = buildView;
     }
 
     // if we still lack a subpart, return
-    if(!buildState.dragTarget) {
+    if (!buildState.dragTarget) {
         return;
     }
 
@@ -3224,14 +3231,14 @@ function buildMouseDown(event) {
  */
 function buildMouseMove(event) {
     //if there is no return target, stop!
-    if(!buildState.dragTarget) { return; }
+    if (!buildState.dragTarget) { return; }
 
     var x = event.offsetX;
     var y = event.offsetY;
 
     //move the part (if that is our mode)
-    if(buildState.dragMode == DRAG_MOVE) {
-        if(buildView.view.encloses(x, y)) {
+    if (buildState.dragMode == DRAG_MOVE) {
+        if (buildView.view.encloses(x, y)) {
             var p = buildState.dragTarget.globalToPartLoc(x, y);
             buildState.dragTarget.moveTo(p.x, p.y);
             drawBuild();
@@ -3250,7 +3257,7 @@ function buildMouseMove(event) {
  */
 function buildMouseUp(event) {
     // if there was a drag target, it is now the selected object
-    if(buildState.dragTarget) {
+    if (buildState.dragTarget) {
         selectPart(buildState.dragTarget, buildState);
     }
 
@@ -3271,7 +3278,7 @@ function buildApply(event) {
  * 
  * @param {*} event 
  */
-function wheelApply(event){
+function wheelApply(event) {
     changeWheelSize(buildState);
 }
 
@@ -3313,12 +3320,12 @@ function buildDeletePart(event) {
     var index = newPartList.indexOf(part.name);
     newPartList.splice(index, 1);
 
-    if(part.type == "Motor" || part.type == "Chassis") {
+    if (part.type == "Motor" || part.type == "Chassis") {
         alert("You cannot remove this part.");
         return;
     }
 
-    if(!confirm("Are you sure you want to remove " + part.name + "?")) {
+    if (!confirm("Are you sure you want to remove " + part.name + "?")) {
         return;
     }
 
@@ -3329,7 +3336,7 @@ function buildDeletePart(event) {
 
     // delete the part from the drop-down list
     var options = document.getElementById("partDropDown").options;
-     for (var i = 0; i < options.length; i++) {
+    for (var i = 0; i < options.length; i++) {
         if (options[i].text == part.name) {
             options[i].selected = true;
             break;
@@ -3351,19 +3358,19 @@ function buildDeletePart(event) {
 function simDeletePart(event) {
     var part = simState.editTarget.part;
 
-    if(part.type == "Motor" || part.type == "Chassis") {
+    if (part.type == "Motor" || part.type == "Chassis") {
         alert("You cannot remove this part.");
         return;
     }
 
-    if(!confirm("Are you sure you want to remove " + part.name + "?")) {
+    if (!confirm("Are you sure you want to remove " + part.name + "?")) {
         return;
     }
 
     deselectPart(simState);
 
     var partArray = [];
-    for(var i=0; i<simState.worldObjects.length; i++) {
+    for (var i = 0; i < simState.worldObjects.length; i++) {
         partArray[i] = simState.worldObjects[i].part;
     }
 
@@ -3381,18 +3388,18 @@ function simDeletePart(event) {
 function addList(name) {
 
     // add the part name to the list, unless it didn't change
-    if(cancelAdd != 1) {
+    if (cancelAdd != 1) {
         newPartList.push(name);
     }
     cancelAdd = 0;
 
     var partDropDown = document.getElementById("partDropDown");
     var option = document.createElement("OPTION");
-    
-    if(addListTrue == 1) {
-          option.innerHTML = name;
-          //option.value = document.getElementById("txtValue").value;
-          partDropDown.options.add(option);
+
+    if (addListTrue == 1) {
+        option.innerHTML = name;
+        //option.value = document.getElementById("txtValue").value;
+        partDropDown.options.add(option);
     }
 }
 
@@ -3401,7 +3408,7 @@ function addList(name) {
  * @param {*} event 
  */
 function buildAddMarker(event) {
-    addListTrue = 1; 
+    addListTrue = 1;
     var marker = new Marker(robot);
     robot.addPart(marker);
     buildView.addPart(marker);
@@ -3415,13 +3422,13 @@ function buildAddMarker(event) {
  * @param {*} event
  */
 function buildAddLight(event) {
-    addListTrue = 1; 
+    addListTrue = 1;
     var light = new Light(robot);
     light.radius = 1;
     robot.addPart(light);
     buildView.addPart(light);
     drawBuild();
-    addListTrue = 0; 
+    addListTrue = 0;
 }
 
 
@@ -3430,12 +3437,12 @@ function buildAddLight(event) {
  * @param {*} event
  */
 function buildAddLightSensor(event) {
-    addListTrue = 1; 
+    addListTrue = 1;
     var sensor = new LightSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
-    addListTrue = 0; 
+    addListTrue = 0;
 }
 
 
@@ -3444,12 +3451,12 @@ function buildAddLightSensor(event) {
  * @param {*} event
  */
 function buildAddRangeSensor(event) {
-    addListTrue = 1; 
+    addListTrue = 1;
     var sensor = new RangeSensor(robot);
     robot.addPart(sensor);
     buildView.addPart(sensor);
     drawBuild();
-    addListTrue = 0; 
+    addListTrue = 0;
 }
 
 
@@ -3458,7 +3465,7 @@ function buildAddRangeSensor(event) {
  * @param {*} event
  */
 function buildAddLaser(event) {
-    addListTrue = 1; 
+    addListTrue = 1;
     var laser = new Laser(robot);
     robot.addPart(laser);
     buildView.addPart(laser);
@@ -3492,10 +3499,10 @@ function buildAddLineSensor(event) {
  */
 function backgroundPhotoDraw(event) {
     var reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         var canvas = document.getElementById("simbg");
         var context = canvas.getContext("2d");
-        
+
         const img = new Image();
         img.onload = () => {
             context.drawImage(img, 0, 0, 800, 600);
@@ -3510,29 +3517,29 @@ function backgroundPhotoDraw(event) {
  * @param {*} event 
  */
 function simulationGo(event) {
-    if(opponentClicked == 1){
+    if (opponentClicked == 1) {
         drawPlayerHUD();
         drawOpponentHUD();
     }
 
     var text = event.target.innerHTML;
 
-    if(text == "Start") {
+    if (text == "Start") {
         event.target.innerHTML = "Pause";
-        
+
         simulationStart();
-    } else if(text == "Pause") {
+    } else if (text == "Pause") {
         event.target.innerHTML = "Resume";
         var elapsed = stopStopwatch();
         simulationStop();
-    } else if(text == "Resume") {
+    } else if (text == "Resume") {
         event.target.innerHTML = "Pause";
         simulationStart();
     }
 
-    if (robot.blowedUp == true && event.target.innerHTML == "Resume"){
+    if (robot.blowedUp == true && event.target.innerHTML == "Resume") {
         robot.thread = null;
-        if(simState.robotThread) {
+        if (simState.robotThread) {
             simState.robotThread.terminate();
         }
         alert("Oops, looks like your robot has been destroyed. Hit reset.");
@@ -3540,21 +3547,21 @@ function simulationGo(event) {
     }
 
     //preserve the starting pose of the robot
-    simState.robotResetStartX = robot.x; 
+    simState.robotResetStartX = robot.x;
     simState.robotResetStartY = robot.y;
     simState.robotRestartStartHeading = robot.heading;
-    
-    if(opponent){
+
+    if (opponent) {
         //preserve the starting pose of the opponent
         simState.opponentStartX = opponent.x;
         simState.opponentStartY = opponent.y;
         simState.opponentStartHeading = opponent.heading;
-        
+
         //allows the player to resume without the bot
-        if (opponent.blowedUp == true && event.target.innerHTML == "Resume"){
+        if (opponent.blowedUp == true && event.target.innerHTML == "Resume") {
             opponentClicked = 0;
             opponent = null;
-            if(simView.opponentThread) {
+            if (simView.opponentThread) {
                 simView.opponentThread.terminate();
             }
 
@@ -3562,7 +3569,7 @@ function simulationGo(event) {
             opponentView = null;
             simState.opponentThread = null;
         }
-    }       
+    }
 }
 
 function simulationReset(event) {
@@ -3570,8 +3577,8 @@ function simulationReset(event) {
     var canvas = document.getElementById("simfg");
 
     robotStartingLocation()
-    robot.moveTo(simState.robotResetStartX, simState.robotResetStartY); 
-    
+    robot.moveTo(simState.robotResetStartX, simState.robotResetStartY);
+
     //refuel and powered up
     robot.left.setPower(0);
     robot.right.setPower(0);
@@ -3579,27 +3586,27 @@ function simulationReset(event) {
     robot.hp = 3;
 
     //MAYDAY!
-    if (robot.blowedUp == true){
+    if (robot.blowedUp == true) {
         robot.thread = null;
-        if(simState.robotThread) {
+        if (simState.robotThread) {
             simState.robotThread.terminate();
         }
-        
+
         //Six Million Dollar Bot
         robot = new Chassis();
-        
-        addListTrue = 1; 
+
+        addListTrue = 1;
 
         loadRobot(robot);
-        
-        addListTrue = 0; 
 
-        simView = new ChassisView(robot); 
+        addListTrue = 0;
+
+        simView = new ChassisView(robot);
         buildView = new ChassisBuildView(robot);
         simState.robotThread = new Worker("userbot.js");
         simState.robotThread.onerror = gradbotError;
         simState.robotThread.onmessage = simulationReceiveMessage;
-        simState.robotThread.postMessage({type: "start", robot: robot.sendable()});
+        simState.robotThread.postMessage({ type: "start", robot: robot.sendable() });
         robot.thread = simState.robotThread;
 
         //refreshed stats
@@ -3607,16 +3614,16 @@ function simulationReset(event) {
         robot.right.setPower(0);
         robot.resetLaserBattery();
         robot.hp = 3;
-        robotStartingLocation(); 
-    }  
+        robotStartingLocation();
+    }
 
-    if(opponent){
+    if (opponent) {
 
-        if(simState.combatWorldLoaded == true){
-            opponent.moveTo(simState.opponentCombatStartX,simState.opponentCombatStartY);
-            opponent.face(simState.opponentStartHeading); 
+        if (simState.combatWorldLoaded == true) {
+            opponent.moveTo(simState.opponentCombatStartX, simState.opponentCombatStartY);
+            opponent.face(simState.opponentStartHeading);
         }
-        else{
+        else {
             opponent.moveTo(simState.opponentStartX, simState.opponentStartY);
             opponent.face(simState.opponentStartHeading);
         }
@@ -3626,20 +3633,20 @@ function simulationReset(event) {
         opponent.right.setPower(0);
         opponent.resetLaserBattery();
         opponent.hp = 3;
-    
+
         //checks if opponent exploded and removes the mess after reset
-        if (opponent.blowedUp == true){
+        if (opponent.blowedUp == true) {
             opponent = null;
-            if(simView.opponentThread) {
+            if (simView.opponentThread) {
                 simView.opponentThread.terminate();
             }
             simView.opponentThread = null;
             opponentView = null;
             simState.opponentThread.terminate();
             simState.opponentThread = null;
-    
+
             // Respawn the correct opponent
-            switch(opponentType) {
+            switch (opponentType) {
                 case "rover":
                     loadRoverOpponent();
                     break;
@@ -3651,7 +3658,7 @@ function simulationReset(event) {
                     break;
                 case "custom":
                     document.getElementById("simUpload").value = "";
-                    document.getElementById('simUpload').click();          
+                    document.getElementById('simUpload').click();
                     break;
             }
         }
@@ -3674,13 +3681,13 @@ function simulationClear(event) {
     document.getElementById("simReset").click();
 
     // reset the opponent
-    if(opponent){
+    if (opponent) {
         opponent.x = 700;
         opponent.y = 500;
         opponent.heading = Math.PI;
     }
-    
-    removePacmanPoints(); 
+
+    removePacmanPoints();
 
     simState.combatWorldLoaded = false;
     simState.mazeWorldLoaded = false;
@@ -3688,11 +3695,11 @@ function simulationClear(event) {
     robotStartingLocation();
 
     //clear lights and walls
-    if(simState.worldObjects.length != 0) {
-        if(confirm("Would you like to remove the world objects?")) {
-            simState.worldObjects= [];
+    if (simState.worldObjects.length != 0) {
+        if (confirm("Would you like to remove the world objects?")) {
+            simState.worldObjects = [];
         }
-        else{
+        else {
             robotStartingLocation()
         }
     }
@@ -3732,10 +3739,10 @@ function gradbotError(message) {
  * Initialize the gradbot interface.
  */
 function gradbotInit() {
-    
+
     loadRobotTrue = 1;
 
-    
+
     //fill the simulation background with graph paper
     graphPaperFill('simbg');
 
@@ -3746,7 +3753,7 @@ function gradbotInit() {
     simState.robotStartY = robot.y;
     simState.robotStartHeading = robot.heading;
 
-     loadRobotTrue = 0;
+    loadRobotTrue = 0;
 
     // enable the sim to look for the drawing toggle button
     DrawFunction();
@@ -3766,10 +3773,10 @@ function gradbotInit() {
     canvas.onmousemove = simMouseMove;
 
     const backgroundPhotoInput = document.getElementById("pictureUpload");
-    document.getElementById("backgroundChange").onclick = function() {
+    document.getElementById("backgroundChange").onclick = function () {
         backgroundPhotoInput.value = "";
         backgroundPhotoInput.click();
-        
+
     };
     backgroundPhotoInput.onchange = backgroundPhotoDraw;
 
@@ -3790,13 +3797,13 @@ function gradbotInit() {
     canvas.onmousemove = buildMouseMove;
 
     //set up world handlers
-    document.getElementById("worldOpen").onclick = function() {
+    document.getElementById("worldOpen").onclick = function () {
         deselectPart(simState); //Might need to fix
-        document.getElementById("worldUpload").value = ""; 
+        document.getElementById("worldUpload").value = "";
         document.getElementById("worldUpload").click();
     };
     document.getElementById("worldSave").onclick = saveWorldFile;
-    document.getElementById("worldUpload").onchange = openWorldFile ;
+    document.getElementById("worldUpload").onchange = openWorldFile;
 
     document.getElementById("partDropDown").onchange = dropDownPartSelect;
 
@@ -3805,40 +3812,40 @@ function gradbotInit() {
     var partNameBuild = document.getElementById("buildPartName");
 
     // If the user presses the "Enter" key on the keyboard, apply the input field
-    partNameBuild.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        // Cancel the default action
-        event.preventDefault();
-        // Trigger the buildpartApply button
-        document.getElementById("buildPartApply").click();
-    }
-    });    
+    partNameBuild.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            // Cancel the default action
+            event.preventDefault();
+            // Trigger the buildpartApply button
+            document.getElementById("buildPartApply").click();
+        }
+    });
 
     // Get the input field buildPartOutlineColor
     var partOutlineColorBuild = document.getElementById("buildPartOutlineColor");
     // If the user presses the "Enter" key on the keyboard, apply the input field
-    partOutlineColorBuild.addEventListener("keypress", function(event) {
-    // If the user presses the "Enter" key on the keyboard
-    if (event.key === "Enter") {
-         // Cancel the default action
-        event.preventDefault();
-        // Trigger the buildpartApply button
-        document.getElementById("buildPartApply").click();
-    }
-    });    
+    partOutlineColorBuild.addEventListener("keypress", function (event) {
+        // If the user presses the "Enter" key on the keyboard
+        if (event.key === "Enter") {
+            // Cancel the default action
+            event.preventDefault();
+            // Trigger the buildpartApply button
+            document.getElementById("buildPartApply").click();
+        }
+    });
 
     // Get the input field buildPartFillColor
     var partFillColorBuild = document.getElementById("buildPartFillColor");
     // If the user presses the "Enter" key on the keyboard, apply the input field
-    partFillColorBuild.addEventListener("keypress", function(event) {
-    // If the user presses the "Enter" key on the keyboard
-    if (event.key === "Enter") {
-         // Cancel the default action
-        event.preventDefault();
-        // Trigger the buildpartApply button
-        document.getElementById("buildPartApply").click();
-    }
-    });    
+    partFillColorBuild.addEventListener("keypress", function (event) {
+        // If the user presses the "Enter" key on the keyboard
+        if (event.key === "Enter") {
+            // Cancel the default action
+            event.preventDefault();
+            // Trigger the buildpartApply button
+            document.getElementById("buildPartApply").click();
+        }
+    });
 
     //set up the build's form buttons
     document.getElementById("buildPartApply").onclick = buildApply;
@@ -3850,40 +3857,40 @@ function gradbotInit() {
     var partNameSim = document.getElementById("simPartName");
 
     // If the user presses the "Enter" key on the keyboard, apply the input field
-    partNameSim.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        // Cancel the default action
-        event.preventDefault();
-        // Trigger the simPartApply button
-        document.getElementById("simPartApply").click();
-    }
-    });    
+    partNameSim.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            // Cancel the default action
+            event.preventDefault();
+            // Trigger the simPartApply button
+            document.getElementById("simPartApply").click();
+        }
+    });
 
     // Get the input field simPartOutlineColor
     var partOutlineColorSim = document.getElementById("simPartOutlineColor");
     // If the user presses the "Enter" key on the keyboard, apply the input field
-    partOutlineColorSim.addEventListener("keypress", function(event) {
-    // If the user presses the "Enter" key on the keyboard
-    if (event.key === "Enter") {
-         // Cancel the default action
-        event.preventDefault();
-        // Trigger the simPartApply button
-        document.getElementById("simPartApply").click();
-    }
-    });    
+    partOutlineColorSim.addEventListener("keypress", function (event) {
+        // If the user presses the "Enter" key on the keyboard
+        if (event.key === "Enter") {
+            // Cancel the default action
+            event.preventDefault();
+            // Trigger the simPartApply button
+            document.getElementById("simPartApply").click();
+        }
+    });
 
     // Get the input field simPartOutlineColor
     var partFillColorSim = document.getElementById("simPartFillColor");
     // If the user presses the "Enter" key on the keyboard, apply the input field
-    partFillColorSim.addEventListener("keypress", function(event) {
-    // If the user presses the "Enter" key on the keyboard
-    if (event.key === "Enter") {
-         // Cancel the default action
-        event.preventDefault();
-        // Trigger the simPartApply button
-        document.getElementById("simPartApply").click();
-    }
-    });    
+    partFillColorSim.addEventListener("keypress", function (event) {
+        // If the user presses the "Enter" key on the keyboard
+        if (event.key === "Enter") {
+            // Cancel the default action
+            event.preventDefault();
+            // Trigger the simPartApply button
+            document.getElementById("simPartApply").click();
+        }
+    });
 
     //set up the sim's form buttons
     document.getElementById("simPartApply").onclick = simApply;
@@ -3894,15 +3901,15 @@ function gradbotInit() {
     document.getElementById('simButton').click();
 
     //set up file handlers
-    document.getElementById("buildOpen").onclick = function() {
+    document.getElementById("buildOpen").onclick = function () {
         deselectPart(buildState);
         document.getElementById("buildUpload").value = "";
         document.getElementById("buildUpload").click();
     };
     document.getElementById("buildSave").onclick = saveRobotFile;
-    document.getElementById("buildUpload").onchange = openRobotFile ;
-    document.getElementById("buildNew").onclick = function() {
-        if(confirm("Are you sure you want to create a new robot? Any unsaved changes will be lost!")) {
+    document.getElementById("buildUpload").onchange = openRobotFile;
+    document.getElementById("buildNew").onclick = function () {
+        if (confirm("Are you sure you want to create a new robot? Any unsaved changes will be lost!")) {
             deselectPart(buildState);
             newRobot();
         }
@@ -3913,33 +3920,33 @@ function gradbotInit() {
     var wheelSizeVar = document.getElementById("wheelSize");
 
     // If the user presses the "Enter" key on the keyboard, apply the input field
-    wheelSizeVar.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        // Cancel the default action
-        event.preventDefault();
-        // Trigger the buildpartApply button
-        document.getElementById("changeWheelSize").click();
-    }
-    });  
+    wheelSizeVar.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            // Cancel the default action
+            event.preventDefault();
+            // Trigger the buildpartApply button
+            document.getElementById("changeWheelSize").click();
+        }
+    });
     document.getElementById("changeWheelSize").onclick = wheelApply;
 
     //set up opponent handlers
     document.getElementById("simUpload").onchange = openOpponentFile;
-    document.getElementById("simOpenOpponent").onclick = function() {
+    document.getElementById("simOpenOpponent").onclick = function () {
         document.getElementById("simUpload").value = "";
         document.getElementById("simUpload").click();
     };
-    document.getElementById("simRemoveOpponent").onclick = function() {
+    document.getElementById("simRemoveOpponent").onclick = function () {
         opponent = null;
-        opponentClicked = null; 
-        if(simView.opponentThread) {
+        opponentClicked = null;
+        if (simView.opponentThread) {
             simView.opponentThread.terminate();
         }
         simView.opponentThread = null;
         opponentView = null;
         drawSim();
     };
-    
+
     document.getElementById("simRoverOpponent").onclick = loadRoverOpponent;
     document.getElementById("simCirclerOpponent").onclick = loadCirclerOpponent;
     document.getElementById("simSpinnerOpponent").onclick = loadSpinnerOpponent;
@@ -3962,7 +3969,7 @@ function gradbotInit() {
 
 
     // set up code editor
-    flask = new CodeFlask('#robotCode', {language: 'js'});
+    flask = new CodeFlask('#robotCode', { language: 'js' });
 
 
     //activate our error handler
@@ -3973,12 +3980,12 @@ function gradbotInit() {
     var infiniteButton = document.getElementById("infinite-mode");
 
     // Add click event listeners to the buttons
-    toroidalButton.addEventListener("click", function() {
-    simulationMode = "toroidal";
+    toroidalButton.addEventListener("click", function () {
+        simulationMode = "toroidal";
     });
 
-    infiniteButton.addEventListener("click", function() {
-    simulationMode = "infinite";
+    infiniteButton.addEventListener("click", function () {
+        simulationMode = "infinite";
     });
 
 
@@ -3988,23 +3995,23 @@ function gradbotInit() {
     document.getElementById("x10").onclick = setSpeedMult10;
     document.getElementById("x25").onclick = setSpeedMult25;
 
-    document.getElementById("wheelSizeReset").onclick = wheelSizeReset;    
+    document.getElementById("wheelSizeReset").onclick = wheelSizeReset;
 
     //load world handlers under simulation tabs
     //
     /*
-	document.getElementById("worldOpen").onclick = function() {
-		deselectPart(buildState);
-		document.getElementById("worldUpload").click();
-	};
-	document.getElementById("worldSave").onclick = saveWorldFile;
-	document.getElementById("worldUpload").onchange = openWorldFile ;
-	document.getElementById("worldNew").onclick = function() {
-		if(confirm("Are you sure you want to create a new World? Any unsaved changes will be lost!")) {
-			deselectPart(buildState);
-			newWorld();
-		}
-	}
+    document.getElementById("worldOpen").onclick = function() {
+        deselectPart(buildState);
+        document.getElementById("worldUpload").click();
+    };
+    document.getElementById("worldSave").onclick = saveWorldFile;
+    document.getElementById("worldUpload").onchange = openWorldFile ;
+    document.getElementById("worldNew").onclick = function() {
+        if(confirm("Are you sure you want to create a new World? Any unsaved changes will be lost!")) {
+            deselectPart(buildState);
+            newWorld();
+        }
+    }
     */
 }
 
@@ -4028,7 +4035,7 @@ function simulationStart() {
     simState.running = true;
 
     // clear the timer, if there is one
-    if(simState.timer) {
+    if (simState.timer) {
         clearInterval(simState.timer);
     }
 
@@ -4036,26 +4043,26 @@ function simulationStart() {
     simState.robotThread = new Worker("userbot.js");
     simState.robotThread.onerror = gradbotError;
     simState.robotThread.onmessage = simulationReceiveMessage;
-    simState.robotThread.postMessage({type: "start", robot: robot.sendable()});
+    simState.robotThread.postMessage({ type: "start", robot: robot.sendable() });
     robot.thread = simState.robotThread;
 
 
     //start the opponent thread (if there is one)
-    if(opponent){
-        if(simState.opponentThread) {
+    if (opponent) {
+        if (simState.opponentThread) {
             simState.opponentThread.terminate();
         }
         simState.opponentThread = new Worker("userbot.js");
         simState.opponentThread.onerror = gradbotError;
         simState.opponentThread.onmessage = opponentReceiveMessage;
-        simState.opponentThread.postMessage({type: "start", robot: opponent.sendable()});
+        simState.opponentThread.postMessage({ type: "start", robot: opponent.sendable() });
         opponent.thread = simState.opponentThread;
     }
 
     //set the timer going!
-    simState.timer = setInterval(simulationUpdate, 1000/60); 
+    simState.timer = setInterval(simulationUpdate, 1000 / 60);
 
-    if(simState.mazeWorldLoaded == true){
+    if (simState.mazeWorldLoaded == true) {
         startStopwatch();
     }
 }
@@ -4087,19 +4094,19 @@ function simulationStop() {
     simState.running = false;
 
     // clear the timer, if there is one
-    if(simState.timer) {
+    if (simState.timer) {
         clearInterval(simState.timer);
     }
 
     // terminate the robot thread
-    if(simState.robotThread) {
+    if (simState.robotThread) {
         simState.robotThread.terminate();
         simState.robotThread = null;
         robot.thread = null;
     }
 
     //terminate the opponent thread
-    if(simState.opponentThread) {
+    if (simState.opponentThread) {
         simState.opponentThread.terminate();
         simState.opponentThread = null;
         opponent.thread = null;
@@ -4107,7 +4114,7 @@ function simulationStop() {
 
     // remove the robot's abilityt to teleport on resume ^_^
     robot.lastUpdate = undefined;
-    if(opponent) {
+    if (opponent) {
         opponent.lastUpdate = undefined;
     }
 
@@ -4121,7 +4128,7 @@ function simulationStop() {
 function simulationUpdate() {
     var bots = [robot];
     var botViews = [simView];
-    if(opponent) {
+    if (opponent) {
         bots.push(opponent);
         botViews.push(opponentView);
     }
@@ -4134,36 +4141,36 @@ function simulationUpdate() {
     for (var i = 0; i < botViews.length; i++) {
         for (var j = i + 1; j < botViews.length; j++) {
             if (collision(botViews[i].view, botViews[j].view)) {
-                    bots[i].left.setPower(0);
-                    bots[i].right.setPower(0);
-                    bots[j].left.setPower(0);
-                    bots[j].right.setPower(0);
+                bots[i].left.setPower(0);
+                bots[i].right.setPower(0);
+                bots[j].left.setPower(0);
+                bots[j].right.setPower(0);
             }
         }
     }
 
     //update all the world objects
     var toVanish = [];
-    for(var i=0; i < simState.worldObjects.length; i++) {
+    for (var i = 0; i < simState.worldObjects.length; i++) {
         var obj = simState.worldObjects[i];
         obj.part.update();
 
         //check for laser blast collisions
-        if(obj.part.type == "LaserBlast") {
+        if (obj.part.type == "LaserBlast") {
 
-            for(var k = 0; k < simState.worldObjects.length; k++){
-                if(simState.worldObjects[k].part.type != "LaserBlast"){
-                    if(collision(obj.view, simState.worldObjects[k].view)){
+            for (var k = 0; k < simState.worldObjects.length; k++) {
+                if (simState.worldObjects[k].part.type != "LaserBlast") {
+                    if (collision(obj.view, simState.worldObjects[k].view)) {
                         toVanish.push(obj.part);
                     }
                 }
             }
 
-            for(var j=0; j < botViews.length; j++) {
-                if(bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
-                    
+            for (var j = 0; j < botViews.length; j++) {
+                if (bots[j] !== obj.part.firedBy && collision(botViews[j].view, obj.view)) {
+
                     //drawPlayerHUDClear();
-                    if(opponentClicked == 1) {
+                    if (opponentClicked == 1) {
                         drawPlayerHUDClear();
                         drawOpponentHUDClear();
                     }
@@ -4171,7 +4178,7 @@ function simulationUpdate() {
                     bots[j].hp--;
 
                     //drawPlayerHUD();
-                    if(opponentClicked == 1) {
+                    if (opponentClicked == 1) {
                         drawPlayerHUD();
                         drawOpponentHUD();
                     }
@@ -4182,9 +4189,9 @@ function simulationUpdate() {
         }
 
         // check for wall collisions
-        if(obj.part.type == "Wall") {
-            for(var j=0; j < botViews.length; j++) {
-                if(collision(botViews[j].view, obj.view)) {
+        if (obj.part.type == "Wall") {
+            for (var j = 0; j < botViews.length; j++) {
+                if (collision(botViews[j].view, obj.view)) {
                     bots[j].left.setPower(0);
                     bots[j].right.setPower(0);
 
@@ -4205,8 +4212,8 @@ function simulationUpdate() {
                         boxesInContact.push(obj.part);
                         // set box's data property to store the bot view
                         obj.part.botView = botViews[j].view;
-                        
-                        if(simState.mazeWorldLoaded){
+
+                        if (simState.mazeWorldLoaded) {
                             var endTime = stopStopwatch();
                             window.alert("Congratulations! It took you " + endTime / 1000 + " seconds to complete the maze!");
                             document.getElementById('simGo').click();
@@ -4215,11 +4222,11 @@ function simulationUpdate() {
                         }
                     }
                     // move the box based on the relative position of the bot view and object view
-                    if(simState.mazeWorldLoaded != true){
+                    if (simState.mazeWorldLoaded != true) {
                         if (obj.part.botView.y < obj.part.y) {
                             obj.part.y = obj.part.botView.y + 36; // move box down
                         } else if (obj.part.botView.y > obj.part.y) {
-                            obj.part.y = obj.part.botView.y -36; // move box up
+                            obj.part.y = obj.part.botView.y - 36; // move box up
 
                         } else if (obj.part.botView.x < obj.part.x) {
                             obj.part.x = obj.part.botView.x + 36; // move box to the right
@@ -4239,14 +4246,14 @@ function simulationUpdate() {
             }
         }
 
-        if(simState.pacmanWorldLoaded == true){
-            if(obj.part.type == "Light") {
-                for(var j=0; j < botViews.length; j++) {
-                    if(collision(botViews[j].view, obj.view)) {
+        if (simState.pacmanWorldLoaded == true) {
+            if (obj.part.type == "Light") {
+                for (var j = 0; j < botViews.length; j++) {
+                    if (collision(botViews[j].view, obj.view)) {
                         var part = obj.part;
                         deselectPart(simState);
                         var partArray = [];
-                        for(var i=0; i<simState.worldObjects.length; i++) {
+                        for (var i = 0; i < simState.worldObjects.length; i++) {
                             partArray[i] = simState.worldObjects[i].part;
                         }
                         simState.worldObjects.splice(partArray.indexOf(part), 1)
@@ -4260,11 +4267,11 @@ function simulationUpdate() {
         }
 
     }
-    for(var i=0; i < toVanish.length; i++) {
+    for (var i = 0; i < toVanish.length; i++) {
         toVanish[i].vanish();
     }
 
-    for(var i=0; i < bots.length; i++) {
+    for (var i = 0; i < bots.length; i++) {
         bots[i].update();
     }
     drawSim();
@@ -4280,7 +4287,7 @@ function simulationUpdate() {
 //World Save Funtions
 
 function newWorld() {
-   robot = new Chassis(100, 100, 0);
+    robot = new Chassis(100, 100, 0);
 
     //rebuild the robot views
     simView = new ChassisView(robot);
@@ -4307,10 +4314,10 @@ function saveRobotFile() {
     } else {
         var file = new Blob([JSON.stringify(robot)]);
         var a = document.getElementById('buildDownload');
-        a.href = URL.createObjectURL(file, {type: "text/plain"});
+        a.href = URL.createObjectURL(file, { type: "text/plain" });
         a.download = robotname;
         a.click();
-        
+
         URL.revokeObjectURL(a.href);
     }
 }
@@ -4318,20 +4325,20 @@ function saveRobotFile() {
 
 function openRobotFile() {
     var reader = new FileReader();
-    reader.onload = function() {
-        addListTrue = 1; 
-        simState.premadeUserBotLoaded = false;  
+    reader.onload = function () {
+        addListTrue = 1;
+        simState.premadeUserBotLoaded = false;
         loadRobot(robot, reader.result);
         //rebuild the robot views
         simView = new ChassisView(robot);
         buildView = new ChassisBuildView(robot);
 
-        robotStartingLocation();   
+        robotStartingLocation();
         //redraw
         graphPaperFill("simbg");
         drawSim();
         drawBuild();
-        addListTrue = 0; 
+        addListTrue = 0;
     };
 
     reader.readAsText(this.files[0]);
@@ -4340,24 +4347,24 @@ function openRobotFile() {
 
 function openOpponentFile() {
 
-    if(simState.pacmanWorldLoaded == true || simState.mazeWorldLoaded == true){
+    if (simState.pacmanWorldLoaded == true || simState.mazeWorldLoaded == true) {
         notAvailablePopup();
         return;
     }
 
     loadRobotTrue = 1;
-    
+
     opponentType = "custom";
     var reader = new FileReader();
-    reader.onload = function() {
+    reader.onload = function () {
         opponent = new Chassis();
         loadRobotOpp(opponent, reader.result);
-        if(simState.combatWorldLoaded == false && simState.mazeWorldLoaded == false && simState.pacmanWorldLoaded == false){
-        opponent.x = 700;
-        opponent.y = 500;
-        opponent.heading = Math.PI;
+        if (simState.combatWorldLoaded == false && simState.mazeWorldLoaded == false && simState.pacmanWorldLoaded == false) {
+            opponent.x = 700;
+            opponent.y = 500;
+            opponent.heading = Math.PI;
         }
-        else if(simState.combatWorldLoaded == true){
+        else if (simState.combatWorldLoaded == true) {
             opponent.x = 740;
             opponent.y = 300;
             opponent.heading = Math.PI;
@@ -4383,14 +4390,14 @@ function loadRoverOpponent() {
 
 
 function loadCirclerOpponent() {
-    var circler='{"x":327.5469402567586,"y":167.76097113134486,"heading":13.770062022058815,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":59.55253896430367,"speed":4.05552790346908},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":53.56963298139768,"speed":3.6480920060331816},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\nvar count = 0;\\nvar r = 3;\\nvar vx = 0.25;\\nvar dr = -0.25;\\nvar delays;\\n\\nsetSpeed(0.4, 0);\\nfor(var i=0; i<5; i++) {\\n  laser.fire();\\n  await delay(1000);\\n}\\n\\n\\nwhile(true) {\\n  delays = Math.floor(0.628 * r / vx);\\n  vyaw = vx/r;\\n  setSpeed(vx, vyaw);\\n  count = count + 1;\\n  \\n  if(count % 20 ==  0) {\\n    laser.fire();\\n  }\\n  \\n  if(count % delays == 0) {\\n    r += dr;\\n    if(r >= 3 || r <= 0.5) {\\n      dr *= -1;\\n    }\\n  }\\n  await delay(100);\\n}","laserBattery":0}';
+    var circler = '{"x":327.5469402567586,"y":167.76097113134486,"heading":13.770062022058815,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":59.55253896430367,"speed":4.05552790346908},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":53.56963298139768,"speed":3.6480920060331816},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\nvar count = 0;\\nvar r = 3;\\nvar vx = 0.25;\\nvar dr = -0.25;\\nvar delays;\\n\\nsetSpeed(0.4, 0);\\nfor(var i=0; i<5; i++) {\\n  laser.fire();\\n  await delay(1000);\\n}\\n\\n\\nwhile(true) {\\n  delays = Math.floor(0.628 * r / vx);\\n  vyaw = vx/r;\\n  setSpeed(vx, vyaw);\\n  count = count + 1;\\n  \\n  if(count % 20 ==  0) {\\n    laser.fire();\\n  }\\n  \\n  if(count % delays == 0) {\\n    r += dr;\\n    if(r >= 3 || r <= 0.5) {\\n      dr *= -1;\\n    }\\n  }\\n  await delay(100);\\n}","laserBattery":0}';
     opponentType = "circler";
     loadSampleOpponent(circler);
 }
 
 
 function loadSpinnerOpponent() {
-    var spinner='{"x":100,"y":100,"heading":0,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":100,"speed":6.81},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":-80,"speed":-5.4479999999999995},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nleft.setPower(100);\\nright.setPower(-80);\\n\\nwhile(true) {\\n  await delay(1000);\\n  laser.fire();\\n}","laserBattery":38}';
+    var spinner = '{"x":100,"y":100,"heading":0,"type":"Chassis","name":"part7","worldx":400,"worldy":300,"outline":"black","fill":"silver","power":0,"thread":null,"parts":[{"x":0,"y":0,"heading":0,"type":"Light","name":"part11","worldx":400,"worldy":300,"outline":"black","fill":"red","power":0,"radius":1},{"x":6.433333333333334,"y":-0.10000000000000024,"heading":0,"type":"Laser","name":"laser","worldx":396.9999999999999,"worldy":107.00000000000003,"outline":"black","fill":"black","power":0,"charged":true,"chargeTime":500}],"left":{"x":-7,"y":-7,"heading":0,"type":"Motor","name":"left","worldx":190.00000000000006,"worldy":510,"outline":"black","fill":"black","power":100,"speed":6.81},"right":{"x":-7,"y":7,"heading":3.141592653589793,"type":"Motor","name":"right","worldx":610,"worldy":510,"outline":"black","fill":"black","power":-80,"speed":-5.4479999999999995},"hp":3,"blowedUp":false,"explosionVelocities":[],"code":"function setSpeed(vx, vyaw) {\\n  const r = 0.065;    //wheel radius\\n  const l = 0.238;    //axle length\\n  var sleft;          //left speed\\n  var sright;         //right speed\\n  var lpower;         //left power\\n  var rpower;         //right power\\n  \\n  // Compute lpower and rpower\\n  sright = 1/r * vx - l/(2*r) * vyaw;\\n  sleft = 2/r * vx - sright;\\n  lpower = 100/6.8 * sleft;\\n  rpower = 100/6.8 * sright;\\n  \\n  left.setPower(lpower);\\n  right.setPower(rpower);\\n}\\n\\n// Turtle Graphics\\nconst tspeed=0.4;  //turtle rolling speed\\nconst trot=0.25;    //turtle rotation speed\\n\\nasync function forward(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nasync function back(d) \\n{\\n  // calculate move time\\n  var t = d/tspeed;\\n  \\n  // move for the specified time\\n  setSpeed(-tspeed, 0);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\nfunction toRadians(deg) \\n{\\n  return Math.PI * deg / 180.0;\\n}\\n\\n\\nasync function turnLeft(d) \\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, -trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\nasync function turnRight(d)\\n{\\n  // calculate move time\\n  var t = toRadians(d) / trot;\\n  \\n  // move for the specified time\\n  setSpeed(0, trot);\\n  await delay(t*1000);\\n  setSpeed(0, 0);\\n}\\n\\n\\n\\n/////////////////////////////////////////////////////\\n\\nleft.setPower(100);\\nright.setPower(-80);\\n\\nwhile(true) {\\n  await delay(1000);\\n  laser.fire();\\n}","laserBattery":38}';
     opponentType = "spinner";
     loadSampleOpponent(spinner);
 }
@@ -4410,29 +4417,29 @@ function loadTheseus() {
     loadPrebuiltUser(theseus);
 }
 
-function robotStartingLocation(){
-    if (simState.pacmanWorldLoaded){
+function robotStartingLocation() {
+    if (simState.pacmanWorldLoaded) {
         robot.heading = simState.pacmanStartHeading;
         robot.moveTo(simState.robotPacmanStartX, simState.robotPacmanStartY);
         simState.robotResetStartX = simState.robotPacmanStartX;
         simState.robotResetStartY = simState.robotPacmanStartY;
     }
 
-    else if(simState.mazeWorldLoaded){
+    else if (simState.mazeWorldLoaded) {
         robot.heading = simState.robotStartHeading;
         robot.moveTo(simState.robotMazeStartX, simState.robotMazeStartY);      //Resets Robot to coordinates 60,60
         simState.robotResetStartX = simState.robotMazeStartX
         simState.robotResetStartY = simState.robotMazeStartY;
     }
 
-    else if (simState.combatWorldLoaded){
+    else if (simState.combatWorldLoaded) {
         robot.heading = simState.robotStartHeading;
         robot.moveTo(simState.robotCombatStartX, simState.robotCombatStartY);     //Resets Robot to coordinates 60,300
         simState.robotResetStartX = simState.robotCombatStartX;
         simState.robotResetStartY = simState.robotCombatStartY;
     }
 
-    else{
+    else {
         robot.heading = simState.robotStartHeading
         robot.moveTo(simState.robotStartX, simState.robotStartY)
         simState.robotResetStartX = 100;
@@ -4442,11 +4449,11 @@ function robotStartingLocation(){
     drawSim();
 }
 
-function loadPrebuiltUser(test){
+function loadPrebuiltUser(test) {
     deselectPart(buildState);
-    addListTrue = 1; 
-    simState.premadeUserBotLoaded = true; 
-    loadRobot(robot,test);
+    addListTrue = 1;
+    simState.premadeUserBotLoaded = true;
+    loadRobot(robot, test);
     addListTrue = 0;
     //rebuild the robot view
     simView = new ChassisView(robot);
@@ -4459,7 +4466,7 @@ function loadPrebuiltUser(test){
 }
 
 function loadSampleOpponent(robotString) {
-    if(simState.pacmanWorldLoaded == true || simState.mazeWorldLoaded == true){
+    if (simState.pacmanWorldLoaded == true || simState.mazeWorldLoaded == true) {
         notAvailablePopup();
         return;
     }
@@ -4467,15 +4474,15 @@ function loadSampleOpponent(robotString) {
 
     loadRobotOpp(opponent, robotString);
 
-    if(simState.combatWorldLoaded == false && simState.mazeWorldLoaded == false && simState.pacmanWorldLoaded == false){
+    if (simState.combatWorldLoaded == false && simState.mazeWorldLoaded == false && simState.pacmanWorldLoaded == false) {
         opponent.x = 700;
         opponent.y = 500;
         opponent.heading = Math.PI;
     }
-    else if(simState.combatWorldLoaded == true){
-            opponent.x = 740;
-            opponent.y = 300;
-            opponent.heading = Math.PI;
+    else if (simState.combatWorldLoaded == true) {
+        opponent.x = 740;
+        opponent.y = 300;
+        opponent.heading = Math.PI;
     }
     //rebuild the robot view
     opponentView = new ChassisView(opponent);
@@ -4490,16 +4497,16 @@ function loadRobotOpp(robot, robotString) {
     loadRobotTrue = 1;
 
     opponentClicked = 1;
-    
-    if(!robotString) robotString = localStorage.getItem("robot");
-    if(!robotString) return;
+
+    if (!robotString) robotString = localStorage.getItem("robot");
+    if (!robotString) return;
 
 
     var obj = JSON.parse(robotString);
 
     /* grab the attributes */
-    for(var attr in obj) {
-        if(attr == "parts") { continue; }
+    for (var attr in obj) {
+        if (attr == "parts") { continue; }
         robot[attr] = obj[attr];
     }
 
@@ -4511,7 +4518,7 @@ function loadRobotOpp(robot, robotString) {
 
 
     robot.parts = [];
-    for(var i=0; i<obj.parts.length; i++) {
+    for (var i = 0; i < obj.parts.length; i++) {
         robot.addPart(finishPart(obj.parts[i]));
         robot.parts[i].parent = robot;
     }
@@ -4521,16 +4528,16 @@ function loadRobotOpp(robot, robotString) {
 
 
 function loadRobot(robot, robotString) {
-    
-    if(!robotString) robotString = localStorage.getItem("robot");
-    if(!robotString) return;
+
+    if (!robotString) robotString = localStorage.getItem("robot");
+    if (!robotString) return;
 
 
     var obj = JSON.parse(robotString);
 
     /* grab the attributes */
-    for(var attr in obj) {
-        if(attr == "parts") { continue; }
+    for (var attr in obj) {
+        if (attr == "parts") { continue; }
         robot[attr] = obj[attr];
     }
 
@@ -4551,16 +4558,16 @@ function loadRobot(robot, robotString) {
     document.getElementById("wheelSize").value = wheelSize;
 
     /* handle the parts */
-    
+
     // Remove all elements of the drop-down list except for the first 3
     document.getElementById("partDropDown").options.length = 0;
     //loadRobotTrue = 1;
 
     robot.parts = [];
-    for(var i=0; i<obj.parts.length; i++) {
+    for (var i = 0; i < obj.parts.length; i++) {
         robot.addPart(finishPart(obj.parts[i]));
         robot.parts[i].parent = robot;
-        
+
         // When a robot is opened, add the part names to the list
         addList(robot.parts[i].name)
     }
@@ -4572,23 +4579,23 @@ function finishPart(part) {
     var result;
 
     // run the part constructor
-    if(part.type == "Motor") {
+    if (part.type == "Motor") {
         result = new Motor();
-    } else if(part.type == "Marker") {
+    } else if (part.type == "Marker") {
         result = new Marker();
-    } else if(part.type == "Light") {
+    } else if (part.type == "Light") {
         result = new Light();
-    } else if(part.type == "LightSensor") {
+    } else if (part.type == "LightSensor") {
         result = new LightSensor();
-    } else if(part.type == "RangeSensor") {
+    } else if (part.type == "RangeSensor") {
         result = new RangeSensor();
-    } else if(part.type == "Wall") {
+    } else if (part.type == "Wall") {
         result = new Wall();
-    } else if(part.type == "Box") {
+    } else if (part.type == "Box") {
         result = new Box();
-    } else if(part.type == "Laser") {
+    } else if (part.type == "Laser") {
         result = new Laser();
-    } 
+    }
     // NOTE: The line sensor is unfinished. 
     // Uncommenting this code will cause bugs. 
     // It has been kept for future work.
@@ -4602,8 +4609,8 @@ function finishPart(part) {
         return undefined;
     }
 
-    for(var attr in part) {
-        if(attr == "doc") continue;
+    for (var attr in part) {
+        if (attr == "doc") continue;
         result[attr] = part[attr];
     }
 
@@ -4613,7 +4620,7 @@ function finishPart(part) {
 
 function newRobot() {
     robot = new Chassis(100, 100, 0);
-    simState.premadeUserBotLoaded = false;          
+    simState.premadeUserBotLoaded = false;
     // Remove all elements of the drop-down list except for the first 3
     document.getElementById("partDropDown").options.length = 0;
 
@@ -4631,28 +4638,28 @@ function newRobot() {
 
 var multiplyer = 1;
 
-function setSpeedMult1(){
+function setSpeedMult1() {
     multiplyer = 1;
 }
 
-function setSpeedMult5(){
+function setSpeedMult5() {
     multiplyer = 5;
 }
 
-function setSpeedMult10(){
+function setSpeedMult10() {
     multiplyer = 10;
 }
 
-function setSpeedMult25(){
+function setSpeedMult25() {
     multiplyer = 25;
 }
-function getSpeedMult(){
+function getSpeedMult() {
     return multiplyer;
 }
 
 function openWorldFile() {
     var reader = new FileReader();
-    reader.onload = function() {
+    reader.onload = function () {
         loadWorld(reader.result);
         //redraw
         graphPaperFill("simbg");
@@ -4672,10 +4679,10 @@ function saveWorldFile() {
     } else {
         var file = new Blob([JSON.stringify(simState)]);
         var a = document.getElementById('worldDownload');
-        a.href = URL.createObjectURL(file, {type: "text/plain"});
+        a.href = URL.createObjectURL(file, { type: "text/plain" });
         a.download = worldname;
         a.click();
-        
+
         URL.revokeObjectURL(a.href);
     }
 }
@@ -4690,26 +4697,26 @@ function loadCombatWorld() {
     simState.combatWorldLoaded = true;
     simState.mazeWorldLoaded = false;
     simState.pacmanWorldLoaded = false;
-    simState.worldObjects= []; //Clears world objects
+    simState.worldObjects = []; //Clears world objects
     var combatWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":289,"y":421,"heading":0,"view":{"x":289,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":401},{"x":299,"y":401},{"x":299,"y":441},{"x":279,"y":441}],"minx":279,"miny":401,"maxx":299,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":289,"y":421,"heading":0,"type":"Wall","name":"part31","worldx":289,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},"lastX":289,"lastY":421,"robotStartX":100,"robotStartY":100,"robotStartHeading":0,"opponentStartX":700,"opponentStartY":500,"opponentStartHeading":3.141592653589793,"timer":null,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":21,"y":590,"heading":0,"view":{"x":21,"y":590,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":1,"y":580},{"x":801,"y":580},{"x":801,"y":600},{"x":1,"y":600}],"minx":1,"miny":580,"maxx":801,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":21,"y":590,"heading":0,"type":"Wall","name":"part6","worldx":401,"worldy":590,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":791,"y":582,"heading":0,"view":{"x":791,"y":582,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":781,"y":2},{"x":801,"y":2},{"x":801,"y":602},{"x":781,"y":602}],"minx":781,"miny":2,"maxx":801,"maxy":602,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":791,"y":582,"heading":0,"type":"Wall","name":"part5","worldx":791,"worldy":302,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":10,"y":582,"heading":0,"view":{"x":10,"y":582,"heading":0,"scale":2,"points":[{"x":-5,"y":-300},{"x":5,"y":-300},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":-18},{"x":20,"y":-18},{"x":20,"y":602},{"x":0,"y":602}],"minx":0,"miny":-18,"maxx":20,"maxy":602,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":582,"heading":0,"type":"Wall","name":"part4","worldx":10,"worldy":292,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":30,"resizeFactorWidth":1}},{"x":19,"y":9,"heading":0,"view":{"x":19,"y":9,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-1,"y":-1},{"x":799,"y":-1},{"x":799,"y":19},{"x":-1,"y":19}],"minx":-1,"miny":-1,"maxx":799,"maxy":19,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":19,"y":9,"heading":0,"type":"Wall","name":"part7","worldx":399,"worldy":9,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":390,"y":40,"heading":0,"view":{"x":390,"y":40,"heading":0,"scale":2,"points":[{"x":-5,"y":-20},{"x":15,"y":-20},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":380,"y":0},{"x":420,"y":0},{"x":420,"y":60},{"x":380,"y":60}],"minx":380,"miny":0,"maxx":420,"maxy":60,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":390,"y":40,"heading":0,"type":"Wall","name":"part8","worldx":400,"worldy":30,"outline":"blue","fill":"blue","power":0,"rotated":0,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":3}},{"x":390,"y":581,"heading":0,"view":{"x":390,"y":581,"heading":0,"scale":2,"points":[{"x":-5,"y":-20},{"x":15,"y":-20},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":380,"y":541},{"x":420,"y":541},{"x":420,"y":601},{"x":380,"y":601}],"minx":380,"miny":541,"maxx":420,"maxy":601,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":390,"y":581,"heading":0,"type":"Wall","name":"part10","worldx":400,"worldy":571,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":3}},{"x":141,"y":112,"heading":0,"view":{"x":141,"y":112,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":102},{"x":181,"y":102},{"x":181,"y":122},{"x":121,"y":122}],"minx":121,"miny":102,"maxx":181,"maxy":122,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":141,"y":112,"heading":0,"type":"Wall","name":"part12","worldx":151,"worldy":112,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":141,"y":491,"heading":0,"view":{"x":141,"y":491,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":481},{"x":181,"y":481},{"x":181,"y":501},{"x":121,"y":501}],"minx":121,"miny":481,"maxx":181,"maxy":501,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":141,"y":491,"heading":0,"type":"Wall","name":"part15","worldx":151,"worldy":491,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":639,"y":491,"heading":0,"view":{"x":639,"y":491,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":619,"y":481},{"x":679,"y":481},{"x":679,"y":501},{"x":619,"y":501}],"minx":619,"miny":481,"maxx":679,"maxy":501,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":639,"y":491,"heading":0,"type":"Wall","name":"part14","worldx":649,"worldy":491,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":640,"y":110,"heading":0,"view":{"x":640,"y":110,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":620,"y":100},{"x":680,"y":100},{"x":680,"y":120},{"x":620,"y":120}],"minx":620,"miny":100,"maxx":680,"maxy":120,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":640,"y":110,"heading":0,"type":"Wall","name":"part16","worldx":650,"worldy":110,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":671,"y":381,"heading":0,"view":{"x":671,"y":381,"heading":0,"scale":2,"points":[{"x":-5,"y":-90},{"x":5,"y":-90},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":661,"y":201},{"x":681,"y":201},{"x":681,"y":401},{"x":661,"y":401}],"minx":661,"miny":201,"maxx":681,"maxy":401,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":671,"y":381,"heading":0,"type":"Wall","name":"part18","worldx":671,"worldy":301,"outline":"lightblue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":682,"y":211,"heading":0,"view":{"x":682,"y":211,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":662,"y":201},{"x":702,"y":201},{"x":702,"y":221},{"x":662,"y":221}],"minx":662,"miny":201,"maxx":702,"maxy":221,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":682,"y":211,"heading":0,"type":"Wall","name":"part20","worldx":682,"worldy":211,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":682,"y":391,"heading":0,"view":{"x":682,"y":391,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":662,"y":381},{"x":702,"y":381},{"x":702,"y":401},{"x":662,"y":401}],"minx":662,"miny":381,"maxx":702,"maxy":401,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":682,"y":391,"heading":0,"type":"Wall","name":"part21","worldx":682,"worldy":391,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":121,"y":392,"heading":0,"view":{"x":121,"y":392,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":101,"y":382},{"x":141,"y":382},{"x":141,"y":402},{"x":101,"y":402}],"minx":101,"miny":382,"maxx":141,"maxy":402,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":121,"y":392,"heading":0,"type":"Wall","name":"part25","worldx":121,"worldy":392,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":131,"y":380,"heading":0,"view":{"x":131,"y":380,"heading":0,"scale":2,"points":[{"x":-5,"y":-90},{"x":5,"y":-90},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":121,"y":200},{"x":141,"y":200},{"x":141,"y":400},{"x":121,"y":400}],"minx":121,"miny":200,"maxx":141,"maxy":400,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":131,"y":380,"heading":0,"type":"Wall","name":"part27","worldx":131,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":510,"y":179,"heading":0,"view":{"x":510,"y":179,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":500,"y":159},{"x":520,"y":159},{"x":520,"y":199},{"x":500,"y":199}],"minx":500,"miny":159,"maxx":520,"maxy":199,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":510,"y":179,"heading":0,"type":"Wall","name":"part22","worldx":510,"worldy":179,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":511,"y":421,"heading":0,"view":{"x":511,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":501,"y":401},{"x":521,"y":401},{"x":521,"y":441},{"x":501,"y":441}],"minx":501,"miny":401,"maxx":521,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":511,"y":421,"heading":0,"type":"Wall","name":"part25","worldx":511,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":479,"y":169,"heading":0,"view":{"x":479,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":459,"y":159},{"x":499,"y":159},{"x":499,"y":179},{"x":459,"y":179}],"minx":459,"miny":159,"maxx":499,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":479,"y":169,"heading":0,"type":"Wall","name":"part23","worldx":489,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":479,"y":169,"heading":0,"view":{"x":479,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":459,"y":159},{"x":519,"y":159},{"x":519,"y":179},{"x":459,"y":179}],"minx":459,"miny":159,"maxx":519,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":479,"y":169,"heading":0,"type":"Wall","name":"part23","worldx":489,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":550,"y":300,"heading":0,"view":{"x":550,"y":300,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":15,"y":-10},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":540,"y":280},{"x":580,"y":280},{"x":580,"y":320},{"x":540,"y":320}],"minx":540,"miny":280,"maxx":580,"maxy":320,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":550,"y":300,"heading":0,"type":"Wall","name":"part24","worldx":560,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":480,"y":431,"heading":0,"view":{"x":480,"y":431,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":460,"y":421},{"x":500,"y":421},{"x":500,"y":441},{"x":460,"y":441}],"minx":460,"miny":421,"maxx":500,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":480,"y":431,"heading":0,"type":"Wall","name":"part26","worldx":490,"worldy":431,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":480,"y":431,"heading":0,"view":{"x":480,"y":431,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":460,"y":421},{"x":520,"y":421},{"x":520,"y":441},{"x":460,"y":441}],"minx":460,"miny":421,"maxx":520,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":480,"y":431,"heading":0,"type":"Wall","name":"part26","worldx":490,"worldy":431,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":230,"y":301,"heading":0,"view":{"x":230,"y":301,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":10,"y":-10},{"x":10,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":220,"y":281},{"x":250,"y":281},{"x":250,"y":321},{"x":220,"y":321}],"minx":220,"miny":281,"maxx":250,"maxy":321,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":230,"y":301,"heading":0,"type":"Wall","name":"part28","worldx":240,"worldy":301,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":230,"y":301,"heading":0,"view":{"x":230,"y":301,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":15,"y":-10},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":220,"y":281},{"x":260,"y":281},{"x":260,"y":321},{"x":220,"y":321}],"minx":220,"miny":281,"maxx":260,"maxy":321,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":230,"y":301,"heading":0,"type":"Wall","name":"part28","worldx":240,"worldy":301,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":3}},{"x":291,"y":180,"heading":0,"view":{"x":291,"y":180,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":281,"y":160},{"x":301,"y":160},{"x":301,"y":200},{"x":281,"y":200}],"minx":281,"miny":160,"maxx":301,"maxy":200,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":291,"y":180,"heading":0,"type":"Wall","name":"part29","worldx":291,"worldy":180,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":289,"y":421,"heading":0,"view":{"x":289,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":5,"y":-10},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":401},{"x":299,"y":401},{"x":299,"y":441},{"x":279,"y":441}],"minx":279,"miny":401,"maxx":299,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":289,"y":421,"heading":0,"type":"Wall","name":"part31","worldx":289,"worldy":421,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":121,"y":209,"heading":0,"view":{"x":121,"y":209,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":10,"y":-5},{"x":10,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":101,"y":199},{"x":141,"y":199},{"x":141,"y":219},{"x":101,"y":219}],"minx":101,"miny":199,"maxx":141,"maxy":219,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":121,"y":209,"heading":0,"type":"Wall","name":"part27","worldx":121,"worldy":209,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":1}},{"x":301,"y":169,"heading":0,"view":{"x":301,"y":169,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":281,"y":159},{"x":341,"y":159},{"x":341,"y":179},{"x":281,"y":179}],"minx":281,"miny":159,"maxx":341,"maxy":179,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":301,"y":169,"heading":0,"type":"Wall","name":"part30","worldx":311,"worldy":169,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":299,"y":432,"heading":0,"view":{"x":299,"y":432,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":279,"y":422},{"x":339,"y":422},{"x":339,"y":442},{"x":279,"y":442}],"minx":279,"miny":422,"maxx":339,"maxy":442,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":299,"y":432,"heading":0,"type":"Wall","name":"part32","worldx":309,"worldy":432,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}}],"editTarget":null,"editOriginalOutline":"blue","running":false,"width":0,"height":0,"rotated":false}'
-    if(opponent){
-        opponent.moveTo(simState.opponentCombatStartX,simState.opponentCombatStartY);
+    if (opponent) {
+        opponent.moveTo(simState.opponentCombatStartX, simState.opponentCombatStartY);
     }
-    robotStartingLocation();    
-    removePacmanPoints();       
+    robotStartingLocation();
+    removePacmanPoints();
     loadWorld(combatWorld);
-    document.getElementById("simReset").click()     
+    document.getElementById("simReset").click()
 }
 
 function loadMazeWorld() {
     simState.combatWorldLoaded = false;
     simState.mazeWorldLoaded = true;
     simState.pacmanWorldLoaded = false;
-    simState.worldObjects= []; //Clears world objects
+    simState.worldObjects = []; //Clears world objects
     var mazeWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":520,"y":110,"heading":0,"view":{"x":520,"y":110,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":70,"y":-5},{"x":70,"y":15},{"x":-10,"y":15}],"outline":"coral","fill":"blue","polygon":[{"x":500,"y":100},{"x":660,"y":100},{"x":660,"y":140},{"x":500,"y":140}],"minx":500,"miny":100,"maxx":660,"maxy":140,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":520,"y":110,"heading":0,"type":"Wall","name":"part44","worldx":590,"worldy":120,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":8,"resizeFactorWidth":3}},"lastX":521,"lastY":125,"robotStartX":100,"robotStartY":100,"robotStartHeading":0,"opponentStartX":700,"opponentStartY":500,"opponentStartHeading":3.141592653589793,"timer":67,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":10,"y":580,"heading":0,"view":{"x":10,"y":580,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":0},{"x":20,"y":0},{"x":20,"y":600},{"x":0,"y":600}],"minx":0,"miny":0,"maxx":20,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":580,"heading":0,"type":"Wall","name":"LeftSide","worldx":10,"worldy":300,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":791,"y":575,"heading":0,"view":{"x":791,"y":575,"heading":0,"scale":2,"points":[{"x":-5,"y":-290},{"x":5,"y":-290},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":781,"y":-5},{"x":801,"y":-5},{"x":801,"y":595},{"x":781,"y":595}],"minx":781,"miny":-5,"maxx":801,"maxy":595,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":791,"y":575,"heading":0,"type":"Wall","name":"part7","worldx":791,"worldy":295,"outline":"lightblue","fill":"blue","power":0,"rotated":false,"moveable":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":29,"resizeFactorWidth":1}},{"x":4,"y":591,"heading":0,"view":{"x":4,"y":591,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":400,"y":-5},{"x":400,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-16,"y":581},{"x":804,"y":581},{"x":804,"y":601},{"x":-16,"y":601}],"minx":-16,"miny":581,"maxx":804,"maxy":601,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":4,"y":591,"heading":0,"type":"Wall","name":"BottomWall","worldx":394,"worldy":591,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":40,"resizeFactorWidth":1}},{"x":20,"y":10,"heading":0,"view":{"x":20,"y":10,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":0},{"x":800,"y":0},{"x":800,"y":20},{"x":0,"y":20}],"minx":0,"miny":0,"maxx":800,"maxy":20,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":20,"y":10,"heading":0,"type":"Wall","name":"TopWall","worldx":400,"worldy":10,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":744,"y":535,"heading":0,"view":{"x":744,"y":535,"heading":0,"scale":2,"points":[{"x":-8,"y":-8},{"x":8,"y":-8},{"x":8,"y":8},{"x":-8,"y":8}],"outline":"blue","fill":"lightblue","polygon":[{"x":728,"y":519},{"x":760,"y":519},{"x":760,"y":551},{"x":728,"y":551}],"minx":728,"miny":519,"maxx":760,"maxy":551,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":744,"y":535,"heading":0,"type":"Box","name":"FinalBox","worldx":744,"worldy":535,"outline":"blue","fill":"lightblue","power":0,"resizeFactor":1}},{"x":110,"y":480,"heading":0,"view":{"x":110,"y":480,"heading":0,"scale":2,"points":[{"x":-5,"y":-110},{"x":15,"y":-110},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":100,"y":260},{"x":140,"y":260},{"x":140,"y":500},{"x":100,"y":500}],"minx":100,"miny":260,"maxx":140,"maxy":500,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":110,"y":480,"heading":0,"type":"Wall","name":"part11","worldx":120,"worldy":380,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":11,"resizeFactorWidth":3}},{"x":110,"y":160,"heading":0,"view":{"x":110,"y":160,"heading":0,"scale":2,"points":[{"x":-5,"y":-30},{"x":35,"y":-30},{"x":35,"y":10},{"x":-5,"y":10}],"outline":"lightblue","fill":"blue","polygon":[{"x":100,"y":100},{"x":180,"y":100},{"x":180,"y":180},{"x":100,"y":180}],"minx":100,"miny":100,"maxx":180,"maxy":180,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":110,"y":160,"heading":0,"type":"Wall","name":"part10","worldx":140,"worldy":140,"outline":"lightblue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":3,"resizeFactorWidth":7}},{"x":120,"y":269,"heading":0,"view":{"x":120,"y":269,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":70,"y":-5},{"x":70,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":100,"y":259},{"x":260,"y":259},{"x":260,"y":299},{"x":100,"y":299}],"minx":100,"miny":259,"maxx":260,"maxy":299,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":120,"y":269,"heading":0,"type":"Wall","name":"part13","worldx":180,"worldy":279,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":269,"y":160,"heading":0,"view":{"x":269,"y":160,"heading":0,"scale":2,"points":[{"x":-5,"y":-70},{"x":15,"y":-70},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":259,"y":20},{"x":299,"y":20},{"x":299,"y":180},{"x":259,"y":180}],"minx":259,"miny":20,"maxx":299,"maxy":180,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":269,"y":160,"heading":0,"type":"Wall","name":"part14","worldx":279,"worldy":100,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":232,"y":479,"heading":0,"view":{"x":232,"y":479,"heading":0,"scale":2,"points":[{"x":-5,"y":-30},{"x":15,"y":-30},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":222,"y":419},{"x":262,"y":419},{"x":262,"y":499},{"x":222,"y":499}],"minx":222,"miny":419,"maxx":262,"maxy":499,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":232,"y":479,"heading":0,"type":"Wall","name":"part16","worldx":242,"worldy":459,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":3,"resizeFactorWidth":3}},{"x":140,"y":390,"heading":0,"view":{"x":140,"y":390,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":100,"y":-5},{"x":100,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":120,"y":380},{"x":340,"y":380},{"x":340,"y":420},{"x":120,"y":420}],"minx":120,"miny":380,"maxx":340,"maxy":420,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":140,"y":390,"heading":0,"type":"Wall","name":"part15","worldx":230,"worldy":400,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":10,"resizeFactorWidth":3}},{"x":350,"y":400,"heading":0,"view":{"x":350,"y":400,"heading":0,"scale":2,"points":[{"x":-5,"y":-70},{"x":15,"y":-70},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":340,"y":260},{"x":380,"y":260},{"x":380,"y":420},{"x":340,"y":420}],"minx":340,"miny":260,"maxx":380,"maxy":420,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":350,"y":400,"heading":0,"type":"Wall","name":"part17","worldx":360,"worldy":340,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":369,"y":280,"heading":0,"view":{"x":369,"y":280,"heading":0,"scale":2,"points":[{"x":-5,"y":-10},{"x":25,"y":-10},{"x":25,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":359,"y":260},{"x":419,"y":260},{"x":419,"y":300},{"x":359,"y":300}],"minx":359,"miny":260,"maxx":419,"maxy":300,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":369,"y":280,"heading":0,"type":"Wall","name":"part18","worldx":389,"worldy":280,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":1,"resizeFactorWidth":5}},{"x":389,"y":240,"heading":0,"view":{"x":389,"y":240,"heading":0,"scale":2,"points":[{"x":-5,"y":-70},{"x":15,"y":-70},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":379,"y":100},{"x":419,"y":100},{"x":419,"y":260},{"x":379,"y":260}],"minx":379,"miny":100,"maxx":419,"maxy":260,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":389,"y":240,"heading":0,"type":"Wall","name":"part19","worldx":399,"worldy":180,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":349,"y":561,"heading":0,"view":{"x":349,"y":561,"heading":0,"scale":2,"points":[{"x":-5,"y":-30},{"x":15,"y":-30},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":339,"y":501},{"x":379,"y":501},{"x":379,"y":581},{"x":339,"y":581}],"minx":339,"miny":501,"maxx":379,"maxy":581,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":349,"y":561,"heading":0,"type":"Wall","name":"part41","worldx":359,"worldy":541,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":3,"resizeFactorWidth":3}},{"x":480,"y":471,"heading":0,"view":{"x":480,"y":471,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":110,"y":-5},{"x":110,"y":15},{"x":-10,"y":15}],"outline":"lightblue","fill":"blue","polygon":[{"x":460,"y":461},{"x":700,"y":461},{"x":700,"y":501},{"x":460,"y":501}],"minx":460,"miny":461,"maxx":700,"maxy":501,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":480,"y":471,"heading":0,"type":"Wall","name":"part35","worldx":580,"worldy":481,"outline":"lightblue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":11,"resizeFactorWidth":3}},{"x":669,"y":570,"heading":0,"view":{"x":669,"y":570,"heading":0,"scale":2,"points":[{"x":-5,"y":-40},{"x":15,"y":-40},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":659,"y":490},{"x":699,"y":490},{"x":699,"y":590},{"x":659,"y":590}],"minx":659,"miny":490,"maxx":699,"maxy":590,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":669,"y":570,"heading":0,"type":"Wall","name":"part36","worldx":679,"worldy":540,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":3}},{"x":469,"y":480,"heading":0,"view":{"x":469,"y":480,"heading":0,"scale":2,"points":[{"x":-5,"y":-50},{"x":15,"y":-50},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":459,"y":380},{"x":499,"y":380},{"x":499,"y":500},{"x":459,"y":500}],"minx":459,"miny":380,"maxx":499,"maxy":500,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":469,"y":480,"heading":0,"type":"Wall","name":"part37","worldx":479,"worldy":440,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":5,"resizeFactorWidth":3}},{"x":519,"y":230,"heading":0,"view":{"x":519,"y":230,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":90,"y":-5},{"x":90,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":499,"y":220},{"x":699,"y":220},{"x":699,"y":260},{"x":499,"y":260}],"minx":499,"miny":220,"maxx":699,"maxy":260,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":519,"y":230,"heading":0,"type":"Wall","name":"part38","worldx":599,"worldy":240,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":3}},{"x":720,"y":350,"heading":0,"view":{"x":720,"y":350,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":40,"y":-5},{"x":40,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":700,"y":340},{"x":800,"y":340},{"x":800,"y":380},{"x":700,"y":380}],"minx":700,"miny":340,"maxx":800,"maxy":380,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":720,"y":350,"heading":0,"type":"Wall","name":"part39","worldx":750,"worldy":360,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":3}},{"x":589,"y":442,"heading":0,"view":{"x":589,"y":442,"heading":0,"scale":2,"points":[{"x":-5,"y":-100},{"x":15,"y":-100},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":579,"y":242},{"x":619,"y":242},{"x":619,"y":462},{"x":579,"y":462}],"minx":579,"miny":242,"maxx":619,"maxy":462,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":589,"y":442,"heading":0,"type":"Wall","name":"part43","worldx":599,"worldy":352,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":10,"resizeFactorWidth":3}},{"x":670,"y":240,"heading":0,"view":{"x":670,"y":240,"heading":0,"scale":2,"points":[{"x":-5,"y":-70},{"x":15,"y":-70},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":660,"y":100},{"x":700,"y":100},{"x":700,"y":260},{"x":660,"y":260}],"minx":660,"miny":100,"maxx":700,"maxy":260,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":670,"y":240,"heading":0,"type":"Wall","name":"part42","worldx":680,"worldy":180,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":3}},{"x":520,"y":110,"heading":0,"view":{"x":520,"y":110,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":80,"y":-5},{"x":80,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":500,"y":100},{"x":680,"y":100},{"x":680,"y":140},{"x":500,"y":140}],"minx":500,"miny":100,"maxx":680,"maxy":140,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":520,"y":110,"heading":0,"type":"Wall","name":"part44","worldx":590,"worldy":120,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":8,"resizeFactorWidth":3}}],"editTarget":null,"editOriginalOutline":"lightblue","running":false,"width":800,"height":600,"rotated":false}'
-    document.getElementById("simRemoveOpponent").click(); 
-    robotStartingLocation();    
-    removePacmanPoints();       
+    document.getElementById("simRemoveOpponent").click();
+    robotStartingLocation();
+    removePacmanPoints();
     loadWorld(mazeWorld);
     document.getElementById("simReset").click()
 }
@@ -4718,67 +4725,67 @@ function loadPacmanWorld() {
     simState.combatWorldLoaded = false;
     simState.mazeWorldLoaded = false;
     simState.pacmanWorldLoaded = true;
-    simState.worldObjects= []; //Clears world objects
+    simState.worldObjects = []; //Clears world objects
     var pacmanWorld = '{"prefix":"sim","dragMode":0,"dragTarget":{"x":399,"y":287,"heading":0,"view":{"x":399,"y":287,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":399,"y":287}],"minx":393,"miny":281,"maxx":405,"maxy":293,"radius":3},"scale":2,"subviews":[],"part":{"x":399,"y":287,"heading":0,"type":"Light","name":"part333","worldx":399,"worldy":287,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},"lastX":399,"lastY":287,"robotStartX":100,"robotStartY":100,"robotMazeStartX":60,"robotMazeStartY":60,"robotCombatStartX":60,"robotCombatStartY":300,"robotPacmanStartX":400,"robotPacmanStartY":300,"robotStartHeading":0,"pacmanStartHeading":4.71239,"opponentStartX":700,"opponentStartY":500,"opponentStartHeading":3.141592653589793,"timer":null,"prevTab":"Simulate","robotThread":null,"opponentThread":null,"worldObjects":[{"x":11,"y":580,"heading":0,"view":{"x":11,"y":580,"heading":0,"scale":2,"points":[{"x":-5,"y":-120},{"x":5,"y":-120},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":1,"y":340},{"x":21,"y":340},{"x":21,"y":600},{"x":1,"y":600}],"minx":1,"miny":340,"maxx":21,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":11,"y":580,"heading":0,"type":"Wall","name":"part15","worldx":11,"worldy":470,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":12,"resizeFactorWidth":1}},{"x":10,"y":241,"heading":0,"view":{"x":10,"y":241,"heading":0,"scale":2,"points":[{"x":-5,"y":-120},{"x":5,"y":-120},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":1},{"x":20,"y":1},{"x":20,"y":261},{"x":0,"y":261}],"minx":0,"miny":1,"maxx":20,"maxy":261,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":10,"y":241,"heading":0,"type":"Wall","name":"part16","worldx":10,"worldy":131,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":12,"resizeFactorWidth":1}},{"x":792,"y":239,"heading":0,"view":{"x":792,"y":239,"heading":0,"scale":2,"points":[{"x":-5,"y":-120},{"x":5,"y":-120},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":782,"y":-1},{"x":802,"y":-1},{"x":802,"y":259},{"x":782,"y":259}],"minx":782,"miny":-1,"maxx":802,"maxy":259,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":792,"y":239,"heading":0,"type":"Wall","name":"part17","worldx":792,"worldy":129,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":12,"resizeFactorWidth":1}},{"x":790,"y":581,"heading":0,"view":{"x":790,"y":581,"heading":0,"scale":2,"points":[{"x":-5,"y":-120},{"x":5,"y":-120},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":780,"y":341},{"x":800,"y":341},{"x":800,"y":601},{"x":780,"y":601}],"minx":780,"miny":341,"maxx":800,"maxy":601,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":790,"y":581,"heading":0,"type":"Wall","name":"part18","worldx":790,"worldy":471,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":12,"resizeFactorWidth":1}},{"x":20,"y":590,"heading":0,"view":{"x":20,"y":590,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":0,"y":580},{"x":800,"y":580},{"x":800,"y":600},{"x":0,"y":600}],"minx":0,"miny":580,"maxx":800,"maxy":600,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":20,"y":590,"heading":0,"type":"Wall","name":"part20","worldx":400,"worldy":590,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":18,"y":9,"heading":0,"view":{"x":18,"y":9,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":390,"y":-5},{"x":390,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-2,"y":-1},{"x":798,"y":-1},{"x":798,"y":19},{"x":-2,"y":19}],"minx":-2,"miny":-1,"maxx":798,"maxy":19,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":18,"y":9,"heading":0,"type":"Wall","name":"part19","worldx":398,"worldy":9,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":39,"resizeFactorWidth":1}},{"x":500,"y":91,"heading":0,"view":{"x":500,"y":91,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":50,"y":-5},{"x":50,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":480,"y":81},{"x":600,"y":81},{"x":600,"y":121},{"x":480,"y":121}],"minx":480,"miny":81,"maxx":600,"maxy":121,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":500,"y":91,"heading":0,"type":"Wall","name":"part27","worldx":540,"worldy":101,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":5,"resizeFactorWidth":3}},{"x":390,"y":99,"heading":0,"view":{"x":390,"y":99,"heading":0,"scale":2,"points":[{"x":-5,"y":-50},{"x":15,"y":-50},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":380,"y":-1},{"x":420,"y":-1},{"x":420,"y":119},{"x":380,"y":119}],"minx":380,"miny":-1,"maxx":420,"maxy":119,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":390,"y":99,"heading":0,"type":"Wall","name":"part24","worldx":400,"worldy":59,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":5,"resizeFactorWidth":3}},{"x":681,"y":90,"heading":0,"view":{"x":681,"y":90,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":661,"y":80},{"x":721,"y":80},{"x":721,"y":120},{"x":661,"y":120}],"minx":661,"miny":80,"maxx":721,"maxy":120,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":681,"y":90,"heading":0,"type":"Wall","name":"part25","worldx":691,"worldy":100,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":3}},{"x":681,"y":191,"heading":0,"view":{"x":681,"y":191,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":661,"y":181},{"x":721,"y":181},{"x":721,"y":201},{"x":661,"y":201}],"minx":661,"miny":181,"maxx":721,"maxy":201,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":681,"y":191,"heading":0,"type":"Wall","name":"part26","worldx":691,"worldy":191,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":99,"y":90,"heading":0,"view":{"x":99,"y":90,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":79,"y":80},{"x":139,"y":80},{"x":139,"y":120},{"x":79,"y":120}],"minx":79,"miny":80,"maxx":139,"maxy":120,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":99,"y":90,"heading":0,"type":"Wall","name":"part28","worldx":109,"worldy":100,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":3}},{"x":219,"y":90,"heading":0,"view":{"x":219,"y":90,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":50,"y":-5},{"x":50,"y":15},{"x":-10,"y":15}],"outline":"blue","fill":"blue","polygon":[{"x":199,"y":80},{"x":319,"y":80},{"x":319,"y":120},{"x":199,"y":120}],"minx":199,"miny":80,"maxx":319,"maxy":120,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":219,"y":90,"heading":0,"type":"Wall","name":"part39","worldx":259,"worldy":100,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":5,"resizeFactorWidth":3}},{"x":99,"y":191,"heading":0,"view":{"x":99,"y":191,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":79,"y":181},{"x":139,"y":181},{"x":139,"y":201},{"x":79,"y":201}],"minx":79,"miny":181,"maxx":139,"maxy":201,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":99,"y":191,"heading":0,"type":"Wall","name":"part30","worldx":109,"worldy":191,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":1}},{"x":320,"y":191,"heading":0,"view":{"x":320,"y":191,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":90,"y":-5},{"x":90,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":300,"y":181},{"x":500,"y":181},{"x":500,"y":201},{"x":300,"y":201}],"minx":300,"miny":181,"maxx":500,"maxy":201,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":320,"y":191,"heading":0,"type":"Wall","name":"part32","worldx":400,"worldy":191,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":18,"y":269,"heading":0,"view":{"x":18,"y":269,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":60,"y":-5},{"x":60,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-2,"y":259},{"x":138,"y":259},{"x":138,"y":279},{"x":-2,"y":279}],"minx":-2,"miny":259,"maxx":138,"maxy":279,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":18,"y":269,"heading":0,"type":"Wall","name":"part45","worldx":68,"worldy":269,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":6,"resizeFactorWidth":1}},{"x":19,"y":349,"heading":0,"view":{"x":19,"y":349,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":60,"y":-5},{"x":60,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":-1,"y":339},{"x":139,"y":339},{"x":139,"y":359},{"x":-1,"y":359}],"minx":-1,"miny":339,"maxx":139,"maxy":359,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":19,"y":349,"heading":0,"type":"Wall","name":"part34","worldx":69,"worldy":349,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":6,"resizeFactorWidth":1}},{"x":100,"y":509,"heading":0,"view":{"x":100,"y":509,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":110,"y":-5},{"x":110,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":80,"y":499},{"x":320,"y":499},{"x":320,"y":519},{"x":80,"y":519}],"minx":80,"miny":499,"maxx":320,"maxy":519,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":100,"y":509,"heading":0,"type":"Wall","name":"part46","worldx":200,"worldy":509,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":11,"resizeFactorWidth":1}},{"x":390,"y":500,"heading":0,"view":{"x":390,"y":500,"heading":0,"scale":2,"points":[{"x":-5,"y":-30},{"x":15,"y":-30},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":380,"y":440},{"x":420,"y":440},{"x":420,"y":520},{"x":380,"y":520}],"minx":380,"miny":440,"maxx":420,"maxy":520,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":390,"y":500,"heading":0,"type":"Wall","name":"part38","worldx":400,"worldy":480,"outline":"blue","fill":"blue","power":0,"rotated":0,"moveable":false,"resizeFactor":1,"resizeFactorHeight":3,"resizeFactorWidth":3}},{"x":99,"y":431,"heading":0,"view":{"x":99,"y":431,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":70,"y":-5},{"x":70,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":79,"y":421},{"x":239,"y":421},{"x":239,"y":441},{"x":79,"y":441}],"minx":79,"miny":421,"maxx":239,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":99,"y":431,"heading":0,"type":"Wall","name":"part31","worldx":159,"worldy":431,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":1}},{"x":210,"y":420,"heading":0,"view":{"x":210,"y":420,"heading":0,"scale":2,"points":[{"x":-5,"y":-40},{"x":15,"y":-40},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":200,"y":340},{"x":240,"y":340},{"x":240,"y":440},{"x":200,"y":440}],"minx":200,"miny":340,"maxx":240,"maxy":440,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":210,"y":420,"heading":0,"type":"Wall","name":"part33","worldx":220,"worldy":390,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":3}},{"x":680,"y":269,"heading":0,"view":{"x":680,"y":269,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":60,"y":-5},{"x":60,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":660,"y":259},{"x":800,"y":259},{"x":800,"y":279},{"x":660,"y":279}],"minx":660,"miny":259,"maxx":800,"maxy":279,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":680,"y":269,"heading":0,"type":"Wall","name":"part42","worldx":730,"worldy":269,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":6,"resizeFactorWidth":1}},{"x":680,"y":349,"heading":0,"view":{"x":680,"y":349,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":60,"y":-5},{"x":60,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":660,"y":339},{"x":800,"y":339},{"x":800,"y":359},{"x":660,"y":359}],"minx":660,"miny":339,"maxx":800,"maxy":359,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":680,"y":349,"heading":0,"type":"Wall","name":"part44","worldx":730,"worldy":349,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":6,"resizeFactorWidth":1}},{"x":320,"y":430,"heading":0,"view":{"x":320,"y":430,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":90,"y":-5},{"x":90,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":300,"y":420},{"x":500,"y":420},{"x":500,"y":440},{"x":300,"y":440}],"minx":300,"miny":420,"maxx":500,"maxy":440,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":320,"y":430,"heading":0,"type":"Wall","name":"part40","worldx":400,"worldy":430,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":310,"y":340,"heading":0,"view":{"x":310,"y":340,"heading":0,"scale":2,"points":[{"x":-5,"y":-40},{"x":5,"y":-40},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":300,"y":260},{"x":320,"y":260},{"x":320,"y":360},{"x":300,"y":360}],"minx":300,"miny":260,"maxx":320,"maxy":360,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":310,"y":340,"heading":0,"type":"Wall","name":"part35","worldx":310,"worldy":310,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":1}},{"x":320,"y":350,"heading":0,"view":{"x":320,"y":350,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":90,"y":-5},{"x":90,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":300,"y":340},{"x":500,"y":340},{"x":500,"y":360},{"x":300,"y":360}],"minx":300,"miny":340,"maxx":500,"maxy":360,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":320,"y":350,"heading":0,"type":"Wall","name":"part37","worldx":400,"worldy":350,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":9,"resizeFactorWidth":1}},{"x":491,"y":340,"heading":0,"view":{"x":491,"y":340,"heading":0,"scale":2,"points":[{"x":-5,"y":-40},{"x":5,"y":-40},{"x":5,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":481,"y":260},{"x":501,"y":260},{"x":501,"y":360},{"x":481,"y":360}],"minx":481,"miny":260,"maxx":501,"maxy":360,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":491,"y":340,"heading":0,"type":"Wall","name":"part43","worldx":491,"worldy":310,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":1}},{"x":501,"y":510,"heading":0,"view":{"x":501,"y":510,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":110,"y":-5},{"x":110,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":481,"y":500},{"x":721,"y":500},{"x":721,"y":520},{"x":481,"y":520}],"minx":481,"miny":500,"maxx":721,"maxy":520,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":501,"y":510,"heading":0,"type":"Wall","name":"part47","worldx":601,"worldy":510,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":11,"resizeFactorWidth":1}},{"x":581,"y":431,"heading":0,"view":{"x":581,"y":431,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":70,"y":-5},{"x":70,"y":5},{"x":-10,"y":5}],"outline":"blue","fill":"blue","polygon":[{"x":561,"y":421},{"x":721,"y":421},{"x":721,"y":441},{"x":561,"y":441}],"minx":561,"miny":421,"maxx":721,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":581,"y":431,"heading":0,"type":"Wall","name":"part48","worldx":641,"worldy":431,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":7,"resizeFactorWidth":1}},{"x":570,"y":421,"heading":0,"view":{"x":570,"y":421,"heading":0,"scale":2,"points":[{"x":-5,"y":-40},{"x":15,"y":-40},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":560,"y":341},{"x":600,"y":341},{"x":600,"y":441},{"x":560,"y":441}],"minx":560,"miny":341,"maxx":600,"maxy":441,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":570,"y":421,"heading":0,"type":"Wall","name":"part49","worldx":580,"worldy":391,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":3}},{"x":319,"y":269,"heading":0,"view":{"x":319,"y":269,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":45},{"x":-10,"y":45}],"outline":"blue","fill":"blue","polygon":[{"x":299,"y":259},{"x":359,"y":259},{"x":359,"y":359},{"x":299,"y":359}],"minx":299,"miny":259,"maxx":359,"maxy":359,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":319,"y":269,"heading":0,"type":"Wall","name":"part50","worldx":329,"worldy":309,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":9}},{"x":461,"y":269,"heading":0,"view":{"x":461,"y":269,"heading":0,"scale":2,"points":[{"x":-10,"y":-5},{"x":20,"y":-5},{"x":20,"y":45},{"x":-10,"y":45}],"outline":"blue","fill":"blue","polygon":[{"x":441,"y":259},{"x":501,"y":259},{"x":501,"y":359},{"x":441,"y":359}],"minx":441,"miny":259,"maxx":501,"maxy":359,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":461,"y":269,"heading":0,"type":"Wall","name":"part51","worldx":471,"worldy":309,"outline":"blue","fill":"blue","power":0,"rotated":1,"moveable":false,"resizeFactor":1,"resizeFactorHeight":2,"resizeFactorWidth":9}},{"x":391,"y":230,"heading":0,"view":{"x":391,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":391,"y":230}],"minx":385,"miny":224,"maxx":397,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":391,"y":230,"heading":0,"type":"Light","name":"part39","worldx":391,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":410,"y":230,"heading":0,"view":{"x":410,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":410,"y":230}],"minx":404,"miny":224,"maxx":416,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":410,"y":230,"heading":0,"type":"Light","name":"part40","worldx":410,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":370,"y":230,"heading":0,"view":{"x":370,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":370,"y":230}],"minx":364,"miny":224,"maxx":376,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":370,"y":230,"heading":0,"type":"Light","name":"part41","worldx":370,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":230,"heading":0,"view":{"x":350,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":230}],"minx":344,"miny":224,"maxx":356,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":230,"heading":0,"type":"Light","name":"part42","worldx":350,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":330,"y":230,"heading":0,"view":{"x":330,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":330,"y":230}],"minx":324,"miny":224,"maxx":336,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":330,"y":230,"heading":0,"type":"Light","name":"part43","worldx":330,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":310,"y":230,"heading":0,"view":{"x":310,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":310,"y":230}],"minx":304,"miny":224,"maxx":316,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":310,"y":230,"heading":0,"type":"Light","name":"part44","worldx":310,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":290,"y":230,"heading":0,"view":{"x":290,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":290,"y":230}],"minx":284,"miny":224,"maxx":296,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":290,"y":230,"heading":0,"type":"Light","name":"part45","worldx":290,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":430,"y":230,"heading":0,"view":{"x":430,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":430,"y":230}],"minx":424,"miny":224,"maxx":436,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":430,"y":230,"heading":0,"type":"Light","name":"part46","worldx":430,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":230,"heading":0,"view":{"x":450,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":230}],"minx":444,"miny":224,"maxx":456,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":230,"heading":0,"type":"Light","name":"part47","worldx":450,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":470,"y":230,"heading":0,"view":{"x":470,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":470,"y":230}],"minx":464,"miny":224,"maxx":476,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":470,"y":230,"heading":0,"type":"Light","name":"part48","worldx":470,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":490,"y":230,"heading":0,"view":{"x":490,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":490,"y":230}],"minx":484,"miny":224,"maxx":496,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":490,"y":230,"heading":0,"type":"Light","name":"part49","worldx":490,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":510,"y":230,"heading":0,"view":{"x":510,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":510,"y":230}],"minx":504,"miny":224,"maxx":516,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":510,"y":230,"heading":0,"type":"Light","name":"part50","worldx":510,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":230,"heading":0,"view":{"x":530,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":230}],"minx":524,"miny":224,"maxx":536,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":230,"heading":0,"type":"Light","name":"part51","worldx":530,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":250,"heading":0,"view":{"x":530,"y":250,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":250}],"minx":524,"miny":244,"maxx":536,"maxy":256,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":250,"heading":0,"type":"Light","name":"part52","worldx":530,"worldy":250,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":270,"heading":0,"view":{"x":530,"y":270,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":270}],"minx":524,"miny":264,"maxx":536,"maxy":276,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":270,"heading":0,"type":"Light","name":"part53","worldx":530,"worldy":270,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":290,"heading":0,"view":{"x":530,"y":290,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":290}],"minx":524,"miny":284,"maxx":536,"maxy":296,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":290,"heading":0,"type":"Light","name":"part54","worldx":530,"worldy":290,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":310,"heading":0,"view":{"x":530,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":310}],"minx":524,"miny":304,"maxx":536,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":310,"heading":0,"type":"Light","name":"part55","worldx":530,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":330,"heading":0,"view":{"x":530,"y":330,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":330}],"minx":524,"miny":324,"maxx":536,"maxy":336,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":330,"heading":0,"type":"Light","name":"part56","worldx":530,"worldy":330,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":350,"heading":0,"view":{"x":530,"y":350,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":350}],"minx":524,"miny":344,"maxx":536,"maxy":356,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":350,"heading":0,"type":"Light","name":"part57","worldx":530,"worldy":350,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":370,"heading":0,"view":{"x":530,"y":370,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":370}],"minx":524,"miny":364,"maxx":536,"maxy":376,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":370,"heading":0,"type":"Light","name":"part58","worldx":530,"worldy":370,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":230,"heading":0,"view":{"x":270,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":230}],"minx":264,"miny":224,"maxx":276,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":230,"heading":0,"type":"Light","name":"part59","worldx":270,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":250,"heading":0,"view":{"x":270,"y":250,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":250}],"minx":264,"miny":244,"maxx":276,"maxy":256,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":250,"heading":0,"type":"Light","name":"part60","worldx":270,"worldy":250,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":270,"heading":0,"view":{"x":270,"y":270,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":270}],"minx":264,"miny":264,"maxx":276,"maxy":276,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":270,"heading":0,"type":"Light","name":"part61","worldx":270,"worldy":270,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":290,"heading":0,"view":{"x":270,"y":290,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":290}],"minx":264,"miny":284,"maxx":276,"maxy":296,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":290,"heading":0,"type":"Light","name":"part62","worldx":270,"worldy":290,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":310,"heading":0,"view":{"x":270,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":310}],"minx":264,"miny":304,"maxx":276,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":310,"heading":0,"type":"Light","name":"part63","worldx":270,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":330,"heading":0,"view":{"x":270,"y":330,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":330}],"minx":264,"miny":324,"maxx":276,"maxy":336,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":330,"heading":0,"type":"Light","name":"part64","worldx":270,"worldy":330,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":350,"heading":0,"view":{"x":270,"y":350,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":350}],"minx":264,"miny":344,"maxx":276,"maxy":356,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":350,"heading":0,"type":"Light","name":"part65","worldx":270,"worldy":350,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":370,"heading":0,"view":{"x":270,"y":370,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":370}],"minx":264,"miny":364,"maxx":276,"maxy":376,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":370,"heading":0,"type":"Light","name":"part66","worldx":270,"worldy":370,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":390,"heading":0,"view":{"x":270,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":390}],"minx":264,"miny":384,"maxx":276,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":390,"heading":0,"type":"Light","name":"part67","worldx":270,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":290,"y":390,"heading":0,"view":{"x":290,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":290,"y":390}],"minx":284,"miny":384,"maxx":296,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":290,"y":390,"heading":0,"type":"Light","name":"part68","worldx":290,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":310,"y":390,"heading":0,"view":{"x":310,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":310,"y":390}],"minx":304,"miny":384,"maxx":316,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":310,"y":390,"heading":0,"type":"Light","name":"part69","worldx":310,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":330,"y":390,"heading":0,"view":{"x":330,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":330,"y":390}],"minx":324,"miny":384,"maxx":336,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":330,"y":390,"heading":0,"type":"Light","name":"part70","worldx":330,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":390,"heading":0,"view":{"x":350,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":390}],"minx":344,"miny":384,"maxx":356,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":390,"heading":0,"type":"Light","name":"part71","worldx":350,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":370,"y":390,"heading":0,"view":{"x":370,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":370,"y":390}],"minx":364,"miny":384,"maxx":376,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":370,"y":390,"heading":0,"type":"Light","name":"part72","worldx":370,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":390,"y":390,"heading":0,"view":{"x":390,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":390,"y":390}],"minx":384,"miny":384,"maxx":396,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":390,"y":390,"heading":0,"type":"Light","name":"part73","worldx":390,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":410,"y":390,"heading":0,"view":{"x":410,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":410,"y":390}],"minx":404,"miny":384,"maxx":416,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":410,"y":390,"heading":0,"type":"Light","name":"part74","worldx":410,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":430,"y":390,"heading":0,"view":{"x":430,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":430,"y":390}],"minx":424,"miny":384,"maxx":436,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":430,"y":390,"heading":0,"type":"Light","name":"part75","worldx":430,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":390,"heading":0,"view":{"x":450,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":390}],"minx":444,"miny":384,"maxx":456,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":390,"heading":0,"type":"Light","name":"part76","worldx":450,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":390,"heading":0,"view":{"x":530,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":390}],"minx":524,"miny":384,"maxx":536,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":390,"heading":0,"type":"Light","name":"part77","worldx":530,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":510,"y":390,"heading":0,"view":{"x":510,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":510,"y":390}],"minx":504,"miny":384,"maxx":516,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":510,"y":390,"heading":0,"type":"Light","name":"part78","worldx":510,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":490,"y":390,"heading":0,"view":{"x":490,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":490,"y":390}],"minx":484,"miny":384,"maxx":496,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":490,"y":390,"heading":0,"type":"Light","name":"part79","worldx":490,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":470,"y":390,"heading":0,"view":{"x":470,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":470,"y":390}],"minx":464,"miny":384,"maxx":476,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":470,"y":390,"heading":0,"type":"Light","name":"part80","worldx":470,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":210,"heading":0,"view":{"x":270,"y":210,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":210}],"minx":264,"miny":204,"maxx":276,"maxy":216,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":210,"heading":0,"type":"Light","name":"part81","worldx":270,"worldy":210,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":190,"heading":0,"view":{"x":270,"y":190,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":190}],"minx":264,"miny":184,"maxx":276,"maxy":196,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":190,"heading":0,"type":"Light","name":"part82","worldx":270,"worldy":190,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":170,"heading":0,"view":{"x":270,"y":170,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":170}],"minx":264,"miny":164,"maxx":276,"maxy":176,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":170,"heading":0,"type":"Light","name":"part83","worldx":270,"worldy":170,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":150,"heading":0,"view":{"x":270,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":150}],"minx":264,"miny":144,"maxx":276,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":150,"heading":0,"type":"Light","name":"part84","worldx":270,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":290,"y":150,"heading":0,"view":{"x":290,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":290,"y":150}],"minx":284,"miny":144,"maxx":296,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":290,"y":150,"heading":0,"type":"Light","name":"part85","worldx":290,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":310,"y":150,"heading":0,"view":{"x":310,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":310,"y":150}],"minx":304,"miny":144,"maxx":316,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":310,"y":150,"heading":0,"type":"Light","name":"part86","worldx":310,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":330,"y":150,"heading":0,"view":{"x":330,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":330,"y":150}],"minx":324,"miny":144,"maxx":336,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":330,"y":150,"heading":0,"type":"Light","name":"part87","worldx":330,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":150,"heading":0,"view":{"x":350,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":150}],"minx":344,"miny":144,"maxx":356,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":150,"heading":0,"type":"Light","name":"part88","worldx":350,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":370,"y":150,"heading":0,"view":{"x":370,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":370,"y":150}],"minx":364,"miny":144,"maxx":376,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":370,"y":150,"heading":0,"type":"Light","name":"part89","worldx":370,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":390,"y":150,"heading":0,"view":{"x":390,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":390,"y":150}],"minx":384,"miny":144,"maxx":396,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":390,"y":150,"heading":0,"type":"Light","name":"part90","worldx":390,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":410,"y":150,"heading":0,"view":{"x":410,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":410,"y":150}],"minx":404,"miny":144,"maxx":416,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":410,"y":150,"heading":0,"type":"Light","name":"part91","worldx":410,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":430,"y":150,"heading":0,"view":{"x":430,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":430,"y":150}],"minx":424,"miny":144,"maxx":436,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":430,"y":150,"heading":0,"type":"Light","name":"part92","worldx":430,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":150,"heading":0,"view":{"x":450,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":150}],"minx":444,"miny":144,"maxx":456,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":150,"heading":0,"type":"Light","name":"part93","worldx":450,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":130,"heading":0,"view":{"x":450,"y":130,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":130}],"minx":444,"miny":124,"maxx":456,"maxy":136,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":130,"heading":0,"type":"Light","name":"part94","worldx":450,"worldy":130,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":470,"y":150,"heading":0,"view":{"x":470,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":470,"y":150}],"minx":464,"miny":144,"maxx":476,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":470,"y":150,"heading":0,"type":"Light","name":"part95","worldx":470,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":490,"y":150,"heading":0,"view":{"x":490,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":490,"y":150}],"minx":484,"miny":144,"maxx":496,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":490,"y":150,"heading":0,"type":"Light","name":"part96","worldx":490,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":510,"y":150,"heading":0,"view":{"x":510,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":510,"y":150}],"minx":504,"miny":144,"maxx":516,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":510,"y":150,"heading":0,"type":"Light","name":"part97","worldx":510,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":150,"heading":0,"view":{"x":530,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":150}],"minx":524,"miny":144,"maxx":536,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":150,"heading":0,"type":"Light","name":"part98","worldx":530,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":170,"heading":0,"view":{"x":530,"y":170,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":170}],"minx":524,"miny":164,"maxx":536,"maxy":176,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":170,"heading":0,"type":"Light","name":"part99","worldx":530,"worldy":170,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":190,"heading":0,"view":{"x":530,"y":190,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":190}],"minx":524,"miny":184,"maxx":536,"maxy":196,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":190,"heading":0,"type":"Light","name":"part100","worldx":530,"worldy":190,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":210,"heading":0,"view":{"x":530,"y":210,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":210}],"minx":524,"miny":204,"maxx":536,"maxy":216,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":210,"heading":0,"type":"Light","name":"part101","worldx":530,"worldy":210,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":110,"heading":0,"view":{"x":450,"y":110,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":110}],"minx":444,"miny":104,"maxx":456,"maxy":116,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":110,"heading":0,"type":"Light","name":"part102","worldx":450,"worldy":110,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":90,"heading":0,"view":{"x":450,"y":90,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":90}],"minx":444,"miny":84,"maxx":456,"maxy":96,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":90,"heading":0,"type":"Light","name":"part103","worldx":450,"worldy":90,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":550,"y":150,"heading":0,"view":{"x":550,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":550,"y":150}],"minx":544,"miny":144,"maxx":556,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":550,"y":150,"heading":0,"type":"Light","name":"part104","worldx":550,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":130,"heading":0,"view":{"x":350,"y":130,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":130}],"minx":344,"miny":124,"maxx":356,"maxy":136,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":130,"heading":0,"type":"Light","name":"part105","worldx":350,"worldy":130,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":110,"heading":0,"view":{"x":350,"y":110,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":110}],"minx":344,"miny":104,"maxx":356,"maxy":116,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":110,"heading":0,"type":"Light","name":"part106","worldx":350,"worldy":110,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":70,"heading":0,"view":{"x":450,"y":70,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":70}],"minx":444,"miny":64,"maxx":456,"maxy":76,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":70,"heading":0,"type":"Light","name":"part107","worldx":450,"worldy":70,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":50,"heading":0,"view":{"x":450,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":50}],"minx":444,"miny":44,"maxx":456,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":50,"heading":0,"type":"Light","name":"part108","worldx":450,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":470,"y":50,"heading":0,"view":{"x":470,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":470,"y":50}],"minx":464,"miny":44,"maxx":476,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":470,"y":50,"heading":0,"type":"Light","name":"part109","worldx":470,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":90,"heading":0,"view":{"x":350,"y":90,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":90}],"minx":344,"miny":84,"maxx":356,"maxy":96,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":90,"heading":0,"type":"Light","name":"part110","worldx":350,"worldy":90,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":70,"heading":0,"view":{"x":350,"y":70,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":70}],"minx":344,"miny":64,"maxx":356,"maxy":76,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":70,"heading":0,"type":"Light","name":"part111","worldx":350,"worldy":70,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":50,"heading":0,"view":{"x":350,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":50}],"minx":344,"miny":44,"maxx":356,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":50,"heading":0,"type":"Light","name":"part112","worldx":350,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":330,"y":50,"heading":0,"view":{"x":330,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":330,"y":50}],"minx":324,"miny":44,"maxx":336,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":330,"y":50,"heading":0,"type":"Light","name":"part113","worldx":330,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":310,"y":50,"heading":0,"view":{"x":310,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":310,"y":50}],"minx":304,"miny":44,"maxx":316,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":310,"y":50,"heading":0,"type":"Light","name":"part114","worldx":310,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":290,"y":50,"heading":0,"view":{"x":290,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":290,"y":50}],"minx":284,"miny":44,"maxx":296,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":290,"y":50,"heading":0,"type":"Light","name":"part115","worldx":290,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":50,"heading":0,"view":{"x":270,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":50}],"minx":264,"miny":44,"maxx":276,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":50,"heading":0,"type":"Light","name":"part116","worldx":270,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":250,"y":50,"heading":0,"view":{"x":250,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":250,"y":50}],"minx":244,"miny":44,"maxx":256,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":250,"y":50,"heading":0,"type":"Light","name":"part117","worldx":250,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":250,"y":150,"heading":0,"view":{"x":250,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":250,"y":150}],"minx":244,"miny":144,"maxx":256,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":250,"y":150,"heading":0,"type":"Light","name":"part118","worldx":250,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":230,"y":150,"heading":0,"view":{"x":230,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":230,"y":150}],"minx":224,"miny":144,"maxx":236,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":230,"y":150,"heading":0,"type":"Light","name":"part119","worldx":230,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":210,"y":150,"heading":0,"view":{"x":210,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":210,"y":150}],"minx":204,"miny":144,"maxx":216,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":210,"y":150,"heading":0,"type":"Light","name":"part120","worldx":210,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":190,"y":150,"heading":0,"view":{"x":190,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":190,"y":150}],"minx":184,"miny":144,"maxx":196,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":190,"y":150,"heading":0,"type":"Light","name":"part121","worldx":190,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":150,"heading":0,"view":{"x":170,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":150}],"minx":164,"miny":144,"maxx":176,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":150,"heading":0,"type":"Light","name":"part122","worldx":170,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":130,"heading":0,"view":{"x":170,"y":130,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":130}],"minx":164,"miny":124,"maxx":176,"maxy":136,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":130,"heading":0,"type":"Light","name":"part123","worldx":170,"worldy":130,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":110,"heading":0,"view":{"x":170,"y":110,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":110}],"minx":164,"miny":104,"maxx":176,"maxy":116,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":110,"heading":0,"type":"Light","name":"part124","worldx":170,"worldy":110,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":90,"heading":0,"view":{"x":170,"y":90,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":90}],"minx":164,"miny":84,"maxx":176,"maxy":96,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":90,"heading":0,"type":"Light","name":"part125","worldx":170,"worldy":90,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":70,"heading":0,"view":{"x":170,"y":70,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":70}],"minx":164,"miny":64,"maxx":176,"maxy":76,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":70,"heading":0,"type":"Light","name":"part126","worldx":170,"worldy":70,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":50,"heading":0,"view":{"x":170,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":50}],"minx":164,"miny":44,"maxx":176,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":50,"heading":0,"type":"Light","name":"part127","worldx":170,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":190,"y":50,"heading":0,"view":{"x":190,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":190,"y":50}],"minx":184,"miny":44,"maxx":196,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":190,"y":50,"heading":0,"type":"Light","name":"part128","worldx":190,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":210,"y":50,"heading":0,"view":{"x":210,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":210,"y":50}],"minx":204,"miny":44,"maxx":216,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":210,"y":50,"heading":0,"type":"Light","name":"part129","worldx":210,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":230,"y":50,"heading":0,"view":{"x":230,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":230,"y":50}],"minx":224,"miny":44,"maxx":236,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":230,"y":50,"heading":0,"type":"Light","name":"part130","worldx":230,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":150,"y":50,"heading":0,"view":{"x":150,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":150,"y":50}],"minx":144,"miny":44,"maxx":156,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":150,"y":50,"heading":0,"type":"Light","name":"part131","worldx":150,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":130,"y":50,"heading":0,"view":{"x":130,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":130,"y":50}],"minx":124,"miny":44,"maxx":136,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":130,"y":50,"heading":0,"type":"Light","name":"part132","worldx":130,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":110,"y":50,"heading":0,"view":{"x":110,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":110,"y":50}],"minx":104,"miny":44,"maxx":116,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":110,"y":50,"heading":0,"type":"Light","name":"part133","worldx":110,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":90,"y":50,"heading":0,"view":{"x":90,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":90,"y":50}],"minx":84,"miny":44,"maxx":96,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":90,"y":50,"heading":0,"type":"Light","name":"part134","worldx":90,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":70,"y":50,"heading":0,"view":{"x":70,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":70,"y":50}],"minx":64,"miny":44,"maxx":76,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":70,"y":50,"heading":0,"type":"Light","name":"part135","worldx":70,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":50,"heading":0,"view":{"x":50,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":50}],"minx":44,"miny":44,"maxx":56,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":50,"heading":0,"type":"Light","name":"part136","worldx":50,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":70,"heading":0,"view":{"x":50,"y":70,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":70}],"minx":44,"miny":64,"maxx":56,"maxy":76,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":70,"heading":0,"type":"Light","name":"part137","worldx":50,"worldy":70,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":90,"heading":0,"view":{"x":50,"y":90,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":90}],"minx":44,"miny":84,"maxx":56,"maxy":96,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":90,"heading":0,"type":"Light","name":"part138","worldx":50,"worldy":90,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":110,"heading":0,"view":{"x":50,"y":110,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":110}],"minx":44,"miny":104,"maxx":56,"maxy":116,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":110,"heading":0,"type":"Light","name":"part139","worldx":50,"worldy":110,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":130,"heading":0,"view":{"x":50,"y":130,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":130}],"minx":44,"miny":124,"maxx":56,"maxy":136,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":130,"heading":0,"type":"Light","name":"part140","worldx":50,"worldy":130,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":150,"heading":0,"view":{"x":50,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":150}],"minx":44,"miny":144,"maxx":56,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":150,"heading":0,"type":"Light","name":"part141","worldx":50,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":70,"y":150,"heading":0,"view":{"x":70,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":70,"y":150}],"minx":64,"miny":144,"maxx":76,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":70,"y":150,"heading":0,"type":"Light","name":"part142","worldx":70,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":90,"y":150,"heading":0,"view":{"x":90,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":90,"y":150}],"minx":84,"miny":144,"maxx":96,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":90,"y":150,"heading":0,"type":"Light","name":"part143","worldx":90,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":110,"y":150,"heading":0,"view":{"x":110,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":110,"y":150}],"minx":104,"miny":144,"maxx":116,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":110,"y":150,"heading":0,"type":"Light","name":"part144","worldx":110,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":130,"y":150,"heading":0,"view":{"x":130,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":130,"y":150}],"minx":124,"miny":144,"maxx":136,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":130,"y":150,"heading":0,"type":"Light","name":"part145","worldx":130,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":150,"y":150,"heading":0,"view":{"x":150,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":150,"y":150}],"minx":144,"miny":144,"maxx":156,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":150,"y":150,"heading":0,"type":"Light","name":"part146","worldx":150,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":170,"heading":0,"view":{"x":170,"y":170,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":170}],"minx":164,"miny":164,"maxx":176,"maxy":176,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":170,"heading":0,"type":"Light","name":"part147","worldx":170,"worldy":170,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":190,"heading":0,"view":{"x":170,"y":190,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":190}],"minx":164,"miny":184,"maxx":176,"maxy":196,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":190,"heading":0,"type":"Light","name":"part148","worldx":170,"worldy":190,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":210,"heading":0,"view":{"x":170,"y":210,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":210}],"minx":164,"miny":204,"maxx":176,"maxy":216,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":210,"heading":0,"type":"Light","name":"part149","worldx":170,"worldy":210,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":230,"heading":0,"view":{"x":170,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":230}],"minx":164,"miny":224,"maxx":176,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":230,"heading":0,"type":"Light","name":"part150","worldx":170,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":150,"y":230,"heading":0,"view":{"x":150,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":150,"y":230}],"minx":144,"miny":224,"maxx":156,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":150,"y":230,"heading":0,"type":"Light","name":"part151","worldx":150,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":130,"y":230,"heading":0,"view":{"x":130,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":130,"y":230}],"minx":124,"miny":224,"maxx":136,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":130,"y":230,"heading":0,"type":"Light","name":"part152","worldx":130,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":110,"y":230,"heading":0,"view":{"x":110,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":110,"y":230}],"minx":104,"miny":224,"maxx":116,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":110,"y":230,"heading":0,"type":"Light","name":"part153","worldx":110,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":90,"y":230,"heading":0,"view":{"x":90,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":90,"y":230}],"minx":84,"miny":224,"maxx":96,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":90,"y":230,"heading":0,"type":"Light","name":"part154","worldx":90,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":70,"y":230,"heading":0,"view":{"x":70,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":70,"y":230}],"minx":64,"miny":224,"maxx":76,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":70,"y":230,"heading":0,"type":"Light","name":"part155","worldx":70,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":230,"heading":0,"view":{"x":50,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":230}],"minx":44,"miny":224,"maxx":56,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":230,"heading":0,"type":"Light","name":"part156","worldx":50,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":210,"heading":0,"view":{"x":50,"y":210,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":210}],"minx":44,"miny":204,"maxx":56,"maxy":216,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":210,"heading":0,"type":"Light","name":"part157","worldx":50,"worldy":210,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":190,"heading":0,"view":{"x":50,"y":190,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":190}],"minx":44,"miny":184,"maxx":56,"maxy":196,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":190,"heading":0,"type":"Light","name":"part158","worldx":50,"worldy":190,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":170,"heading":0,"view":{"x":50,"y":170,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":170}],"minx":44,"miny":164,"maxx":56,"maxy":176,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":170,"heading":0,"type":"Light","name":"part159","worldx":50,"worldy":170,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":250,"y":310,"heading":0,"view":{"x":250,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":250,"y":310}],"minx":244,"miny":304,"maxx":256,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":250,"y":310,"heading":0,"type":"Light","name":"part160","worldx":250,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":230,"y":310,"heading":0,"view":{"x":230,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":230,"y":310}],"minx":224,"miny":304,"maxx":236,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":230,"y":310,"heading":0,"type":"Light","name":"part161","worldx":230,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":210,"y":310,"heading":0,"view":{"x":210,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":210,"y":310}],"minx":204,"miny":304,"maxx":216,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":210,"y":310,"heading":0,"type":"Light","name":"part162","worldx":210,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":190,"y":310,"heading":0,"view":{"x":190,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":190,"y":310}],"minx":184,"miny":304,"maxx":196,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":190,"y":310,"heading":0,"type":"Light","name":"part163","worldx":190,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":290,"heading":0,"view":{"x":170,"y":290,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":290}],"minx":164,"miny":284,"maxx":176,"maxy":296,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":290,"heading":0,"type":"Light","name":"part164","worldx":170,"worldy":290,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":270,"heading":0,"view":{"x":170,"y":270,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":270}],"minx":164,"miny":264,"maxx":176,"maxy":276,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":270,"heading":0,"type":"Light","name":"part165","worldx":170,"worldy":270,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":250,"heading":0,"view":{"x":170,"y":250,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":250}],"minx":164,"miny":244,"maxx":176,"maxy":256,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":250,"heading":0,"type":"Light","name":"part166","worldx":170,"worldy":250,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":310,"heading":0,"view":{"x":170,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":310}],"minx":164,"miny":304,"maxx":176,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":310,"heading":0,"type":"Light","name":"part167","worldx":170,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":330,"heading":0,"view":{"x":170,"y":330,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":330}],"minx":164,"miny":324,"maxx":176,"maxy":336,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":330,"heading":0,"type":"Light","name":"part168","worldx":170,"worldy":330,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":350,"heading":0,"view":{"x":170,"y":350,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":350}],"minx":164,"miny":344,"maxx":176,"maxy":356,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":350,"heading":0,"type":"Light","name":"part169","worldx":170,"worldy":350,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":370,"heading":0,"view":{"x":170,"y":370,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":370}],"minx":164,"miny":364,"maxx":176,"maxy":376,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":370,"heading":0,"type":"Light","name":"part170","worldx":170,"worldy":370,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":390,"heading":0,"view":{"x":170,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":390}],"minx":164,"miny":384,"maxx":176,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":390,"heading":0,"type":"Light","name":"part171","worldx":170,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":150,"y":390,"heading":0,"view":{"x":150,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":150,"y":390}],"minx":144,"miny":384,"maxx":156,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":150,"y":390,"heading":0,"type":"Light","name":"part172","worldx":150,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":130,"y":390,"heading":0,"view":{"x":130,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":130,"y":390}],"minx":124,"miny":384,"maxx":136,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":130,"y":390,"heading":0,"type":"Light","name":"part173","worldx":130,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":410,"heading":0,"view":{"x":270,"y":410,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":410}],"minx":264,"miny":404,"maxx":276,"maxy":416,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":410,"heading":0,"type":"Light","name":"part174","worldx":270,"worldy":410,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":430,"heading":0,"view":{"x":270,"y":430,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":430}],"minx":264,"miny":424,"maxx":276,"maxy":436,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":430,"heading":0,"type":"Light","name":"part175","worldx":270,"worldy":430,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":410,"heading":0,"view":{"x":530,"y":410,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":410}],"minx":524,"miny":404,"maxx":536,"maxy":416,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":410,"heading":0,"type":"Light","name":"part176","worldx":530,"worldy":410,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":430,"heading":0,"view":{"x":530,"y":430,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":430}],"minx":524,"miny":424,"maxx":536,"maxy":436,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":430,"heading":0,"type":"Light","name":"part177","worldx":530,"worldy":430,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":550,"y":310,"heading":0,"view":{"x":550,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":550,"y":310}],"minx":544,"miny":304,"maxx":556,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":550,"y":310,"heading":0,"type":"Light","name":"part178","worldx":550,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":490,"y":50,"heading":0,"view":{"x":490,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":490,"y":50}],"minx":484,"miny":44,"maxx":496,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":490,"y":50,"heading":0,"type":"Light","name":"part179","worldx":490,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":510,"y":50,"heading":0,"view":{"x":510,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":510,"y":50}],"minx":504,"miny":44,"maxx":516,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":510,"y":50,"heading":0,"type":"Light","name":"part180","worldx":510,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":50,"heading":0,"view":{"x":530,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":50}],"minx":524,"miny":44,"maxx":536,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":50,"heading":0,"type":"Light","name":"part181","worldx":530,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":550,"y":50,"heading":0,"view":{"x":550,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":550,"y":50}],"minx":544,"miny":44,"maxx":556,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":550,"y":50,"heading":0,"type":"Light","name":"part182","worldx":550,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":570,"y":50,"heading":0,"view":{"x":570,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":570,"y":50}],"minx":564,"miny":44,"maxx":576,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":570,"y":50,"heading":0,"type":"Light","name":"part183","worldx":570,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":590,"y":50,"heading":0,"view":{"x":590,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":590,"y":50}],"minx":584,"miny":44,"maxx":596,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":590,"y":50,"heading":0,"type":"Light","name":"part184","worldx":590,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":610,"y":50,"heading":0,"view":{"x":610,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":610,"y":50}],"minx":604,"miny":44,"maxx":616,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":610,"y":50,"heading":0,"type":"Light","name":"part185","worldx":610,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":50,"heading":0,"view":{"x":630,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":50}],"minx":624,"miny":44,"maxx":636,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":50,"heading":0,"type":"Light","name":"part186","worldx":630,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":650,"y":50,"heading":0,"view":{"x":650,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":650,"y":50}],"minx":644,"miny":44,"maxx":656,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":650,"y":50,"heading":0,"type":"Light","name":"part187","worldx":650,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":670,"y":50,"heading":0,"view":{"x":670,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":670,"y":50}],"minx":664,"miny":44,"maxx":676,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":670,"y":50,"heading":0,"type":"Light","name":"part188","worldx":670,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":70,"heading":0,"view":{"x":630,"y":70,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":70}],"minx":624,"miny":64,"maxx":636,"maxy":76,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":70,"heading":0,"type":"Light","name":"part189","worldx":630,"worldy":70,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":690,"y":50,"heading":0,"view":{"x":690,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":690,"y":50}],"minx":684,"miny":44,"maxx":696,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":690,"y":50,"heading":0,"type":"Light","name":"part190","worldx":690,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":710,"y":50,"heading":0,"view":{"x":710,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":710,"y":50}],"minx":704,"miny":44,"maxx":716,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":710,"y":50,"heading":0,"type":"Light","name":"part191","worldx":710,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":730,"y":50,"heading":0,"view":{"x":730,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":730,"y":50}],"minx":724,"miny":44,"maxx":736,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":730,"y":50,"heading":0,"type":"Light","name":"part192","worldx":730,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":50,"heading":0,"view":{"x":750,"y":50,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":50}],"minx":744,"miny":44,"maxx":756,"maxy":56,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":50,"heading":0,"type":"Light","name":"part193","worldx":750,"worldy":50,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":90,"heading":0,"view":{"x":630,"y":90,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":90}],"minx":624,"miny":84,"maxx":636,"maxy":96,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":90,"heading":0,"type":"Light","name":"part194","worldx":630,"worldy":90,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":110,"heading":0,"view":{"x":630,"y":110,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":110}],"minx":624,"miny":104,"maxx":636,"maxy":116,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":110,"heading":0,"type":"Light","name":"part195","worldx":630,"worldy":110,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":130,"heading":0,"view":{"x":630,"y":130,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":130}],"minx":624,"miny":124,"maxx":636,"maxy":136,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":130,"heading":0,"type":"Light","name":"part196","worldx":630,"worldy":130,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":150,"heading":0,"view":{"x":630,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":150}],"minx":624,"miny":144,"maxx":636,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":150,"heading":0,"type":"Light","name":"part197","worldx":630,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":610,"y":150,"heading":0,"view":{"x":610,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":610,"y":150}],"minx":604,"miny":144,"maxx":616,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":610,"y":150,"heading":0,"type":"Light","name":"part198","worldx":610,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":570,"y":150,"heading":0,"view":{"x":570,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":570,"y":150}],"minx":564,"miny":144,"maxx":576,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":570,"y":150,"heading":0,"type":"Light","name":"part199","worldx":570,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":590,"y":150,"heading":0,"view":{"x":590,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":590,"y":150}],"minx":584,"miny":144,"maxx":596,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":590,"y":150,"heading":0,"type":"Light","name":"part200","worldx":590,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":170,"heading":0,"view":{"x":630,"y":170,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":170}],"minx":624,"miny":164,"maxx":636,"maxy":176,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":170,"heading":0,"type":"Light","name":"part201","worldx":630,"worldy":170,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":190,"heading":0,"view":{"x":630,"y":190,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":190}],"minx":624,"miny":184,"maxx":636,"maxy":196,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":190,"heading":0,"type":"Light","name":"part202","worldx":630,"worldy":190,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":650,"y":150,"heading":0,"view":{"x":650,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":650,"y":150}],"minx":644,"miny":144,"maxx":656,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":650,"y":150,"heading":0,"type":"Light","name":"part203","worldx":650,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":670,"y":150,"heading":0,"view":{"x":670,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":670,"y":150}],"minx":664,"miny":144,"maxx":676,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":670,"y":150,"heading":0,"type":"Light","name":"part204","worldx":670,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":690,"y":150,"heading":0,"view":{"x":690,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":690,"y":150}],"minx":684,"miny":144,"maxx":696,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":690,"y":150,"heading":0,"type":"Light","name":"part205","worldx":690,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":710,"y":150,"heading":0,"view":{"x":710,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":710,"y":150}],"minx":704,"miny":144,"maxx":716,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":710,"y":150,"heading":0,"type":"Light","name":"part206","worldx":710,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":730,"y":150,"heading":0,"view":{"x":730,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":730,"y":150}],"minx":724,"miny":144,"maxx":736,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":730,"y":150,"heading":0,"type":"Light","name":"part207","worldx":730,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":150,"heading":0,"view":{"x":750,"y":150,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":150}],"minx":744,"miny":144,"maxx":756,"maxy":156,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":150,"heading":0,"type":"Light","name":"part208","worldx":750,"worldy":150,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":130,"heading":0,"view":{"x":750,"y":130,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":130}],"minx":744,"miny":124,"maxx":756,"maxy":136,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":130,"heading":0,"type":"Light","name":"part209","worldx":750,"worldy":130,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":110,"heading":0,"view":{"x":750,"y":110,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":110}],"minx":744,"miny":104,"maxx":756,"maxy":116,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":110,"heading":0,"type":"Light","name":"part210","worldx":750,"worldy":110,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":90,"heading":0,"view":{"x":750,"y":90,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":90}],"minx":744,"miny":84,"maxx":756,"maxy":96,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":90,"heading":0,"type":"Light","name":"part211","worldx":750,"worldy":90,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":70,"heading":0,"view":{"x":750,"y":70,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":70}],"minx":744,"miny":64,"maxx":756,"maxy":76,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":70,"heading":0,"type":"Light","name":"part212","worldx":750,"worldy":70,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":210,"heading":0,"view":{"x":630,"y":210,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":210}],"minx":624,"miny":204,"maxx":636,"maxy":216,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":210,"heading":0,"type":"Light","name":"part213","worldx":630,"worldy":210,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":230,"heading":0,"view":{"x":630,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":230}],"minx":624,"miny":224,"maxx":636,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":230,"heading":0,"type":"Light","name":"part214","worldx":630,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":650,"y":230,"heading":0,"view":{"x":650,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":650,"y":230}],"minx":644,"miny":224,"maxx":656,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":650,"y":230,"heading":0,"type":"Light","name":"part215","worldx":650,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":670,"y":230,"heading":0,"view":{"x":670,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":670,"y":230}],"minx":664,"miny":224,"maxx":676,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":670,"y":230,"heading":0,"type":"Light","name":"part216","worldx":670,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":210,"y":261,"heading":0,"view":{"x":210,"y":261,"heading":0,"scale":2,"points":[{"x":-5,"y":-40},{"x":15,"y":-40},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":200,"y":181},{"x":240,"y":181},{"x":240,"y":281},{"x":200,"y":281}],"minx":200,"miny":181,"maxx":240,"maxy":281,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":210,"y":261,"heading":0,"type":"Wall","name":"part41","worldx":220,"worldy":231,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":3}},{"x":571,"y":259,"heading":0,"view":{"x":571,"y":259,"heading":0,"scale":2,"points":[{"x":-5,"y":-40},{"x":15,"y":-40},{"x":15,"y":10},{"x":-5,"y":10}],"outline":"blue","fill":"blue","polygon":[{"x":561,"y":179},{"x":601,"y":179},{"x":601,"y":279},{"x":561,"y":279}],"minx":561,"miny":179,"maxx":601,"maxy":279,"stroke":"black"},"scale":2,"subviews":[],"part":{"x":571,"y":259,"heading":0,"type":"Wall","name":"part29","worldx":581,"worldy":229,"outline":"blue","fill":"blue","power":0,"rotated":false,"moveable":false,"resizeFactor":1,"resizeFactorHeight":4,"resizeFactorWidth":3}},{"x":690,"y":230,"heading":0,"view":{"x":690,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":690,"y":230}],"minx":684,"miny":224,"maxx":696,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":690,"y":230,"heading":0,"type":"Light","name":"part217","worldx":690,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":570,"y":310,"heading":0,"view":{"x":570,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":570,"y":310}],"minx":564,"miny":304,"maxx":576,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":570,"y":310,"heading":0,"type":"Light","name":"part218","worldx":570,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":590,"y":310,"heading":0,"view":{"x":590,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":590,"y":310}],"minx":584,"miny":304,"maxx":596,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":590,"y":310,"heading":0,"type":"Light","name":"part219","worldx":590,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":610,"y":310,"heading":0,"view":{"x":610,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":610,"y":310}],"minx":604,"miny":304,"maxx":616,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":610,"y":310,"heading":0,"type":"Light","name":"part220","worldx":610,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":310,"heading":0,"view":{"x":630,"y":310,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":310}],"minx":624,"miny":304,"maxx":636,"maxy":316,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":310,"heading":0,"type":"Light","name":"part221","worldx":630,"worldy":310,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":290,"heading":0,"view":{"x":630,"y":290,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":290}],"minx":624,"miny":284,"maxx":636,"maxy":296,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":290,"heading":0,"type":"Light","name":"part222","worldx":630,"worldy":290,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":270,"heading":0,"view":{"x":630,"y":270,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":270}],"minx":624,"miny":264,"maxx":636,"maxy":276,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":270,"heading":0,"type":"Light","name":"part223","worldx":630,"worldy":270,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":250,"heading":0,"view":{"x":630,"y":250,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":250}],"minx":624,"miny":244,"maxx":636,"maxy":256,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":250,"heading":0,"type":"Light","name":"part224","worldx":630,"worldy":250,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":710,"y":230,"heading":0,"view":{"x":710,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":710,"y":230}],"minx":704,"miny":224,"maxx":716,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":710,"y":230,"heading":0,"type":"Light","name":"part225","worldx":710,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":730,"y":230,"heading":0,"view":{"x":730,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":730,"y":230}],"minx":724,"miny":224,"maxx":736,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":730,"y":230,"heading":0,"type":"Light","name":"part226","worldx":730,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":230,"heading":0,"view":{"x":750,"y":230,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":230}],"minx":744,"miny":224,"maxx":756,"maxy":236,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":230,"heading":0,"type":"Light","name":"part227","worldx":750,"worldy":230,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":210,"heading":0,"view":{"x":750,"y":210,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":210}],"minx":744,"miny":204,"maxx":756,"maxy":216,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":210,"heading":0,"type":"Light","name":"part228","worldx":750,"worldy":210,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":190,"heading":0,"view":{"x":750,"y":190,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":190}],"minx":744,"miny":184,"maxx":756,"maxy":196,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":190,"heading":0,"type":"Light","name":"part229","worldx":750,"worldy":190,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":170,"heading":0,"view":{"x":750,"y":170,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":170}],"minx":744,"miny":164,"maxx":756,"maxy":176,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":170,"heading":0,"type":"Light","name":"part230","worldx":750,"worldy":170,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":330,"heading":0,"view":{"x":630,"y":330,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":330}],"minx":624,"miny":324,"maxx":636,"maxy":336,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":330,"heading":0,"type":"Light","name":"part231","worldx":630,"worldy":330,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":350,"heading":0,"view":{"x":630,"y":350,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":350}],"minx":624,"miny":344,"maxx":636,"maxy":356,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":350,"heading":0,"type":"Light","name":"part232","worldx":630,"worldy":350,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":370,"heading":0,"view":{"x":630,"y":370,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":370}],"minx":624,"miny":364,"maxx":636,"maxy":376,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":370,"heading":0,"type":"Light","name":"part233","worldx":630,"worldy":370,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":390,"heading":0,"view":{"x":630,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":390}],"minx":624,"miny":384,"maxx":636,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":390,"heading":0,"type":"Light","name":"part234","worldx":630,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":650,"y":390,"heading":0,"view":{"x":650,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":650,"y":390}],"minx":644,"miny":384,"maxx":656,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":650,"y":390,"heading":0,"type":"Light","name":"part235","worldx":650,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":670,"y":390,"heading":0,"view":{"x":670,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":670,"y":390}],"minx":664,"miny":384,"maxx":676,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":670,"y":390,"heading":0,"type":"Light","name":"part236","worldx":670,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":690,"y":390,"heading":0,"view":{"x":690,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":690,"y":390}],"minx":684,"miny":384,"maxx":696,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":690,"y":390,"heading":0,"type":"Light","name":"part237","worldx":690,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":710,"y":390,"heading":0,"view":{"x":710,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":710,"y":390}],"minx":704,"miny":384,"maxx":716,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":710,"y":390,"heading":0,"type":"Light","name":"part238","worldx":710,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":730,"y":390,"heading":0,"view":{"x":730,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":730,"y":390}],"minx":724,"miny":384,"maxx":736,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":730,"y":390,"heading":0,"type":"Light","name":"part239","worldx":730,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":390,"heading":0,"view":{"x":750,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":390}],"minx":744,"miny":384,"maxx":756,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":390,"heading":0,"type":"Light","name":"part240","worldx":750,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":410,"heading":0,"view":{"x":750,"y":410,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":410}],"minx":744,"miny":404,"maxx":756,"maxy":416,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":410,"heading":0,"type":"Light","name":"part241","worldx":750,"worldy":410,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":430,"heading":0,"view":{"x":750,"y":430,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":430}],"minx":744,"miny":424,"maxx":756,"maxy":436,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":430,"heading":0,"type":"Light","name":"part242","worldx":750,"worldy":430,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":450,"heading":0,"view":{"x":530,"y":450,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":450}],"minx":524,"miny":444,"maxx":536,"maxy":456,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":450,"heading":0,"type":"Light","name":"part243","worldx":530,"worldy":450,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":470,"heading":0,"view":{"x":530,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":470}],"minx":524,"miny":464,"maxx":536,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":470,"heading":0,"type":"Light","name":"part244","worldx":530,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":550,"y":470,"heading":0,"view":{"x":550,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":550,"y":470}],"minx":544,"miny":464,"maxx":556,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":550,"y":470,"heading":0,"type":"Light","name":"part245","worldx":550,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":510,"y":470,"heading":0,"view":{"x":510,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":510,"y":470}],"minx":504,"miny":464,"maxx":516,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":510,"y":470,"heading":0,"type":"Light","name":"part246","worldx":510,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":490,"y":470,"heading":0,"view":{"x":490,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":490,"y":470}],"minx":484,"miny":464,"maxx":496,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":490,"y":470,"heading":0,"type":"Light","name":"part247","worldx":490,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":470,"y":470,"heading":0,"view":{"x":470,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":470,"y":470}],"minx":464,"miny":464,"maxx":476,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":470,"y":470,"heading":0,"type":"Light","name":"part248","worldx":470,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":470,"heading":0,"view":{"x":450,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":470}],"minx":444,"miny":464,"maxx":456,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":470,"heading":0,"type":"Light","name":"part249","worldx":450,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":490,"heading":0,"view":{"x":450,"y":490,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":490}],"minx":444,"miny":484,"maxx":456,"maxy":496,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":490,"heading":0,"type":"Light","name":"part250","worldx":450,"worldy":490,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":570,"y":470,"heading":0,"view":{"x":570,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":570,"y":470}],"minx":564,"miny":464,"maxx":576,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":570,"y":470,"heading":0,"type":"Light","name":"part251","worldx":570,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":590,"y":470,"heading":0,"view":{"x":590,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":590,"y":470}],"minx":584,"miny":464,"maxx":596,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":590,"y":470,"heading":0,"type":"Light","name":"part252","worldx":590,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":610,"y":470,"heading":0,"view":{"x":610,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":610,"y":470}],"minx":604,"miny":464,"maxx":616,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":610,"y":470,"heading":0,"type":"Light","name":"part253","worldx":610,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":470,"heading":0,"view":{"x":630,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":470}],"minx":624,"miny":464,"maxx":636,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":470,"heading":0,"type":"Light","name":"part254","worldx":630,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":650,"y":470,"heading":0,"view":{"x":650,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":650,"y":470}],"minx":644,"miny":464,"maxx":656,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":650,"y":470,"heading":0,"type":"Light","name":"part255","worldx":650,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":670,"y":470,"heading":0,"view":{"x":670,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":670,"y":470}],"minx":664,"miny":464,"maxx":676,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":670,"y":470,"heading":0,"type":"Light","name":"part256","worldx":670,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":690,"y":470,"heading":0,"view":{"x":690,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":690,"y":470}],"minx":684,"miny":464,"maxx":696,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":690,"y":470,"heading":0,"type":"Light","name":"part257","worldx":690,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":710,"y":470,"heading":0,"view":{"x":710,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":710,"y":470}],"minx":704,"miny":464,"maxx":716,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":710,"y":470,"heading":0,"type":"Light","name":"part258","worldx":710,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":730,"y":470,"heading":0,"view":{"x":730,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":730,"y":470}],"minx":724,"miny":464,"maxx":736,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":730,"y":470,"heading":0,"type":"Light","name":"part259","worldx":730,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":470,"heading":0,"view":{"x":750,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":470}],"minx":744,"miny":464,"maxx":756,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":470,"heading":0,"type":"Light","name":"part260","worldx":750,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":450,"heading":0,"view":{"x":750,"y":450,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":450}],"minx":744,"miny":444,"maxx":756,"maxy":456,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":450,"heading":0,"type":"Light","name":"part261","worldx":750,"worldy":450,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":490,"heading":0,"view":{"x":750,"y":490,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":490}],"minx":744,"miny":484,"maxx":756,"maxy":496,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":490,"heading":0,"type":"Light","name":"part262","worldx":750,"worldy":490,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":510,"heading":0,"view":{"x":450,"y":510,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":510}],"minx":444,"miny":504,"maxx":456,"maxy":516,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":510,"heading":0,"type":"Light","name":"part263","worldx":450,"worldy":510,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":530,"heading":0,"view":{"x":450,"y":530,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":530}],"minx":444,"miny":524,"maxx":456,"maxy":536,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":530,"heading":0,"type":"Light","name":"part264","worldx":450,"worldy":530,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":450,"y":550,"heading":0,"view":{"x":450,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":450,"y":550}],"minx":444,"miny":544,"maxx":456,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":450,"y":550,"heading":0,"type":"Light","name":"part265","worldx":450,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":470,"y":550,"heading":0,"view":{"x":470,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":470,"y":550}],"minx":464,"miny":544,"maxx":476,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":470,"y":550,"heading":0,"type":"Light","name":"part266","worldx":470,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":490,"y":550,"heading":0,"view":{"x":490,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":490,"y":550}],"minx":484,"miny":544,"maxx":496,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":490,"y":550,"heading":0,"type":"Light","name":"part267","worldx":490,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":510,"y":550,"heading":0,"view":{"x":510,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":510,"y":550}],"minx":504,"miny":544,"maxx":516,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":510,"y":550,"heading":0,"type":"Light","name":"part268","worldx":510,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":530,"y":550,"heading":0,"view":{"x":530,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":530,"y":550}],"minx":524,"miny":544,"maxx":536,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":530,"y":550,"heading":0,"type":"Light","name":"part269","worldx":530,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":550,"y":550,"heading":0,"view":{"x":550,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":550,"y":550}],"minx":544,"miny":544,"maxx":556,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":550,"y":550,"heading":0,"type":"Light","name":"part270","worldx":550,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":570,"y":550,"heading":0,"view":{"x":570,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":570,"y":550}],"minx":564,"miny":544,"maxx":576,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":570,"y":550,"heading":0,"type":"Light","name":"part271","worldx":570,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":590,"y":550,"heading":0,"view":{"x":590,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":590,"y":550}],"minx":584,"miny":544,"maxx":596,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":590,"y":550,"heading":0,"type":"Light","name":"part272","worldx":590,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":610,"y":550,"heading":0,"view":{"x":610,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":610,"y":550}],"minx":604,"miny":544,"maxx":616,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":610,"y":550,"heading":0,"type":"Light","name":"part273","worldx":610,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":630,"y":550,"heading":0,"view":{"x":630,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":630,"y":550}],"minx":624,"miny":544,"maxx":636,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":630,"y":550,"heading":0,"type":"Light","name":"part274","worldx":630,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":650,"y":550,"heading":0,"view":{"x":650,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":650,"y":550}],"minx":644,"miny":544,"maxx":656,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":650,"y":550,"heading":0,"type":"Light","name":"part275","worldx":650,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":670,"y":550,"heading":0,"view":{"x":670,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":670,"y":550}],"minx":664,"miny":544,"maxx":676,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":670,"y":550,"heading":0,"type":"Light","name":"part276","worldx":670,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":690,"y":550,"heading":0,"view":{"x":690,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":690,"y":550}],"minx":684,"miny":544,"maxx":696,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":690,"y":550,"heading":0,"type":"Light","name":"part277","worldx":690,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":710,"y":550,"heading":0,"view":{"x":710,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":710,"y":550}],"minx":704,"miny":544,"maxx":716,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":710,"y":550,"heading":0,"type":"Light","name":"part278","worldx":710,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":730,"y":550,"heading":0,"view":{"x":730,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":730,"y":550}],"minx":724,"miny":544,"maxx":736,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":730,"y":550,"heading":0,"type":"Light","name":"part279","worldx":730,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":550,"heading":0,"view":{"x":750,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":550}],"minx":744,"miny":544,"maxx":756,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":550,"heading":0,"type":"Light","name":"part280","worldx":750,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":530,"heading":0,"view":{"x":750,"y":530,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":530}],"minx":744,"miny":524,"maxx":756,"maxy":536,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":530,"heading":0,"type":"Light","name":"part281","worldx":750,"worldy":530,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":750,"y":510,"heading":0,"view":{"x":750,"y":510,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":750,"y":510}],"minx":744,"miny":504,"maxx":756,"maxy":516,"radius":3},"scale":2,"subviews":[],"part":{"x":750,"y":510,"heading":0,"type":"Light","name":"part282","worldx":750,"worldy":510,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":430,"y":550,"heading":0,"view":{"x":430,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":430,"y":550}],"minx":424,"miny":544,"maxx":436,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":430,"y":550,"heading":0,"type":"Light","name":"part283","worldx":430,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":470,"heading":0,"view":{"x":350,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":470}],"minx":344,"miny":464,"maxx":356,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":470,"heading":0,"type":"Light","name":"part284","worldx":350,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":330,"y":470,"heading":0,"view":{"x":330,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":330,"y":470}],"minx":324,"miny":464,"maxx":336,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":330,"y":470,"heading":0,"type":"Light","name":"part285","worldx":330,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":490,"heading":0,"view":{"x":350,"y":490,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":490}],"minx":344,"miny":484,"maxx":356,"maxy":496,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":490,"heading":0,"type":"Light","name":"part286","worldx":350,"worldy":490,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":450,"heading":0,"view":{"x":270,"y":450,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":450}],"minx":264,"miny":444,"maxx":276,"maxy":456,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":450,"heading":0,"type":"Light","name":"part287","worldx":270,"worldy":450,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":470,"heading":0,"view":{"x":270,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":470}],"minx":264,"miny":464,"maxx":276,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":470,"heading":0,"type":"Light","name":"part288","worldx":270,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":290,"y":470,"heading":0,"view":{"x":290,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":290,"y":470}],"minx":284,"miny":464,"maxx":296,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":290,"y":470,"heading":0,"type":"Light","name":"part289","worldx":290,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":310,"y":470,"heading":0,"view":{"x":310,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":310,"y":470}],"minx":304,"miny":464,"maxx":316,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":310,"y":470,"heading":0,"type":"Light","name":"part290","worldx":310,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":510,"heading":0,"view":{"x":350,"y":510,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":510}],"minx":344,"miny":504,"maxx":356,"maxy":516,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":510,"heading":0,"type":"Light","name":"part291","worldx":350,"worldy":510,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":530,"heading":0,"view":{"x":350,"y":530,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":530}],"minx":344,"miny":524,"maxx":356,"maxy":536,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":530,"heading":0,"type":"Light","name":"part292","worldx":350,"worldy":530,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":350,"y":550,"heading":0,"view":{"x":350,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":350,"y":550}],"minx":344,"miny":544,"maxx":356,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":350,"y":550,"heading":0,"type":"Light","name":"part293","worldx":350,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":370,"y":550,"heading":0,"view":{"x":370,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":370,"y":550}],"minx":364,"miny":544,"maxx":376,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":370,"y":550,"heading":0,"type":"Light","name":"part294","worldx":370,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":390,"y":550,"heading":0,"view":{"x":390,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":390,"y":550}],"minx":384,"miny":544,"maxx":396,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":390,"y":550,"heading":0,"type":"Light","name":"part295","worldx":390,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":410,"y":550,"heading":0,"view":{"x":410,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":410,"y":550}],"minx":404,"miny":544,"maxx":416,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":410,"y":550,"heading":0,"type":"Light","name":"part296","worldx":410,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":250,"y":470,"heading":0,"view":{"x":250,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":250,"y":470}],"minx":244,"miny":464,"maxx":256,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":250,"y":470,"heading":0,"type":"Light","name":"part297","worldx":250,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":230,"y":470,"heading":0,"view":{"x":230,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":230,"y":470}],"minx":224,"miny":464,"maxx":236,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":230,"y":470,"heading":0,"type":"Light","name":"part298","worldx":230,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":330,"y":550,"heading":0,"view":{"x":330,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":330,"y":550}],"minx":324,"miny":544,"maxx":336,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":330,"y":550,"heading":0,"type":"Light","name":"part299","worldx":330,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":310,"y":550,"heading":0,"view":{"x":310,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":310,"y":550}],"minx":304,"miny":544,"maxx":316,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":310,"y":550,"heading":0,"type":"Light","name":"part300","worldx":310,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":290,"y":550,"heading":0,"view":{"x":290,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":290,"y":550}],"minx":284,"miny":544,"maxx":296,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":290,"y":550,"heading":0,"type":"Light","name":"part301","worldx":290,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":270,"y":550,"heading":0,"view":{"x":270,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":270,"y":550}],"minx":264,"miny":544,"maxx":276,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":270,"y":550,"heading":0,"type":"Light","name":"part302","worldx":270,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":250,"y":550,"heading":0,"view":{"x":250,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":250,"y":550}],"minx":244,"miny":544,"maxx":256,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":250,"y":550,"heading":0,"type":"Light","name":"part303","worldx":250,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":230,"y":550,"heading":0,"view":{"x":230,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":230,"y":550}],"minx":224,"miny":544,"maxx":236,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":230,"y":550,"heading":0,"type":"Light","name":"part304","worldx":230,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":210,"y":470,"heading":0,"view":{"x":210,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":210,"y":470}],"minx":204,"miny":464,"maxx":216,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":210,"y":470,"heading":0,"type":"Light","name":"part305","worldx":210,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":190,"y":470,"heading":0,"view":{"x":190,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":190,"y":470}],"minx":184,"miny":464,"maxx":196,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":190,"y":470,"heading":0,"type":"Light","name":"part306","worldx":190,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":470,"heading":0,"view":{"x":170,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":470}],"minx":164,"miny":464,"maxx":176,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":470,"heading":0,"type":"Light","name":"part307","worldx":170,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":150,"y":470,"heading":0,"view":{"x":150,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":150,"y":470}],"minx":144,"miny":464,"maxx":156,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":150,"y":470,"heading":0,"type":"Light","name":"part308","worldx":150,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":130,"y":470,"heading":0,"view":{"x":130,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":130,"y":470}],"minx":124,"miny":464,"maxx":136,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":130,"y":470,"heading":0,"type":"Light","name":"part309","worldx":130,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":110,"y":470,"heading":0,"view":{"x":110,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":110,"y":470}],"minx":104,"miny":464,"maxx":116,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":110,"y":470,"heading":0,"type":"Light","name":"part310","worldx":110,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":110,"y":390,"heading":0,"view":{"x":110,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":110,"y":390}],"minx":104,"miny":384,"maxx":116,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":110,"y":390,"heading":0,"type":"Light","name":"part311","worldx":110,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":90,"y":390,"heading":0,"view":{"x":90,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":90,"y":390}],"minx":84,"miny":384,"maxx":96,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":90,"y":390,"heading":0,"type":"Light","name":"part312","worldx":90,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":70,"y":390,"heading":0,"view":{"x":70,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":70,"y":390}],"minx":64,"miny":384,"maxx":76,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":70,"y":390,"heading":0,"type":"Light","name":"part313","worldx":70,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":90,"y":470,"heading":0,"view":{"x":90,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":90,"y":470}],"minx":84,"miny":464,"maxx":96,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":90,"y":470,"heading":0,"type":"Light","name":"part314","worldx":90,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":70,"y":470,"heading":0,"view":{"x":70,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":70,"y":470}],"minx":64,"miny":464,"maxx":76,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":70,"y":470,"heading":0,"type":"Light","name":"part315","worldx":70,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":470,"heading":0,"view":{"x":50,"y":470,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":470}],"minx":44,"miny":464,"maxx":56,"maxy":476,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":470,"heading":0,"type":"Light","name":"part316","worldx":50,"worldy":470,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":450,"heading":0,"view":{"x":50,"y":450,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":450}],"minx":44,"miny":444,"maxx":56,"maxy":456,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":450,"heading":0,"type":"Light","name":"part317","worldx":50,"worldy":450,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":390,"heading":0,"view":{"x":50,"y":390,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":390}],"minx":44,"miny":384,"maxx":56,"maxy":396,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":390,"heading":0,"type":"Light","name":"part318","worldx":50,"worldy":390,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":410,"heading":0,"view":{"x":50,"y":410,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":410}],"minx":44,"miny":404,"maxx":56,"maxy":416,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":410,"heading":0,"type":"Light","name":"part319","worldx":50,"worldy":410,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":430,"heading":0,"view":{"x":50,"y":430,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":430}],"minx":44,"miny":424,"maxx":56,"maxy":436,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":430,"heading":0,"type":"Light","name":"part320","worldx":50,"worldy":430,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":490,"heading":0,"view":{"x":50,"y":490,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":490}],"minx":44,"miny":484,"maxx":56,"maxy":496,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":490,"heading":0,"type":"Light","name":"part321","worldx":50,"worldy":490,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":510,"heading":0,"view":{"x":50,"y":510,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":510}],"minx":44,"miny":504,"maxx":56,"maxy":516,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":510,"heading":0,"type":"Light","name":"part322","worldx":50,"worldy":510,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":530,"heading":0,"view":{"x":50,"y":530,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":530}],"minx":44,"miny":524,"maxx":56,"maxy":536,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":530,"heading":0,"type":"Light","name":"part323","worldx":50,"worldy":530,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":50,"y":550,"heading":0,"view":{"x":50,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":50,"y":550}],"minx":44,"miny":544,"maxx":56,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":50,"y":550,"heading":0,"type":"Light","name":"part324","worldx":50,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":70,"y":550,"heading":0,"view":{"x":70,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":70,"y":550}],"minx":64,"miny":544,"maxx":76,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":70,"y":550,"heading":0,"type":"Light","name":"part325","worldx":70,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":90,"y":550,"heading":0,"view":{"x":90,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":90,"y":550}],"minx":84,"miny":544,"maxx":96,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":90,"y":550,"heading":0,"type":"Light","name":"part326","worldx":90,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":110,"y":550,"heading":0,"view":{"x":110,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":110,"y":550}],"minx":104,"miny":544,"maxx":116,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":110,"y":550,"heading":0,"type":"Light","name":"part327","worldx":110,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":130,"y":550,"heading":0,"view":{"x":130,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":130,"y":550}],"minx":124,"miny":544,"maxx":136,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":130,"y":550,"heading":0,"type":"Light","name":"part328","worldx":130,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":150,"y":550,"heading":0,"view":{"x":150,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":150,"y":550}],"minx":144,"miny":544,"maxx":156,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":150,"y":550,"heading":0,"type":"Light","name":"part329","worldx":150,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":170,"y":550,"heading":0,"view":{"x":170,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":170,"y":550}],"minx":164,"miny":544,"maxx":176,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":170,"y":550,"heading":0,"type":"Light","name":"part330","worldx":170,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":190,"y":550,"heading":0,"view":{"x":190,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":190,"y":550}],"minx":184,"miny":544,"maxx":196,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":190,"y":550,"heading":0,"type":"Light","name":"part331","worldx":190,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}},{"x":210,"y":550,"heading":0,"view":{"x":210,"y":550,"heading":0,"scale":2,"points":[{"x":0,"y":0}],"outline":"black","fill":"yellow","polygon":[{"x":210,"y":550}],"minx":204,"miny":544,"maxx":216,"maxy":556,"radius":3},"scale":2,"subviews":[],"part":{"x":210,"y":550,"heading":0,"type":"Light","name":"part332","worldx":210,"worldy":550,"outline":"black","fill":"yellow","power":0,"radius":3,"moveable":true}}],"editTarget":null,"editOriginalOutline":"black","running":false,"width":0,"height":0,"rotated":false,"mazeWorldLoaded":false,"combatWorldLoaded":false,"pacmanWorldLoaded":true,"pacmanPoints":0}'
-    robotStartingLocation();    
-    document.getElementById("simRemoveOpponent").click(); 
-    loadWorld(pacmanWorld);             
-    simState.pacmanPoints = 0;  
+    robotStartingLocation();
+    document.getElementById("simRemoveOpponent").click();
+    loadWorld(pacmanWorld);
+    simState.pacmanPoints = 0;
     displayPacmanPoints();
-    startPacmanSound.play();  
+    startPacmanSound.play();
     document.getElementById("simReset").click()
 }
 
 
 function loadWorld(worldString) {
 
-    if(!worldString) worldString = localStorage.getItem("world");
-    if(!worldString) return;
+    if (!worldString) worldString = localStorage.getItem("world");
+    if (!worldString) return;
 
     var obj = JSON.parse(worldString);
 
     /* grab the attributes */
-    for(var attr in obj) {
-        if(attr == "part") { continue; }
+    for (var attr in obj) {
+        if (attr == "part") { continue; }
         robot[attr] = obj[attr];
     }
 
     /* handle the parts */
 
     //simState.worldObjects = [];
-    for(var i=0; i<obj.worldObjects.length; i++) {
+    for (var i = 0; i < obj.worldObjects.length; i++) {
         //Check for Wall
-        if(obj.worldObjects[i].part.type == "Wall"){
-        var wall = new Wall(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
-        wall.rotated = obj.worldObjects[i].part.rotated;
-        wall.resizeFactor = obj.worldObjects[i].part.resizeFactor;
-        wall.resizeFactorHeight = obj.worldObjects[i].part.resizeFactorHeight;
-        wall.resizeFactorWidth = obj.worldObjects[i].part.resizeFactorWidth;
-        wall.name = obj.worldObjects[i].part.name;
-        wall.outline = obj.worldObjects[i].part.outline;
-        wall.fill = obj.worldObjects[i].part.fill;
-        wall.moveable = obj.worldObjects[i].part.moveable;      
-        simState.worldObjects.push(constructView(wall));
+        if (obj.worldObjects[i].part.type == "Wall") {
+            var wall = new Wall(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+            wall.rotated = obj.worldObjects[i].part.rotated;
+            wall.resizeFactor = obj.worldObjects[i].part.resizeFactor;
+            wall.resizeFactorHeight = obj.worldObjects[i].part.resizeFactorHeight;
+            wall.resizeFactorWidth = obj.worldObjects[i].part.resizeFactorWidth;
+            wall.name = obj.worldObjects[i].part.name;
+            wall.outline = obj.worldObjects[i].part.outline;
+            wall.fill = obj.worldObjects[i].part.fill;
+            wall.moveable = obj.worldObjects[i].part.moveable;
+            simState.worldObjects.push(constructView(wall));
         }
 
         //Check for Light
-        if(obj.worldObjects[i].part.type == "Light"){
-        var light = new Light(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
-        light.name = obj.worldObjects[i].part.name;
-        light.outline = obj.worldObjects[i].part.outline;
-        light.fill = obj.worldObjects[i].part.fill;
-        light.moveable = obj.worldObjects[i].part.moveable;     
-        simState.worldObjects.push(constructView(light));
+        if (obj.worldObjects[i].part.type == "Light") {
+            var light = new Light(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+            light.name = obj.worldObjects[i].part.name;
+            light.outline = obj.worldObjects[i].part.outline;
+            light.fill = obj.worldObjects[i].part.fill;
+            light.moveable = obj.worldObjects[i].part.moveable;
+            simState.worldObjects.push(constructView(light));
         }
 
         //Check for Box
-        if(obj.worldObjects[i].part.type == "Box"){
-        var box = new Box(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
-        box.name = obj.worldObjects[i].part.name;
-        box.outline = obj.worldObjects[i].part.outline;
-        box.fill = obj.worldObjects[i].part.fill;
-        box.moveable = obj.worldObjects[i].part.moveable;   
-        simState.worldObjects.push(constructView(box));
+        if (obj.worldObjects[i].part.type == "Box") {
+            var box = new Box(null, obj.worldObjects[i].x, obj.worldObjects[i].y);
+            box.name = obj.worldObjects[i].part.name;
+            box.outline = obj.worldObjects[i].part.outline;
+            box.fill = obj.worldObjects[i].part.fill;
+            box.moveable = obj.worldObjects[i].part.moveable;
+            simState.worldObjects.push(constructView(box));
         }
 
         drawSim();
@@ -4792,23 +4799,23 @@ function sound(src) {
     this.sound.setAttribute("controls", "none");
     this.sound.style.display = "none";
     document.body.appendChild(this.sound);
-    this.play = function(){
+    this.play = function () {
         this.sound.play();
     }
-    this.stop = function(){
+    this.stop = function () {
         this.sound.pause();
-    }    
+    }
 }
 
 var startPacmanSound = new sound("sounds_startMusic.mp3");
 var pacmanEatingSound = new sound("sounds_eatingDot.mp3");
 
-function displayPacmanPoints(){
+function displayPacmanPoints() {
     var displayPacmanPoints = document.getElementById("pacmanScore");
-    displayPacmanPoints.innerHTML = "Score: " + simState.pacmanPoints;  
+    displayPacmanPoints.innerHTML = "Score: " + simState.pacmanPoints;
 }
 
-function removePacmanPoints(){
+function removePacmanPoints() {
     var displayPacmanPoints = document.getElementById("pacmanScore");
     displayPacmanPoints.innerHTML = "";
 }
@@ -4818,14 +4825,14 @@ var startTime;
 
 // create a function to start the stopwatch
 function startStopwatch() {
-  startTime = new Date().getTime();
+    startTime = new Date().getTime();
 }
 
 // create a function to stop the stopwatch and return the elapsed time
 function stopStopwatch() {
-  const endTime = new Date().getTime();
-  const elapsedTime = endTime - startTime;
-  return elapsedTime;
+    const endTime = new Date().getTime();
+    const elapsedTime = endTime - startTime;
+    return elapsedTime;
 }
 
 //ALERTS
@@ -4837,7 +4844,7 @@ function noWheelSizeChange() {
     message = window.alert("Sorry, premade user bot wheels cannot be adjusted.");
 }
 
-function wheelSizeReset(){
+function wheelSizeReset() {
     document.getElementById("wheelSize").value = .065;
     document.getElementById("changeWheelSize").click();
 }
@@ -4854,7 +4861,7 @@ function wheelSizeReset(){
 //    if (e.keyCode === 13) {
 //        document.documentElement.classList.toggle('dark-mode');
 //    }}
- // Press enter key to enter dark mode.
+// Press enter key to enter dark mode.
 
 //  const btn = document.querySelector(".btn-toggle");
 //  const theme = document.querySelector("#theme-link");

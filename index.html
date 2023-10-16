@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang = "en">
+<html lang="en">
+
 <head>
     <title>Gradbot Simulator</title>
-    <meta charset = "utf-8">
+    <meta charset="utf-8">
     <!-- <link rel="stylesheet" href="light-theme.css" id="theme-link"/> -->
-    <link rel="stylesheet" href="index.css"/>
+    <link rel="stylesheet" href="index.css" />
 
 
     <!-- <style>
@@ -16,14 +17,16 @@
         }
     </script>
 </head>
+
 <body>
     <div class="pagecontent">
-    <button class="btn-toggle" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark Mode</button>
+        <button class="btn-toggle" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark
+            Mode</button>
     </div>
     <div class="tab">
-            <button class="tablinks" id="simButton" onclick="openTab(event, 'Simulate')">Simulate</button>
-            <button class="tablinks" id="buildButton" onclick="openTab(event, 'Build')">Build</button>
-            <button class="tablinks" id="codeButton" onclick="openTab(event, 'Code')">Code</button>
+        <button class="tablinks" id="simButton" onclick="openTab(event, 'Simulate')">Simulate</button>
+        <button class="tablinks" id="buildButton" onclick="openTab(event, 'Build')">Build</button>
+        <button class="tablinks" id="codeButton" onclick="openTab(event, 'Code')">Code</button>
     </div>
 
     <div class="tabcontent" id='Simulate'>
@@ -39,28 +42,28 @@
                         </div>
                         <!--Create Radio Buttons for Object Interaction-->
                         <div class="wrapper">
-                        <input type="radio" id="dragMove" name="dragMode" checked="checked" />
-                        <label for="dragMove">Move</label>
+                            <input type="radio" id="dragMove" name="dragMode" checked="checked" />
+                            <label for="dragMove">Move</label>
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="dragRotate" name="dragMode"/>
-                        <label for="dragRotate">Rotate</label>
+                            <input type="radio" id="dragRotate" name="dragMode" />
+                            <label for="dragRotate">Rotate</label>
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="dragRotate90" name="dragMode"/>
-                        <label for="dragRotate90">Rotate Wall 90 Degrees</label>
+                            <input type="radio" id="dragRotate90" name="dragMode" />
+                            <label for="dragRotate90">Rotate Wall 90 Degrees</label>
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="dragResizeHeight" name="dragMode"/>
-                        <label for="dragResizeHeight">Resize Wall Height</label>
+                            <input type="radio" id="dragResizeHeight" name="dragMode" />
+                            <label for="dragResizeHeight">Resize Wall Height</label>
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="dragResizeWidth" name="dragMode"/>
-                        <label for="dragResizeWidth">Resize Wall Width</label>
+                            <input type="radio" id="dragResizeWidth" name="dragMode" />
+                            <label for="dragResizeWidth">Resize Wall Width</label>
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="dragDraw" name="dragMode"/>
-                        <label for="dragDraw">Draw</label>
+                            <input type="radio" id="dragDraw" name="dragMode" />
+                            <label for="dragDraw">Draw</label>
                         </div>
 
 
@@ -71,27 +74,33 @@
                         <button id="simGo">Start</button>
                         <button id="simReset">Reset</button>
                         <button id="simClear">Clear</button>
-                        
+
                         <!--Text Fields for Object Attributes-->
                         <div class="toolboxHead">
                             Object Editor
                         </div>
                         <div id="simPartEditor" class="partEditorPane">
-                            Type: <span id="simPartType"></span><hr>
+                            Type: <span id="simPartType"></span>
+                            <hr>
 
                             <label for="simPartName">Name</label>
-                            <input type="text" id="simPartName"><hr>
+                            <input type="text" id="simPartName">
+                            <hr>
 
                             <label for="simPartOutlineColor">Outline Color</label>
-                            <input type="text" id="simPartOutlineColor"><hr>
+                            <input type="text" id="simPartOutlineColor">
+                            <hr>
 
                             <label for="simPartFillColor">Fill Color</label>
-                            <input type="text" id="simPartFillColor"><hr>
+                            <input type="text" id="simPartFillColor">
+                            <hr>
 
                             <button id="simPartApply">Apply</button>
-                            <button id="simPartCancel">Cancel</button><hr>
+                            <button id="simPartCancel">Cancel</button>
+                            <hr>
 
-                            <button id="simPartDelete">Delete Part</button> <hr>
+                            <button id="simPartDelete">Delete Part</button>
+                            <hr>
                         </div>
                         <hr>
 
@@ -129,9 +138,9 @@
                             Sample User Bot
                         </div>
                         <div class="toolboxSubHead">
-                            <button id="Pacbot">Pacbot</button>    
-                            <button id="Destroyer">Destroyer</button>  
-                            <button id="Theseus">Theseus</button>    
+                            <button id="Pacbot">Pacbot</button>
+                            <button id="Destroyer">Destroyer</button>
+                            <button id="Theseus">Theseus</button>
                         </div>
 
                         <!--Simulation Speed Buttons-->
@@ -142,7 +151,7 @@
                         <button id="x5">x5</button>
                         <button id="x10">x10</button>
                         <button id="x25">x25</button>
-                        <hr/>
+                        <hr />
 
                         <!--Open or Save World Buttons-->
                         <div class="toolboxHead">
@@ -152,36 +161,39 @@
                         <a href="" id="worldDownload" style="display: none"></a>
                         <button id="worldOpen">Open</button>
                         <button id="worldSave">Save</button>
-                        <a id="downloadUserDraw" download="image.png"><button type="button" onClick="downloadUserDrawing()">Download Hand Drawing</button></a>
-                        <a id="downloadRobotDraw" download="image.png"><button type="button" onClick="downloadRobotDrawing()">Download Robot Drawing</button></a>
+                        <a id="downloadUserDraw" download="image.png"><button type="button"
+                                onClick="downloadUserDrawing()">Download Hand Drawing</button></a>
+                        <a id="downloadRobotDraw" download="image.png"><button type="button"
+                                onClick="downloadRobotDrawing()">Download Robot Drawing</button></a>
                         <hr>
 
                         <!--Prebuilt Worlds-->
                         <div class="toolboxSubHead">
                             Worlds
                         </div>
-                            <button id="combatWorld">Combat Arena</button>
-                            <button id="mazeWorld">Maze</button>
-                            <button id="pacmanWorld">Pacman</button>
+                        <button id="combatWorld">Combat Arena</button>
+                        <button id="mazeWorld">Maze</button>
+                        <button id="pacmanWorld">Pacman</button>
 
                         <!--Torodial or Infinite World Selector-->
                         <div class="toolboxSubHead">
                             World Properties
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="toroidal-mode" name="toroidal-mode" checked="checked">
-                        <label for="torodial">Toroidal</label>
+                            <input type="radio" id="toroidal-mode" name="toroidal-mode" checked="checked">
+                            <label for="torodial">Toroidal</label>
                         </div>
                         <div class="wrapper">
-                        <input type="radio" id="infinite-mode" name="toroidal-mode"/>
-                        <label for="infinite">Infinite</label>
+                            <input type="radio" id="infinite-mode" name="toroidal-mode" />
+                            <label for="infinite">Infinite</label>
                         </div>
 
                         <!--Change Background button-->
                         <hr>
                         <button id="backgroundChange">Change Background</button>
-                        <input type="file" accept="image/png" id="pictureUpload" name="backgroundphoto" style="display: none">
-                                            
+                        <input type="file" accept="image/png" id="pictureUpload" name="backgroundphoto"
+                            style="display: none">
+
                     </div>
                 </div>
             </div>
@@ -198,40 +210,49 @@
                             Part Editor
                         </div>
 
-                         <!--Drop Down parts editor -->
-                         <label for="partDropDown">Select a Part:</label>
-                         <select name="partDropDown" id="partDropDown">
-                         </select>
-                         
+                        <!--Drop Down parts editor -->
+                        <label for="partDropDown">Select a Part:</label>
+                        <select name="partDropDown" id="partDropDown">
+                        </select>
+
                         <div id="buildPartEditor" class="partEditorPane">
-                            Type: <span id="buildPartType"></span><hr>
+                            Type: <span id="buildPartType"></span>
+                            <hr>
 
                             <label for="buildPartName">Name</label>
-                            <input type="text" id="buildPartName"><hr>
+                            <input type="text" id="buildPartName">
+                            <hr>
 
                             <label for="buildPartOutlineColor">Outline Color</label>
-                            <input type="text" id="buildPartOutlineColor"><hr>
+                            <input type="text" id="buildPartOutlineColor">
+                            <hr>
 
                             <label for="buildPartFillColor">Fill Color</label>
-                            <input type="text" id="buildPartFillColor"><hr>
+                            <input type="text" id="buildPartFillColor">
+                            <hr>
 
                             <button id="buildPartApply">Apply</button>
-                            <button id="buildPartCancel">Cancel</button><hr>
+                            <button id="buildPartCancel">Cancel</button>
+                            <hr>
 
-                            <button id="buildPartDelete">Delete Part</button> <hr>
+                            <button id="buildPartDelete">Delete Part</button>
+                            <hr>
                         </div>
-                        
+
                         <div class="toolboxSubHead">
                             Drag Part
                         </div>
 
-                        <img id="DragMarker" draggable="true" src="images/Marker.png" alt="Marker image" width="65" height="50">
+                        <img id="DragMarker" draggable="true" src="images/Marker.png" alt="Marker image" width="65"
+                            height="50">
 
-                        <img id = "DragLight" src="images/Light.png" alt="Marker image" width="65" height="50">
+                        <img id="DragLight" src="images/Light.png" alt="Marker image" width="65" height="50">
 
-                        <img id ="DragLightSensor" src="images/Light Sensor.png" alt="Marker image" width="65" height="50">
+                        <img id="DragLightSensor" src="images/Light Sensor.png" alt="Marker image" width="65"
+                            height="50">
 
-                        <img id="DragRangeFinder" src="images/Range Finder.png" alt="Marker image" width="65" height="50">
+                        <img id="DragRangeFinder" src="images/Range Finder.png" alt="Marker image" width="65"
+                            height="50">
 
                         <img id="DragLaser" src="images/Laser.png" alt="Marker image" width="50" height="65">
 
@@ -240,8 +261,8 @@
                         <div class="toolboxSubHead">
                             Add Part
                         </div>
-                         
-                        <button id="buildAddMarker" draggable="true" >Marker</button><br>
+
+                        <button id="buildAddMarker" draggable="true">Marker</button><br>
                         <button id="buildAddLight" draggable="true">Light</button><br>
                         <button id="buildAddLightSensor" draggable="true">Light Sensor</button><br>
                         <button id="buildAddRangeSensor" draggable="true">Range Finder</button><br>
@@ -260,13 +281,14 @@
                             <button id="buildSave">Save</button>
                             <button id="buildNew">New</button>
                         </div>
-                          <!--Wheelsize Change -->
-                          <div class="toolboxSubHead">
+                        <!--Wheelsize Change -->
+                        <div class="toolboxSubHead">
                             Change Wheel Size
                         </div>
                         <form>
-                            <input type="number" id="wheelSize" name="wheelSize" min="-10" max="10" value ="0.065" step="0.01"><br>
-                            <button id="changeWheelSize">Submit</button>   
+                            <input type="number" id="wheelSize" name="wheelSize" min="-10" max="10" value="0.065"
+                                step="0.01"><br>
+                            <button id="changeWheelSize">Submit</button>
                         </form>
                         <button id="wheelSizeReset">Reset</button>
                         <hr>
@@ -281,24 +303,24 @@
             <div id="robotCode"></div>
             <div class="toolbox">
                 <div class="toolboxContent">
-                        <div class="toolboxHead">
-                            Part List
-                        </div>
-                        <p>Click on the list for more details:</p>
-                        
-                            <div class="inner">
-                                <ul id="codePartList">
-                                </ul>
-                            </div>
-                            <hr/>
-                            <div class="inner" id="codePartDoc">
-                            </div>
+                    <div class="toolboxHead">
+                        Part List
+                    </div>
+                    <p>Click on the list for more details:</p>
+
+                    <div class="inner">
+                        <ul id="codePartList">
+                        </ul>
+                    </div>
+                    <hr />
+                    <div class="inner" id="codePartDoc">
+                    </div>
                 </div>
-                        <!--<div class="CommandListHead">
+                <!--<div class="CommandListHead">
                             <span class="bolded">Robot Commands</span>
                         </div>-->
             </div>
-         
+
         </div>
     </div>
 
@@ -310,11 +332,12 @@
         Need help coding? Check out our GradBot <a href="https://github.com/relowe/gradbot/wiki">
             Wiki</a>
     </div>
-    
+
     <div id="pacmanScore"></div>
 
 
     <script src="codeflask.min.js"></script>
     <script src="gradbot.js"></script>
 </body>
+
 </html>
