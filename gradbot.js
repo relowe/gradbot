@@ -38,6 +38,8 @@ var cancelAdd = 0; // determines whether the name should be added to newPartList
 var dragX = 0;
 var dragY = 0;
 var dragTrue = 0;
+var chassView = undefined;
+var newBot = 0;
 
 /**
  * This function takes an angle in radians and reduces it so its range
@@ -1654,7 +1656,6 @@ function PartView(part) {
     };
 }
 
-
 /**
  * Constructor for the chassis view object. This visualizes an entire 
  * robot. 
@@ -1684,6 +1685,10 @@ function ChassisView(part) {
     this.view.fill = "white";
     this.view.stroke = "black"
 
+    if (chassView == undefined || newBot == 1){
+        chassView = this;
+        newBot = 0;
+    }
 
     //remember the base version
     //this.partDraw = this.draw;
@@ -2873,15 +2878,21 @@ function dropDownPartSelect(event) {
     var dropDownMenu = document.getElementById("partDropDown");
     var dropPartName = dropDownMenu.options[dropDownMenu.selectedIndex].text;
 
-    // check for clicking on a robot subpart
-    for (var i = 0; i < buildView.subviews.length; i++) {
-        var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
+    // ChassisView can't have a subview that is itself.
+    // Saved the created (user robot's) ChassisView in var chassView. 
+    if (dropPartName == "chassis" && chassView != undefined){
+        buildState.dragTarget = chassView;
+    }
+    else{
+        // check for clicking on a robot subpart
+        for (var i = 0; i < buildView.subviews.length; i++) {
+            var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
 
-        // if the part selected matches the part current partview, select it
-        //NOTE: THERE IS NO CHASSISS IN THE buildView.subviews ARRAY, so chassiss select doesn't work
-        if (partView.part.name == dropPartName) {
-            buildState.dragTarget = partView;
-            break;
+            // if the part selected matches the part current partview, select it
+            if (partView.part.name == dropPartName) {
+                buildState.dragTarget = partView;
+                break;
+            }
         }
     }
 
@@ -3397,7 +3408,6 @@ function simDeletePart(event) {
  * @param {*} event 
  */
 function addList(name) {
-
     // add the part name to the list, unless it didn't change
     if (cancelAdd != 1) {
         newPartList.push(name);
@@ -3752,14 +3762,20 @@ function gradbotError(message) {
 function gradbotInit() {
 
     loadRobotTrue = 1;
-
-
     //fill the simulation background with graph paper
     graphPaperFill('simbg');
 
     //create the robot
     robot = new Chassis(100, 100, 0, "chassis");
     loadRobot(robot);
+
+    // Add the chassis, left, and right to the drop down part select list
+    addListTrue = 1;
+    addList("chassis");
+    addList("left");
+    addList("right");
+    addListTrue = 0;
+
     simState.robotStartX = robot.x;
     simState.robotStartY = robot.y;
     simState.robotStartHeading = robot.heading;
@@ -4340,6 +4356,12 @@ function openRobotFile() {
         addListTrue = 1;
         simState.premadeUserBotLoaded = false;
         loadRobot(robot, reader.result);
+        // Add the chassis, left, and right to the drop down part select list
+        addListTrue = 1;
+        addList("chassis");
+        addList("left");
+        addList("right");
+        addListTrue = 0;
         //rebuild the robot views
         simView = new ChassisView(robot);
         buildView = new ChassisBuildView(robot);
@@ -4574,6 +4596,7 @@ function loadRobot(robot, robotString) {
     document.getElementById("partDropDown").options.length = 0;
     //loadRobotTrue = 1;
 
+    addListTrue = 1;
     robot.parts = [];
     for (var i = 0; i < obj.parts.length; i++) {
         robot.addPart(finishPart(obj.parts[i]));
@@ -4582,6 +4605,7 @@ function loadRobot(robot, robotString) {
         // When a robot is opened, add the part names to the list
         addList(robot.parts[i].name)
     }
+    addListTrue = 0;
     loadRobotTrue = 0;
 }
 
@@ -4628,12 +4652,24 @@ function finishPart(part) {
     return result;
 }
 
-
 function newRobot() {
-    robot = new Chassis(100, 100, 0);
+    newBot = 1;
+    newPartList = [];
+
+    // Delete all of the old drop down parts except chassis, left, and right
+    var options = document.getElementById("partDropDown").options;
+    for (var i = 0; i < options.length; i++){
+        if (options[i].text != "chassis" && options[i].text != "left" && options[i].text != "right"){
+            options[i].selected = true;
+            var dropDownElement = document.getElementById("partDropDown");
+            dropDownElement.remove(dropDownElement.selectedIndex);
+            i--;
+        }
+    }
+
+    robot = new Chassis(100, 100, 0, "chassis");
+
     simState.premadeUserBotLoaded = false;
-    // Remove all elements of the drop-down list except for the first 3
-    document.getElementById("partDropDown").options.length = 0;
 
     //rebuild the robot views
     simView = new ChassisView(robot);
