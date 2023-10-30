@@ -4,11 +4,18 @@
 <style>
 /*  New UI; Leave old UI in place for testing purposes
     until complete*/
+
+
+/*=============================*/
+/* Header Title */
+/*=============================*/
 h1 {
     color: black;
     text-align: center;
 }
-/*  Outline for top menu*/
+/*=============================*/
+/* Navigation Bar*/
+/*=============================*/
 u1 {
     border-radius: 50px;
     background: lightblue;
@@ -19,10 +26,54 @@ u1 {
     height: 20px;
     */
 }
-
+/*Style for Navigation Bar*/
 li {
     display: inline;
 }
+/*=============================*/
+/* Mode Dropdown */
+/*=============================*/
+.dropdown {
+    position: relative;
+    display: inline-block;
+    color: black;
+    background-color: rgb(126, 126, 253);
+    border-radius: 50px;
+    padding: 10px;
+    font-size: 20px;
+    font-weight: bold;
+    font-family:'Times New Roman', Times, serif;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: lightgray;
+    padding: 10px 20px;
+    z-index: 1;
+    min-width: 100px;
+    line-height: 30px;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+/*=============================*/
+/* Button Styles */
+/*=============================*/
+
+/* Nav Buttons */
+.button {
+    background-color: rgb(126, 126, 253);
+    border-radius: 50px;
+    padding: 10px;
+    font-size: 20px;
+    color: black;
+    border: none;
+    font-weight: bold;
+    font-family:'Times New Roman', Times, serif;
+}
+
 </style>
 </head>
 <body>
@@ -30,13 +81,20 @@ li {
 <p>Gradbot Simulator</p>
 <u1>
     <li>
-        <a href ="Button1">Button1</a>
+        <div class = "dropdown">
+            <span>Tool State</span>
+            <div class = "dropdown-content">
+                <p>Simulate</p>
+                <p>Build</p>
+                <p>Code</p>
+            </div>
+        </div>
     </li>
     <li>
-        <a href ="Button2">Button2</a>
+        <button class = "button">Button2</button>
     </li>
     <li>
-        <a href ="Button3">Button3</a>
+        <button class = "button">Toggle Darkmode</button>
     </li>
 </u1>
 </h1>
