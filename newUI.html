@@ -48,11 +48,13 @@ li {
 .dropdown-content {
     display: none;
     position: absolute;
-    background-color: lightgray;
-    padding: 10px 20px;
+    background-color: lightblue;
+    padding: 5px 5px;
     z-index: 1;
     min-width: 100px;
-    line-height: 30px;
+    line-height: 50px;
+    
+    
 }
 
 .dropdown:hover .dropdown-content {
@@ -74,6 +76,18 @@ li {
     font-family:'Times New Roman', Times, serif;
 }
 
+/* Dropdown Buttons*/
+.buttonDrop {
+    background-color: rgb(126, 126, 253);
+    min-width: 100px;
+    padding: 10px;
+    font-size: 20px;
+    color: black;
+    border: none;
+    font-weight: bold;
+    font-family:'Times New Roman', Times, serif;
+}
+
 </style>
 </head>
 <body>
@@ -84,9 +98,9 @@ li {
         <div class = "dropdown">
             <span>Tool State</span>
             <div class = "dropdown-content">
-                <p>Simulate</p>
-                <p>Build</p>
-                <p>Code</p>
+                <button class = "buttonDrop">Simulate</button>
+                <button class = "buttonDrop">Build</button>
+                <button class = "buttonDrop">Code</button>
             </div>
         </div>
     </li>
