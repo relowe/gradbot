@@ -26,6 +26,19 @@
  * Utility Functions and Objects
  ******************************************/
 
+// Module alliases for matter.js
+var Engine = Matter.Engine,
+    Runner = Matter.Runner,
+    Bodies = Matter.Bodies,
+    Composite = Matter.Composite;
+var engine;
+var boxMatter1;
+var worldMatter;
+engine = Engine.create();
+worldMatter = engine.world;
+Matter.Runner.run(engine);
+
+
 var simulationMode = 'toroidal';
 var addListTrue = 0;
 var loadRobotTrue = 0;
@@ -805,16 +818,16 @@ function Chassis(x, y, heading, name) {
                             robot.parts[i].resetDrawing = true;
                         }
                     }
-                } 
+                }
                 else { // Marker is in bounds
                     for (var i = 0; i < robot.parts.length; i++) {
                         if (robot.parts[i].type == 'Marker') {
                             // If the robot was drawing when it went out of bounds, set it to draw again now that it's in bounds
-                            if (robot.parts[i].resetDrawing){
+                            if (robot.parts[i].resetDrawing) {
                                 robot.parts[i].penDrawing = true;
                                 robot.parts[i].resetDrawing = false;
                             }
-                            if (robot.parts[i].penDrawing){
+                            if (robot.parts[i].penDrawing) {
                                 robot.parts[i].penDown();
                             }
                         }
@@ -1685,7 +1698,7 @@ function ChassisView(part) {
     this.view.fill = "white";
     this.view.stroke = "black"
 
-    if (chassView == undefined || newBot == 1){
+    if (chassView == undefined || newBot == 1) {
         chassView = this;
         newBot = 0;
     }
@@ -1796,7 +1809,7 @@ function MarkerView(part) {
     this.drawPart = this.draw;
 
     this.draw = function (canvas, context) {
-        
+
         this.drawPart(canvas, context);
 
         //draw a line if the pen is down and we have two endpoints
@@ -2323,6 +2336,7 @@ function drawSim() {
         simState.worldObjects[i].scale = 2;
         simState.worldObjects[i].draw(canvas, context);
     }
+    console.log("hello");
 
     //draw the robot
     simView.draw(canvas, context);
@@ -2763,7 +2777,10 @@ function simAddBox(event) {
         return;
     }
     var canvas = document.getElementById("simfg");
+    //create box
     var box = new Box(null, canvas.width / 2, canvas.height / 2, 50);
+    boxMatter1 = new boxMatter(canvas.width / 2, canvas.height / 2, 50, 50)
+
 
     simState.worldObjects.push(constructView(box));
     drawSim();
@@ -2880,10 +2897,10 @@ function dropDownPartSelect(event) {
 
     // ChassisView can't have a subview that is itself.
     // Saved the created (user robot's) ChassisView in var chassView. 
-    if (dropPartName == "chassis" && chassView != undefined){
+    if (dropPartName == "chassis" && chassView != undefined) {
         buildState.dragTarget = chassView;
     }
-    else{
+    else {
         // check for clicking on a robot subpart
         for (var i = 0; i < buildView.subviews.length; i++) {
             var partView = buildView.subviews[i]; //left = [0] right [1], parts ... 
@@ -3027,7 +3044,7 @@ function applyEditor(state) {
     }
     part.fill = fill;
     part.outline = outline;
-    if (part.type != "Chassis" && part.type != "Motor"){
+    if (part.type != "Chassis" && part.type != "Motor") {
         part.name = name;
     }
 
@@ -4658,8 +4675,8 @@ function newRobot() {
 
     // Delete all of the old drop down parts except chassis, left, and right
     var options = document.getElementById("partDropDown").options;
-    for (var i = 0; i < options.length; i++){
-        if (options[i].text != "chassis" && options[i].text != "left" && options[i].text != "right"){
+    for (var i = 0; i < options.length; i++) {
+        if (options[i].text != "chassis" && options[i].text != "left" && options[i].text != "right") {
             options[i].selected = true;
             var dropDownElement = document.getElementById("partDropDown");
             dropDownElement.remove(dropDownElement.selectedIndex);
