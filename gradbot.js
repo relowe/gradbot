@@ -36,7 +36,7 @@ var boxMatter1;
 var worldMatter;
 engine = Engine.create();
 worldMatter = engine.world;
-Matter.Runner.run(engine);
+Runner.run(engine);
 
 
 var simulationMode = 'toroidal';
@@ -2336,7 +2336,9 @@ function drawSim() {
         simState.worldObjects[i].scale = 2;
         simState.worldObjects[i].draw(canvas, context);
     }
-    console.log("hello");
+    if (boxMatter1 != null) {
+        boxMatter1.show(context);
+    }
 
     //draw the robot
     simView.draw(canvas, context);
@@ -2779,7 +2781,7 @@ function simAddBox(event) {
     var canvas = document.getElementById("simfg");
     //create box
     var box = new Box(null, canvas.width / 2, canvas.height / 2, 50);
-    boxMatter1 = new boxMatter(canvas.width / 2, canvas.height / 2, 50, 50)
+    boxMatter1 = new BoxMatter(200, 100, 50, 50, true)
 
 
     simState.worldObjects.push(constructView(box));
@@ -4102,7 +4104,6 @@ function simulationStart() {
         simState.opponentThread.postMessage({ type: "start", robot: opponent.sendable() });
         opponent.thread = simState.opponentThread;
     }
-
     //set the timer going!
     simState.timer = setInterval(simulationUpdate, 1000 / 60);
 
@@ -4176,7 +4177,6 @@ function simulationUpdate() {
         bots.push(opponent);
         botViews.push(opponentView);
     }
-
     /*for(var i=0; i < bots.length; i++) {
         bots[i].update();
     }
