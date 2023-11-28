@@ -34,6 +34,7 @@ var Engine = Matter.Engine,
 var engine;
 var boxMatter1;
 var worldMatter;
+var animate;
 engine = Engine.create();
 worldMatter = engine.world;
 Runner.run(engine);
@@ -2350,6 +2351,36 @@ function drawSim() {
     }
 }
 
+function drawSimRepeat() {
+    console.log("drawSimRepeat");
+    var canvas = document.getElementById('simfg');
+    var context = canvas.getContext("2d");
+
+    //scale the view
+    simView.scale = 2;
+
+    // clear the frame
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    //draw the world objects
+    for (i in simState.worldObjects) {
+        simState.worldObjects[i].scale = 2;
+        simState.worldObjects[i].draw(canvas, context);
+    }
+    if (boxMatter1 != null) {
+        boxMatter1.show(context);
+    }
+
+    //draw the robot
+    simView.draw(canvas, context);
+
+    //draw the opponent (if there is one)
+    if (opponent) {
+        opponentView.scale = 2;
+        opponentView.draw(canvas, context);
+    }
+    animate = requestAnimationFrame(drawSimRepeat);
+}
 
 /**
  * Draws the build canvas.
@@ -4105,6 +4136,7 @@ function simulationStart() {
         opponent.thread = simState.opponentThread;
     }
     //set the timer going!
+    //drawSimRepeat();
     simState.timer = setInterval(simulationUpdate, 1000 / 60);
 
     if (simState.mazeWorldLoaded == true) {
@@ -4134,7 +4166,9 @@ function opponentReceiveMessage(message) {
 /**
  * Stop the simulation
  */
+
 function simulationStop() {
+    cancelAnimationFrame(animate);
     // Mark the simulation as not running
     simState.running = false;
 
