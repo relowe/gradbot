@@ -1420,6 +1420,13 @@ function VectorView(x, y, heading, scale, points) {
         var started = false;
         this.polygon = [];
 
+        if (this.typeMatter) {
+            var pos = this.body.position;
+            context.fillStyle = this.fillColor;
+            context.fillRect(pos.x + this.x, pos.y + this.y, this.w * this.scale, this.h * this.scale);
+            return
+        }
+
         //reset the extents
         this.resetExtents();
 
@@ -1676,6 +1683,7 @@ function PartView(part) {
  * @param {*} part - The chassis part
  */
 function ChassisView(part) {
+
     // initialize the partview
     PartView.call(this, part);
 
@@ -1698,6 +1706,11 @@ function ChassisView(part) {
     this.view = new VectorView(part.x, part.y, part.heading, 1.0, points);
     this.view.fill = "white";
     this.view.stroke = "black"
+    this.view.typeMatter = true;
+    this.view.fillColor = "blue";
+    this.view.w = 30;
+    this.view.h = 11;
+    this.view.body = Bodies.rectangle(-30, -11, this.view.w, this.view.h, { isStatic: true });
 
     if (chassView == undefined || newBot == 1) {
         chassView = this;
@@ -2812,7 +2825,7 @@ function simAddBox(event) {
     var canvas = document.getElementById("simfg");
     //create box
     var box = new Box(null, canvas.width / 2, canvas.height / 2, 50);
-    boxMatter1 = new BoxMatter(200, 100, 50, 50, true)
+    boxMatter1 = new BoxMatter(canvas.width / 2, 80, 30, true)
 
 
     simState.worldObjects.push(constructView(box));
