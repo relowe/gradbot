@@ -31,10 +31,10 @@ var Engine = Matter.Engine,
     Runner = Matter.Runner,
     Bodies = Matter.Bodies,
     Composite = Matter.Composite;
+//the matter engine
 var engine;
 var boxMatter1;
 var worldMatter;
-var animate;
 engine = Engine.create();
 worldMatter = engine.world;
 Runner.run(engine);
@@ -1420,10 +1420,13 @@ function VectorView(x, y, heading, scale, points) {
         var started = false;
         this.polygon = [];
 
+        //Creates the view if it is a matter object
         if (this.typeMatter) {
             var pos = this.body.position;
-            context.fillStyle = this.fillColor;
+            context.fillStyle = this.fill;
             context.fillRect(pos.x + this.x, pos.y + this.y, this.w * this.scale, this.h * this.scale);
+            context.strokeStyle = this.stroke;
+            context.strokeRect(pos.x + this.x, pos.y + this.y, this.w * this.scale, this.h * this.scale);
             return
         }
 
@@ -1707,10 +1710,9 @@ function ChassisView(part) {
     this.view.fill = "white";
     this.view.stroke = "black"
     this.view.typeMatter = true;
-    this.view.fillColor = "blue";
-    this.view.w = 30;
+    this.view.w = 20;
     this.view.h = 11;
-    this.view.body = Bodies.rectangle(-30, -11, this.view.w, this.view.h, { isStatic: true });
+    this.view.body = Bodies.rectangle(-20, -10, this.view.w, this.view.h, { isStatic: true });
 
     if (chassView == undefined || newBot == 1) {
         chassView = this;
@@ -2362,37 +2364,6 @@ function drawSim() {
         opponentView.scale = 2;
         opponentView.draw(canvas, context);
     }
-}
-
-function drawSimRepeat() {
-    console.log("drawSimRepeat");
-    var canvas = document.getElementById('simfg');
-    var context = canvas.getContext("2d");
-
-    //scale the view
-    simView.scale = 2;
-
-    // clear the frame
-    context.clearRect(0, 0, canvas.width, canvas.height);
-
-    //draw the world objects
-    for (i in simState.worldObjects) {
-        simState.worldObjects[i].scale = 2;
-        simState.worldObjects[i].draw(canvas, context);
-    }
-    if (boxMatter1 != null) {
-        boxMatter1.show(context);
-    }
-
-    //draw the robot
-    simView.draw(canvas, context);
-
-    //draw the opponent (if there is one)
-    if (opponent) {
-        opponentView.scale = 2;
-        opponentView.draw(canvas, context);
-    }
-    animate = requestAnimationFrame(drawSimRepeat);
 }
 
 /**
@@ -4149,7 +4120,6 @@ function simulationStart() {
         opponent.thread = simState.opponentThread;
     }
     //set the timer going!
-    //drawSimRepeat();
     simState.timer = setInterval(simulationUpdate, 1000 / 60);
 
     if (simState.mazeWorldLoaded == true) {
@@ -4181,7 +4151,6 @@ function opponentReceiveMessage(message) {
  */
 
 function simulationStop() {
-    cancelAnimationFrame(animate);
     // Mark the simulation as not running
     simState.running = false;
 
