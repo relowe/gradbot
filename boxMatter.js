@@ -7,7 +7,7 @@ function BoxMatter(x, y, size, isStatic) {
     }
     Part.call(this, parent, x, y);
     this.type = "BoxMatter";
-    this.outline = "blue";
+    this.stroke = "blue";
     this.fill = "lightblue";
     this.size = size;
     this.moveable = true;
@@ -16,6 +16,9 @@ function BoxMatter(x, y, size, isStatic) {
 
     this.show = function (context) {
         var pos = this.body.position;
+        context.fillStyle = this.fill;
         context.fillRect(pos.x, pos.y, size, size);
+        context.strokeStyle = this.stroke;
+        context.strokeRect(pos.x, pos.y, size, size);
     }
 }

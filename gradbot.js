@@ -1422,12 +1422,13 @@ function VectorView(x, y, heading, scale, points) {
 
         //Creates the view if it is a matter object
         if (this.typeMatter) {
+            console.log(this.heading);
             var pos = this.body.position;
             context.fillStyle = this.fill;
             context.fillRect(pos.x + this.x, pos.y + this.y, this.w * this.scale, this.h * this.scale);
             context.strokeStyle = this.stroke;
             context.strokeRect(pos.x + this.x, pos.y + this.y, this.w * this.scale, this.h * this.scale);
-            return
+            return;
         }
 
         //reset the extents
