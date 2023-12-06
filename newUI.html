@@ -111,9 +111,32 @@ a1 {
 </style>
 </head>
 <body>
-<script>
-    sceneControl = 0;
-</script>
+    <script>
+        function hideShowModeSim() {
+            var x = document.getElementById("SimState");
+            x.style.display = "inline";
+            var x = document.getElementById("BuildState");
+            x.style.display = "none";
+            var x = document.getElementById("CodeState");
+            x.style.display = "none";
+        }
+        function hideShowModeBuild() {
+            var x = document.getElementById("SimState");
+            x.style.display = "none";
+            var x = document.getElementById("BuildState");
+            x.style.display = "inline";
+            var x = document.getElementById("CodeState");
+            x.style.display = "none";
+        }
+        function hideShowModeCode() {
+            var x = document.getElementById("SimState");
+            x.style.display = "none";
+            var x = document.getElementById("BuildState");
+            x.style.display = "none";
+            var x = document.getElementById("CodeState");
+            x.style.display = "inline";
+        }
+    </script>
 <h1>
     <a>Gradbot Simulator</a>
 <u1>
@@ -121,9 +144,9 @@ a1 {
         <div class = "dropdown">
             <span>Tool State</span>
             <div class = "dropdown-content">
-                <button class = "buttonDrop">Simulate</button>
-                <button class = "buttonDrop">Build</button>
-                <button class = "buttonDrop">Code</button>
+                <button class = "buttonDrop"; onclick="hideShowModeSim()">Simulate</button>
+                <button class = "buttonDrop"; onclick="hideShowModeBuild()">Build</button>
+                <button class = "buttonDrop"; onclick="hideShowModeCode()">Code</button>
             </div>
         </div>
     </li>
@@ -132,7 +155,7 @@ a1 {
     </li>
 </u1>
 <p></p>
-<u2>
+<u2 id = "SimState">
     <li>
         <div class = "dropdown">
             <span>Drag Mode</span>
@@ -201,6 +224,168 @@ a1 {
     <li>
         <div class = "dropdown">
             <span>World</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+</u2>
+<p></p>
+<u2 id = "BuildState">
+    <li>
+        <div class = "dropdown">
+            <span>Build</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Build</button>
+                <button class = "buttonDrop">Build</button>
+                <button class = "buttonDrop">Build</button>
+                <button class = "buttonDrop">Build</button>
+                <button class = "buttonDrop">Build</button>
+                <button class = "buttonDrop">Build</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Build</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Build</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Build</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Build</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Build</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+</u2>
+<p></p>
+<u2 id = "CodeState">
+    <li>
+        <div class = "dropdown">
+            <span>Code</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Code</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Code</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Code</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Code</span>
+            <div class = "dropdown-content">
+                <button class = "buttonDrop">Move</button>
+                <button class = "buttonDrop">Rotate</button>
+                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
+                <button class = "buttonDrop">Resize Wall Height</button>
+                <button class = "buttonDrop">Resize Wall Width</button>
+                <button class = "buttonDrop">Draw</button>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Code</span>
             <div class = "dropdown-content">
                 <button class = "buttonDrop">Move</button>
                 <button class = "buttonDrop">Rotate</button>
