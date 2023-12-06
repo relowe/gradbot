@@ -1,10 +1,5 @@
-function BoxMatter(x, y, size, isStatic) {
-    if (isStatic) {
-        this.body = Bodies.rectangle(x, y, size, size);
-    }
-    else {
-        this.body = Bodies.rectangle(x, y, size, size);
-    }
+function BoxMatter(x, y, size) {
+    this.body = Bodies.rectangle(x, y, size, size);
     Part.call(this, parent, x, y);
     this.type = "BoxMatter";
     this.stroke = "blue";

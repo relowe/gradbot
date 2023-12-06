@@ -2831,8 +2831,8 @@ function simAddBox(event) {
     var canvas = document.getElementById("simfg");
     //create box
     var box = new Box(null, canvas.width / 2, canvas.height / 2, 50);
-    boxMatter1 = new BoxMatter(canvas.width / 2, 80, 30, true);
-    boxMatter2 = new BoxMatter(canvas.width / 2, 30, 30, false);
+    boxMatter1 = new BoxMatter(canvas.width / 2, 80, 30);
+    boxMatter2 = new BoxMatter(canvas.width / 2, 30, 30);
 
 
 
