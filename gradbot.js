@@ -28,16 +28,40 @@
 
 // Module alliases for matter.js
 var Engine = Matter.Engine,
+    Render = Matter.Render,
     Runner = Matter.Runner,
     Bodies = Matter.Bodies,
     Composite = Matter.Composite;
 //the matter engine
 var engine;
 var boxMatter1;
+var boxMatter2;
 var worldMatter;
+let render;
+let runner;
 engine = Engine.create();
 worldMatter = engine.world;
 Runner.run(engine);
+
+Composite = Matter.Composite,
+    Composites = Matter.Composites,
+    Constraint = Matter.Constraint,
+    Mouse = Matter.Mouse,
+    MouseConstraint = Matter.MouseConstraint,
+    Events = Matter.Events;
+// create a renderer
+render = Render.create({
+    element: document.getElementById("simfg"),
+    engine: engine,
+});
+// run the renderer
+Render.run(render);
+// create runner
+runner = Runner.create();
+// run the engine
+Runner.run(runner, engine);
+worldMatter.gravity.y = 0;
+
 
 
 var simulationMode = 'toroidal';
@@ -1422,12 +1446,16 @@ function VectorView(x, y, heading, scale, points) {
 
         //Creates the view if it is a matter object
         if (this.typeMatter) {
-            console.log(this.heading);
+            console.log("actual: " + this.body.position.x + " " + this.body.position.y);
+            console.log("offset: " + this.x + " " + this.y);
             var pos = this.body.position;
+            Matter.Body.setPosition(this.body, { x: pos.x + (this.x - this.startPositionX), y: pos.y + (this.y - this.startPositionY) }, false);
+            this.startPositionX = this.body.position.x;
+            this.startPositionY = this.body.position.y;
             context.fillStyle = this.fill;
-            context.fillRect(pos.x + this.x, pos.y + this.y, this.w * this.scale, this.h * this.scale);
+            context.fillRect(this.body.position.x - (this.w / 4), this.body.position.y - (this.h / 2), this.w, this.h);
             context.strokeStyle = this.stroke;
-            context.strokeRect(pos.x + this.x, pos.y + this.y, this.w * this.scale, this.h * this.scale);
+            context.strokeRect(this.body.position.x - (this.w / 4), this.body.position.y - (this.h / 2), this.w, this.h);
             return;
         }
 
@@ -1711,9 +1739,14 @@ function ChassisView(part) {
     this.view.fill = "white";
     this.view.stroke = "black"
     this.view.typeMatter = true;
-    this.view.w = 20;
-    this.view.h = 11;
-    this.view.body = Bodies.rectangle(-20, -10, this.view.w, this.view.h, { isStatic: true });
+    this.view.startPositionX = this.x;
+    this.view.startPositionY = this.y;
+    this.view.w = 40;
+    this.view.h = 20;
+    this.view.body = Bodies.rectangle(this.x - (this.view.w / 4), this.y - (this.view.h / 2), this.view.w, this.view.h);
+    Composite.add(worldMatter, this.view.body);
+    this.view.body.friction = 0;
+    this.view.body.frictionAir = 0;
 
     if (chassView == undefined || newBot == 1) {
         chassView = this;
@@ -2355,6 +2388,7 @@ function drawSim() {
     }
     if (boxMatter1 != null) {
         boxMatter1.show(context);
+        boxMatter2.show(context);
     }
 
     //draw the robot
@@ -2797,7 +2831,9 @@ function simAddBox(event) {
     var canvas = document.getElementById("simfg");
     //create box
     var box = new Box(null, canvas.width / 2, canvas.height / 2, 50);
-    boxMatter1 = new BoxMatter(canvas.width / 2, 80, 30, true)
+    boxMatter1 = new BoxMatter(canvas.width / 2, 80, 30, true);
+    boxMatter2 = new BoxMatter(canvas.width / 2, 30, 30, false);
+
 
 
     simState.worldObjects.push(constructView(box));

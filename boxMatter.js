@@ -1,6 +1,6 @@
 function BoxMatter(x, y, size, isStatic) {
     if (isStatic) {
-        this.body = Bodies.rectangle(x, y, size, size, { isStatic: true });
+        this.body = Bodies.rectangle(x, y, size, size);
     }
     else {
         this.body = Bodies.rectangle(x, y, size, size);
