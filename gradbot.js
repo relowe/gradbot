@@ -293,6 +293,11 @@ function Positionable(x, y, heading) {
      * @param {*} y 
      */
     this.moveTo = function (x, y) {
+        // Kyle's drag stuff ----------------
+        // if (this instanceof BoxMatter){
+        //     Matter.Body.setPosition(this.body, {x: x, y: y});
+        // }
+        // ----------------------------------
         this.x = x;
         this.y = y;
     }
@@ -1446,8 +1451,6 @@ function VectorView(x, y, heading, scale, points) {
 
         //Creates the view if it is a matter object
         if (this.typeMatter) {
-            console.log("actual: " + this.body.position.x + " " + this.body.position.y);
-            console.log("offset: " + this.x + " " + this.y);
             var pos = this.body.position;
             Matter.Body.setPosition(this.body, { x: pos.x + (this.x - this.startPositionX), y: pos.y + (this.y - this.startPositionY) }, false);
             this.startPositionX = this.body.position.x;
@@ -1557,7 +1560,9 @@ function constructView(part) {
         return new RangeSensorView(part);
     } else if (part.type == "Wall") {
         return new WallView(part);
-    } else if (part.type == "Box") {
+    // Kyle's drag stuff
+    //} else if (part.type == "Box" || part.type == "BoxMatter") {
+    } else if (part.type == "Box"){ // Comment this out if uncommenting the above line
         return new BoxView(part);
     } else if (part.type == "LaserBlast") {
         return new LaserBlastView(part);
@@ -2834,8 +2839,8 @@ function simAddBox(event) {
     boxMatter1 = new BoxMatter(canvas.width / 2, 80, 30);
     boxMatter2 = new BoxMatter(canvas.width / 2, 30, 30);
 
-
-
+    // Kyle's drag stuff
+    //simState.worldObjects.push(constructView(boxMatter1));
     simState.worldObjects.push(constructView(box));
     drawSim();
 }
