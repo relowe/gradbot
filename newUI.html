@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <p>GradBot Simulator 2023</p>
+    <meta charset = "utf-8">
+    <link rel="stylesheet" href="index.css"/>
 <style>
 /*  New UI; Leave old UI in place for testing purposes
     until complete*/
@@ -19,8 +22,10 @@ h1 {
 u1 {
     border-radius: 10px;
     background: lightblue;
-    padding: 15px;
+    padding: 10px;
     margin: 10px;
+    align-content: center;
+    align-items: center;
     /*  Comment out until sure
     width: 500%;
     height: 20px;
@@ -31,6 +36,7 @@ u2 {
     background: lightblue;
     padding: 15px;
     margin: 10px;
+
     /*  Comment out until sure
     width: 500px;
     height: 20px;
@@ -39,12 +45,14 @@ u2 {
 /*Style for Navigation Bar*/
 li {
     display: inline;
+    padding: 10px;
+
 }
 /*=============================*/
 /* Mode Dropdown */
 /*=============================*/
 .dropdown {
-    position: relative;
+    position: static;
     display: inline-block;
     color: black;
     background-color: rgb(126, 126, 253);
@@ -63,6 +71,7 @@ li {
     z-index: 1;
     min-width: 100px;
     line-height: 50px;
+    border-radius: 5px;
     
     
 }
@@ -109,9 +118,10 @@ a1 {
 }
 
 </style>
-</head>
-<body>
-    <script>
+<script>
+        window.onload = function(){
+            gradBotInit();
+        }
         function hideShowModeSim() {
             var x = document.getElementById("SimState");
             x.style.display = "inline";
@@ -136,7 +146,9 @@ a1 {
             var x = document.getElementById("CodeState");
             x.style.display = "inline";
         }
-    </script>
+</script>
+</head>
+<body>
 <h1>
     <a>Gradbot Simulator</a>
 <u1>
@@ -151,21 +163,41 @@ a1 {
         </div>
     </li>
     <li>
-        <button class = "button">Toggle Darkmode</button>
+        <button class="button" onclick="document.documentElement.classList.toggle('dark-mode');">Toggle Dark Mode</button>
     </li>
 </u1>
-<p></p>
+</h1>
+<div>
+
 <u2 id = "SimState">
     <li>
         <div class = "dropdown">
             <span>Drag Mode</span>
             <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
+                <div class="wrapper">
+                    <input type="radio" id="dragMove" name="dragMode" checked="checked" />
+                    <label for="dragMove">Move</label>
+                    </div>
+                    <div class="wrapper">
+                    <input type="radio" id="dragRotate" name="dragMode"/>
+                    <label for="dragRotate">Rotate</label>
+                    </div>
+                    <div class="wrapper">
+                    <input type="radio" id="dragRotate90" name="dragMode"/>
+                    <label for="dragRotate90">Rotate Wall 90 Degrees</label>
+                    </div>
+                    <div class="wrapper">
+                    <input type="radio" id="dragResizeHeight" name="dragMode"/>
+                    <label for="dragResizeHeight">Resize Wall Height</label>
+                    </div>
+                    <div class="wrapper">
+                    <input type="radio" id="dragResizeWidth" name="dragMode"/>
+                    <label for="dragResizeWidth">Resize Wall Width</label>
+                    </div>
+                    <div class="wrapper">
+                    <input type="radio" id="dragDraw" name="dragMode"/>
+                    <label for="dragDraw">Draw</label>
+                    </div>
             </div>
         </div>
     </li>
@@ -173,12 +205,9 @@ a1 {
         <div class = "dropdown">
             <span>Controls</span>
             <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
+                <button id="simGo">Start</button>
+                <button id="simReset">Reset</button>
+                <button id="simClear">Clear</button>
             </div>
         </div>
     </li>
@@ -186,12 +215,28 @@ a1 {
         <div class = "dropdown">
             <span>Editor</span>
             <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
+                        <div id="simPartEditor" class="partEditorPane">
+                            Type: <span id="simPartType"></span><hr>
+
+                            <label for="simPartName">Name</label>
+                            <input type="text" id="simPartName"><hr>
+
+                            <label for="simPartOutlineColor">Outline Color</label>
+                            <input type="text" id="simPartOutlineColor"><hr>
+
+                            <label for="simPartFillColor">Fill Color</label>
+                            <input type="text" id="simPartFillColor"><hr>
+
+                            <button id="simPartApply">Apply</button>
+                            <button id="simPartCancel">Cancel</button><hr>
+
+                            <button id="simPartDelete">Delete Part</button> <hr>
+                        </div>
+                        <div class="toolboxSubHead">
+                            <button id="simAddLight">Light</button>
+                            <button id="simAddWall">Wall</button>
+                            <button id="simAddBox">Box</button>
+                        </div>
             </div>
         </div>
     </li>
@@ -199,12 +244,23 @@ a1 {
         <div class = "dropdown">
             <span>Opponents</span>
             <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
+                <p>Manage Opponent</p>
+                <input type="file" id="simUpload" style="display: none">
+                <button id="simOpenOpponent">Add/Change</button>
+                <button id="simRemoveOpponent">Remove</button>
+                <p>Sample Opponents</p>
+                <div class="toolboxSubHead">
+                    <button id="simRoverOpponent">Rover</button>
+                    <button id="simCirclerOpponent">Circler</button>
+                    <button id="simSpinnerOpponent">Spinner</button>
+                </div>
+                <p>Sample User Bot</p>
+                <hr>
+                <div class="toolboxSubHead">
+                    <button id="Pacbot">Pacbot</button>    
+                    <button id="Destroyer">Destroyer</button>  
+                    <button id="Theseus">Theseus</button>    
+                </div>
             </div>
         </div>
     </li>
@@ -212,12 +268,11 @@ a1 {
         <div class = "dropdown">
             <span>Speed</span>
             <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
+                <p>Simulation Speed</p>
+                <button id="x1">x1</button>
+                <button id="x5">x5</button>
+                <button id="x10">x10</button>
+                <button id="x25">x25</button>
             </div>
         </div>
     </li>
@@ -225,179 +280,148 @@ a1 {
         <div class = "dropdown">
             <span>World</span>
             <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
+                <p>Manage World</p>
+                <input type="file" id="worldUpload" style="display: none">
+                <a href="" id="worldDownload" style="display: none"></a>
+                <button id="worldOpen">Open</button>
+                <button id="worldSave">Save</button>
+                <a id="downloadUserDraw" download="image.png"><button type="button" onClick="downloadUserDrawing()">Download Hand Drawing</button></a>
+                <a id="downloadRobotDraw" download="image.png"><button type="button" onClick="downloadRobotDrawing()">Download Robot Drawing</button></a>
+                <hr>
+                
+                <p>Worlds</p>
+                <button id="combatWorld">Combat Arena</button>
+                <button id="mazeWorld">Maze</button>
+                <button id="pacmanWorld">Pacman</button>
+
+                <p>World Properties</p>
+                <div class="wrapper">
+                <input type="radio" id="toroidal-mode" name="toroidal-mode" checked="checked">
+                <label for="torodial">Toroidal</label>
+                </div>
+                <div class="wrapper">
+                <input type="radio" id="infinite-mode" name="toroidal-mode"/>
+                <label for="infinite">Infinite</label>
+                </div>
+
+                <button id="backgroundChange">Change Background</button>
+                <input type="file" accept="image/png" id="pictureUpload" name="backgroundphoto" style="display: none">
+                                    
             </div>
         </div>
     </li>
+    <div class="container">
+        <canvas id="simbg" width="800" height="600"></canvas>
+        <canvas id="simdg" width="800" height="600" display="block"></canvas>
+        <canvas id="simfg" width="800" height="600"></canvas>
+    </div>
 </u2>
+</div>
 <p></p>
+<div>
 <u2 id = "BuildState">
     <li>
         <div class = "dropdown">
             <span>Build</span>
             <div class = "dropdown-content">
-                <button class = "buttonDrop">Build</button>
-                <button class = "buttonDrop">Build</button>
-                <button class = "buttonDrop">Build</button>
-                <button class = "buttonDrop">Build</button>
-                <button class = "buttonDrop">Build</button>
-                <button class = "buttonDrop">Build</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Build</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Build</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Build</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Build</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Build</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-</u2>
-<p></p>
-<u2 id = "CodeState">
-    <li>
-        <div class = "dropdown">
-            <span>Code</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Code</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Code</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Code</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Code</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-    <li>
-        <div class = "dropdown">
-            <span>Code</span>
-            <div class = "dropdown-content">
-                <button class = "buttonDrop">Move</button>
-                <button class = "buttonDrop">Rotate</button>
-                <button class = "buttonDrop">Rotate Wall 90 degrees</button>
-                <button class = "buttonDrop">Resize Wall Height</button>
-                <button class = "buttonDrop">Resize Wall Width</button>
-                <button class = "buttonDrop">Draw</button>
-            </div>
-        </div>
-    </li>
-</u2>
-</h1>
+                <label for="partDropDown">Select a Part:</label>
+                         <select name="partDropDown" id="partDropDown">
+                         </select>
+                         
+                        <div id="buildPartEditor" class="partEditorPane">
+                            Type: <span id="buildPartType"></span><hr>
 
+                            <label for="buildPartName">Name</label>
+                            <input type="text" id="buildPartName"><hr>
+
+                            <label for="buildPartOutlineColor">Outline Color</label>
+                            <input type="text" id="buildPartOutlineColor"><hr>
+
+                            <label for="buildPartFillColor">Fill Color</label>
+                            <input type="text" id="buildPartFillColor"><hr>
+
+                            <button id="buildPartApply">Apply</button>
+                            <button id="buildPartCancel">Cancel</button><hr>
+
+                            <button id="buildPartDelete">Delete Part</button> <hr>
+                        </div>
+                        
+                        <div class="toolboxSubHead">
+                            Drag Part
+                        </div>
+
+                        <img id="DragMarker" draggable="true" src="images/Marker.png" alt="Marker image" width="65" height="50">
+
+                        <img id = "DragLight" src="images/Light.png" alt="Marker image" width="65" height="50">
+
+                        <img id ="DragLightSensor" src="images/Light Sensor.png" alt="Marker image" width="65" height="50">
+
+                        <img id="DragRangeFinder" src="images/Range Finder.png" alt="Marker image" width="65" height="50">
+
+                        <img id="DragLaser" src="images/Laser.png" alt="Marker image" width="50" height="65">
+                        <p>Add Part</p>
+                         
+                        <button id="buildAddMarker" draggable="true" >Marker</button><br>
+                        <button id="buildAddLight" draggable="true">Light</button><br>
+                        <button id="buildAddLightSensor" draggable="true">Light Sensor</button><br>
+                        <button id="buildAddRangeSensor" draggable="true">Range Finder</button><br>
+                        <button id="buildAddLaser" draggable="true">Laser</button><br>
+            </div>
+        </div>
+    </li>
+    <li>
+        <div class = "dropdown">
+            <span>Robot</span>
+            <div class = "dropdown-content">
+                <p>Robot Management</p>
+
+                <div id="buildFiles">
+                    <input type="file" id="buildUpload" style="display: none">
+                    <a href="" id="buildDownload" style="display: none"></a>
+                    <button id="buildOpen">Open</button>
+                    <button id="buildSave">Save</button>
+                    <button id="buildNew">New</button>
+                </div>
+                <p>Change Wheel Size</p>
+                <form>
+                    <input type="number" id="wheelSize" name="wheelSize" min="-10" max="10" value ="0.065" step="0.01"><br>
+                    <button id="changeWheelSize">Submit</button>   
+                </form>
+                <button id="wheelSizeReset">Reset</button>
+            </div>
+        </div>
+    </li>
+    <div class="container">
+        <canvas id="buildCanvas" width="800" height="600"></canvas>
+    </div>
+</u2>
+</div>
+<p></p>
+<div>
+<u2 id = "CodeState">
+    <div class="container">
+        <div id="robotCode"></div>
+        <div class="toolbox">
+            <div class="toolboxContent">
+                <div class="toolboxHead">
+                    Part List
+                </div>
+                <p>Click on the list for more details:</p>
+                
+                <div class="inner">
+                    <ul id="codePartList">
+                    </ul>
+                </div>
+                <hr/>
+                <div class="inner" id="codePartDoc">
+                </div>
+            </div>
+        </div>
+    </div>
+</u2>
+</div>
+    <div id="pacmanScore"></div>
+    <script src="codeflask.min.js"></script>
+    <script src="gradbot.js"></script>
 </body>
 </html>
