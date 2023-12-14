@@ -125,24 +125,42 @@ a1 {
         function hideShowModeSim() {
             var x = document.getElementById("SimState");
             x.style.display = "inline";
+            var x = document.getElementById("SimCanvas");
+            x.style.display = "inline";
+    
             var x = document.getElementById("BuildState");
             x.style.display = "none";
+            var x = document.getElementById("BuildCanvas");
+            x.style.display = "none";
+
             var x = document.getElementById("CodeState");
             x.style.display = "none";
         }
         function hideShowModeBuild() {
             var x = document.getElementById("SimState");
             x.style.display = "none";
+            var x = document.getElementById("SimCanvas");
+            x.style.display = "none";
+
             var x = document.getElementById("BuildState");
             x.style.display = "inline";
+            var x = document.getElementById("BuildCanvas");
+            x.style.display = "inline";
+
             var x = document.getElementById("CodeState");
             x.style.display = "none";
         }
         function hideShowModeCode() {
             var x = document.getElementById("SimState");
             x.style.display = "none";
+            var x = document.getElementById("SimCanvas");
+            x.style.display = "none";
+
             var x = document.getElementById("BuildState");
             x.style.display = "none";
+            var x = document.getElementById("BuildCanvas");
+            x.style.display = "none";
+
             var x = document.getElementById("CodeState");
             x.style.display = "inline";
         }
@@ -167,7 +185,6 @@ a1 {
     </li>
 </u1>
 </h1>
-<div>
 
 <u2 id = "SimState">
     <li>
@@ -310,15 +327,13 @@ a1 {
             </div>
         </div>
     </li>
-    <div class="container">
-        <canvas id="simbg" width="800" height="600"></canvas>
-        <canvas id="simdg" width="800" height="600" display="block"></canvas>
-        <canvas id="simfg" width="800" height="600"></canvas>
-    </div>
 </u2>
+<div id = "SimCanvas" class="container">
+    <canvas id="simbg" width="800" height="600"></canvas>
+    <canvas id="simdg" width="800" height="600" display="block"></canvas>
+    <canvas id="simfg" width="800" height="600"></canvas>
 </div>
 <p></p>
-<div>
 <u2 id = "BuildState">
     <li>
         <div class = "dropdown">
@@ -395,9 +410,11 @@ a1 {
         <canvas id="buildCanvas" width="800" height="600"></canvas>
     </div>
 </u2>
+<div class="container">
+    <canvas id="buildCanvas" width="800" height="600"></canvas>
 </div>
 <p></p>
-<div>
+
 <u2 id = "CodeState">
     <div class="container">
         <div id="robotCode"></div>
@@ -419,7 +436,6 @@ a1 {
         </div>
     </div>
 </u2>
-</div>
     <div id="pacmanScore"></div>
     <script src="codeflask.min.js"></script>
     <script src="gradbot.js"></script>
