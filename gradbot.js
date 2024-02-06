@@ -1446,16 +1446,19 @@ function VectorView(x, y, heading, scale, points) {
 
         //Creates the view if it is a matter object
         if (this.typeMatter) {
-            console.log("actual: " + this.body.position.x + " " + this.body.position.y);
-            console.log("offset: " + this.x + " " + this.y);
             var pos = this.body.position;
             Matter.Body.setPosition(this.body, { x: pos.x + (this.x - this.startPositionX), y: pos.y + (this.y - this.startPositionY) }, false);
+            Matter.Body.setAngle(this.body, this.heading, false)
             this.startPositionX = this.body.position.x;
             this.startPositionY = this.body.position.y;
-            context.fillStyle = this.fill;
-            context.fillRect(this.body.position.x - (this.w / 4), this.body.position.y - (this.h / 2), this.w, this.h);
+            context.save();
+            context.translate(this.body.position.x, this.body.position.y);
+            context.rotate(this.heading);
+            context.fillStyle = this.fill
+            context.fillRect(-this.w / 2, -this.h / 2, this.w * (this.scale / 2), this.h * (this.scale / 2));
             context.strokeStyle = this.stroke;
-            context.strokeRect(this.body.position.x - (this.w / 4), this.body.position.y - (this.h / 2), this.w, this.h);
+            context.strokeRect(-this.w / 2, -this.h / 2, this.w * (this.scale / 2), this.h * (this.scale / 2));
+            context.restore();
             return;
         }
 
@@ -1742,8 +1745,8 @@ function ChassisView(part) {
     this.view.startPositionX = this.x;
     this.view.startPositionY = this.y;
     this.view.w = 40;
-    this.view.h = 20;
-    this.view.body = Bodies.rectangle(this.x - (this.view.w / 4), this.y - (this.view.h / 2), this.view.w, this.view.h);
+    this.view.h = 24;
+    this.view.body = Bodies.rectangle(this.x, this.y, this.view.w, this.view.h);
     Composite.add(worldMatter, this.view.body);
     this.view.body.friction = 0;
     this.view.body.frictionAir = 0;
@@ -2831,8 +2834,8 @@ function simAddBox(event) {
     var canvas = document.getElementById("simfg");
     //create box
     var box = new Box(null, canvas.width / 2, canvas.height / 2, 50);
-    boxMatter1 = new BoxMatter(canvas.width / 2, 80, 30);
-    boxMatter2 = new BoxMatter(canvas.width / 2, 30, 30);
+    boxMatter1 = new BoxMatter(canvas.width / 2, 500, 30);
+    boxMatter2 = new BoxMatter(canvas.width / 2, 80, 30);
 
 
 
